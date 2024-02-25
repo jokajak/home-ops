@@ -34,7 +34,8 @@ nodes:
     talosImageURL: factory.talos.dev/installer/{{ distribution.talos.schematicID }}
     controlPlane: {{ (item.controller) | string | lower }}
     networkInterfaces:
-      - interface: eth0
+      - deviceSelector:
+          busPath: "0*"
         dhcp: false
         {% if distribution.talos.vlan %}
         vlans:

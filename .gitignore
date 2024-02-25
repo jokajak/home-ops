@@ -23,3 +23,6 @@ Brewfile.lock.json
 wiki
 # Bootstrap
 /config.yaml
+
+# talos
+kubernetes/talos/talconfig.json
