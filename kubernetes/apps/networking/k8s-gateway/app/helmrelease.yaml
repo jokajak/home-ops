@@ -12,7 +12,7 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: k8s-gateway
-        namespace: flux-system
+        namespace: networking
   maxHistory: 2
   install:
     remediation:
