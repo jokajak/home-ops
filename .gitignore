@@ -26,3 +26,4 @@ wiki
 
 # talos
 kubernetes/talos/talconfig.json
+kubernetes/talos/cilium/values.yaml
