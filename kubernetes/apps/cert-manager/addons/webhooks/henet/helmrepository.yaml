@@ -1,0 +1,9 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: cert-manager-webhook-henet
+  namespace: cert-manager
+spec:
+  interval: 2h
+  url: https://jokajak.github.io/cert-manager-webhook-henet
