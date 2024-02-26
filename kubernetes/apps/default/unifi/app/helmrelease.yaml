@@ -114,7 +114,7 @@ spec:
       config:
         enabled: true
         size: 20Gi
-        storageClass: rook-ceph-block
+        storageClass: openebs-hostpath
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
