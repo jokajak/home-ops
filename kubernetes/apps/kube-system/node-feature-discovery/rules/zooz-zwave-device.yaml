@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.devbu.io/nfd.k8s-sigs.io/nodefeaturerule_v1alpha1.json
+apiVersion: nfd.k8s-sigs.io/v1alpha1
+kind: NodeFeatureRule
+metadata:
+  name: zooz-zwave-device
+spec:
+  rules:
+    - # Zooz Z-Stick ZST10
+      name: zooz.zwave
+      labels:
+        zwave.feature.node.kubernetes.io/zwave: "true"
+      matchFeatures:
+        - feature: usb.device
+          # lshw -numeric -class generic
+          # *-usb:0
+          #      description: Generic USB device
+          #      product: Zooz ZST10 [10C4:EA60]
+          #      vendor: Silicon Labs [10C4]
+          #      physical id: 3
+          #      bus info: usb@1:3
+          #      version: 1.00
+          #      serial: [REMOVED]
+          #      capabilities: usb-2.00
+          #      configuration: driver=cp210x maxpower=100mA speed=12Mbit/s
+          matchExpressions:
+            class: { op: In, value: ["ff"] }
+            vendor: { op: In, value: ["10c4"] }
+            device: { op: In, value: ["ea60"] }
