@@ -16,8 +16,8 @@ data:
     GATEWAY_CIDR_V4: ENC[AES256_GCM,data:bMHOIJ7IIsamgTaJldM=,iv:fTC5pxHVgLSQND+9u3ZAyInGQJJuoKuHNXhtivMVQn4=,tag:HEhvay8Yc4a5YQC5dw/nOA==,type:str]
     INTERNAL_PROXY_CIDR_V4: ENC[AES256_GCM,data:j/6Fn7d0Z2MaGF+pfWc=,iv:mZ1342vWoshhgyPgFribQwYiQ26gM1rR5gujCh7OO1o=,tag:0bu6WxRQSLGWGJ1dGwcTbA==,type:str]
     EXTERNAL_PROXY_CIDR_V4: ENC[AES256_GCM,data:tCF7hmDb+HmWn1Y3zuw=,iv:7jTzbV5NPrH8nmDIQ8Rrnt+zoLow2+IftOf7yWCyVJY=,tag:S5TEk9OfKuZ7fvxZtzXSPA==,type:str]
-    LB_UNIFI_V4: ENC[AES256_GCM,data:05RzazMsLtP9DXbneEc=,iv:lU606xHbHu/Jnvv3YX5oIhTiIU1ohk/gC2s9t5Exa28=,tag:Wh+G+jAZFuWIs/nk+OtUHw==,type:str]
-    LB_EMQX_V4: ENC[AES256_GCM,data:k9PgUIJD4tG81CXe//w=,iv:4T8XocwRMrFbU3bzHsyP3Os584ZyOgWt/+OOBxdR07w=,tag:2hlGCZsZBJN0SBK+Z7dUkg==,type:str]
+    LB_UNIFI_CIDR_V4: ENC[AES256_GCM,data:80Q9CCzmLrJ+UbrKCEQ=,iv:kkl+S2k1clI9Rec6e7XMyA2kHyhtsRBFZithlmC+B5c=,tag:YvoVCzOBhr58fWRuxrgu9w==,type:str]
+    LB_EMQX_CIDR_V4: ENC[AES256_GCM,data:sNGhHuQdDVacZkiqbuM=,iv:WQaMktDXhiNY6do2It9/opwxYq4mYNn/UpafxgmcAUE=,tag:XQ9e9S0Fj3X4a3Nzln+BpQ==,type:str]
     LB_CIDR_V4: ENC[AES256_GCM,data:hcsxz6rvBcIp0m61/cAcS+c=,iv:9PZ9F3pG2p0S/v8pxOini1XB3GUUSxRzXcPu0eheaOU=,tag:ztKilCWofjW5yJe7u0RiFA==,type:str]
     LB_CIDR_V6: ENC[AES256_GCM,data:mFeFmr1SyqcqQQAXlW2zHgQOe5ooMsgCKqOBDhm2,iv:iAzCogIclTsWIH92dLPJtywVzOYu6wDNebAwG7oHbLA=,tag:WV5u9VShFSktCwCWG4jIUw==,type:str]
     #ENC[AES256_GCM,data:EeMZz6R5zmlG3eBfGqbr,iv:KWgEeRh1zRFnRTU2Im+7lNluqlsZAxBaKXG/oHYDdAc=,tag:7FrWbI5RZR4EzVviCHm2ag==,type:comment]
@@ -39,8 +39,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-02-25T20:34:38Z"
-    mac: ENC[AES256_GCM,data:k75iJVxd4EtYn8tOUNGQ1AatOKJm/v4B/wvQKP2+/x9azjHu1bFjeUlH7D5d4kcsHkaXSp5Q5jfbSJ19PhLLeHaOKievwdeXxjXVb1P1ZdXKMLH1HD+wFfI0OL2BtT9TeiUYNLlT/wjeIsfNcI7k3uZqwHfjSMf4ez/HIDrNYE4=,iv:pidCb1wyhyjn+trOTTJSe1mJdPePof422Hp+vGQaWbw=,tag:59tSA9GANcw+b8EIr9m3gQ==,type:str]
+    lastmodified: "2024-03-17T21:44:02Z"
+    mac: ENC[AES256_GCM,data:enfytXIZtvH871VITfiy5bszQazrLJdqWKYPebsWct0ti+HPTN4u/UF0NmDKjaVoqr93azHWsH5IgH7hdjLwplBd4aBKqb4yhY061FL7d1enWLGTOQfEX+kz3lwIboPozUshP0aYYRKRJHQaDKTNMUoHbZUWDP9FSVfamPk4xcc=,iv:EKd7LHVakSccBCkEp87yTBZYZn33G57dw4Ji2/7ajro=,tag:Fjn75dPft4GeDjKTXuJIRA==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.8.1
