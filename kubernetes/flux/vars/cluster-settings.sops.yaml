@@ -24,6 +24,7 @@ data:
     BITWARDEN_APP_ID: ENC[AES256_GCM,data:GVMHGdgeyHoHs1VJANFNSeR0sp78b3xKqsrDXhrE3PYdVqr6OClTFrESNEhOoRqEIw==,iv:iSm8K9FhHupPyOkLbs+aXuI91RwlXHvfWeujwJbeWOk=,tag:MLXwK3jBlP+4NYs/e+nrZg==,type:str]
     NFS_SUBDIR_PATH: ENC[AES256_GCM,data:aeYYqtdZPOMPRRoKmGKa6k99occFacR+kEa6qocHEOWQrkgmw+DmDhv3nP1H2+pUmKyBGZCHlYgihUELt3jlFhlWY3iM,iv:FgO48pc19BdiVz38nFrgUl1LIrY4vVrtPEgL90gwllE=,tag:byc+QtIcBR/6ppDuXqzOuw==,type:str]
     PIHOLE_ADDR: ENC[AES256_GCM,data:SqZ7NgNn7LGoxYguiCU=,iv:t9R7fsM2e/Ns8E3CwUoGlPywh4Kryw/CTlqSJtEppwc=,tag:FvuDe/E75FDQxUMUrgE+9A==,type:str]
+    ZWAVE_NODE: ENC[AES256_GCM,data:oz69XEXG4cUf7jvK0aM=,iv:25Yucvyj7YAUx9/xL7JFHK2CvqHoO6PxkaZQMtV8gTs=,tag:x3d4hKTF4PkofZIuhMZLIg==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -39,8 +40,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-03-17T21:44:02Z"
-    mac: ENC[AES256_GCM,data:enfytXIZtvH871VITfiy5bszQazrLJdqWKYPebsWct0ti+HPTN4u/UF0NmDKjaVoqr93azHWsH5IgH7hdjLwplBd4aBKqb4yhY061FL7d1enWLGTOQfEX+kz3lwIboPozUshP0aYYRKRJHQaDKTNMUoHbZUWDP9FSVfamPk4xcc=,iv:EKd7LHVakSccBCkEp87yTBZYZn33G57dw4Ji2/7ajro=,tag:Fjn75dPft4GeDjKTXuJIRA==,type:str]
+    lastmodified: "2024-03-18T00:21:44Z"
+    mac: ENC[AES256_GCM,data:AlMPo/3cI/TVupe4Nj7F7aAhnEFZ2Evy9gnPePIvdCXVhJgF6nVPgyFGA8j7CETmJSa2BhkBFUlowfYW+ibm2K/Jv3LY/kGya0kWIc0lWB6XXaZ6e4Xk13rwnoCzj89Ho6mbpPosMrgAJXPptBJwHzKiyHI7z54XGRldxPhqk/c=,iv:dMC92JLfq9E709VXLyIvNJcS6qzslf4V2l56+/lE4Vk=,tag:ioMuAQtOfEr0HtBUBMw20Q==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.8.1
