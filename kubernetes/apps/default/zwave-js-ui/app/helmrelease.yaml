@@ -102,7 +102,7 @@ spec:
         type: persistentVolumeClaim
         accessMode: ReadWriteOnce
         size: 1Gi
-        storageClass: nfs-dynamic
+        storageClass: nfs-csi
         retain: true
         globalMounts:
           - path: /usr/src/app/store
