@@ -40,8 +40,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-03-18T00:21:44Z"
-    mac: ENC[AES256_GCM,data:AlMPo/3cI/TVupe4Nj7F7aAhnEFZ2Evy9gnPePIvdCXVhJgF6nVPgyFGA8j7CETmJSa2BhkBFUlowfYW+ibm2K/Jv3LY/kGya0kWIc0lWB6XXaZ6e4Xk13rwnoCzj89Ho6mbpPosMrgAJXPptBJwHzKiyHI7z54XGRldxPhqk/c=,iv:dMC92JLfq9E709VXLyIvNJcS6qzslf4V2l56+/lE4Vk=,tag:ioMuAQtOfEr0HtBUBMw20Q==,type:str]
+    lastmodified: "2024-03-18T00:31:49Z"
+    mac: ENC[AES256_GCM,data:9u7sMVx0AXTxNpnD+0yJWFinRDUgAVjoqESoYXavpPgPySgDI+hZTJ/U29Bx3BkdiVkDpnszcWEh1dtsje3sNaUbM+MQZcW/dgbyVa42KGSyb1pocmQHa2sPaHNmny4HeMdApGYW+v5Gg8wdR2Zbds3cX9Ocz5HRCYP7/jYoNuw=,iv:iu3ApAnsRxH0q+iWnbLpiklRPwMRLT89H8QM0k3C2XU=,tag:eYpZUf0mi3zq+lMYykzN6A==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.8.1

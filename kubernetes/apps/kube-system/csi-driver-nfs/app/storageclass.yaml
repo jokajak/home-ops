@@ -7,7 +7,7 @@ provisioner: nfs.csi.k8s.io
 parameters:
   server: ${SECRET_NFS_SERVER}
   share: ${SECRET_NFS_PATH}
-  subDir: "${SECRET_NFS_SUBDIR_PATH}"
+  subDir: "${NFS_SUBDIR_PATH}"
 reclaimPolicy: Delete
 volumeBindingMode: Immediate
 # Note: The first two options are strictly for NFSv4.1
