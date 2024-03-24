@@ -28,7 +28,7 @@ servers:
           ttl 30
       - name: hosts
         configBlock: |-
-          ${ROUTER_CIDR_IP4} router.internal
+          ${ROUTER_CIDR_V4} router.internal
       - name: local
         parameters: ${SECRET_DOMAIN} internal
         configBlock: |-
