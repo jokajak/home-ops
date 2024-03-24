@@ -25,6 +25,7 @@ data:
     NFS_SUBDIR_PATH: ENC[AES256_GCM,data:aeYYqtdZPOMPRRoKmGKa6k99occFacR+kEa6qocHEOWQrkgmw+DmDhv3nP1H2+pUmKyBGZCHlYgihUELt3jlFhlWY3iM,iv:FgO48pc19BdiVz38nFrgUl1LIrY4vVrtPEgL90gwllE=,tag:byc+QtIcBR/6ppDuXqzOuw==,type:str]
     PIHOLE_ADDR: ENC[AES256_GCM,data:SqZ7NgNn7LGoxYguiCU=,iv:t9R7fsM2e/Ns8E3CwUoGlPywh4Kryw/CTlqSJtEppwc=,tag:FvuDe/E75FDQxUMUrgE+9A==,type:str]
     ZWAVE_NODE: ENC[AES256_GCM,data:oz69XEXG4cUf7jvK0aM=,iv:25Yucvyj7YAUx9/xL7JFHK2CvqHoO6PxkaZQMtV8gTs=,tag:x3d4hKTF4PkofZIuhMZLIg==,type:str]
+    ROUTER_CIDR_V4: ENC[AES256_GCM,data:MRQfLr5czCksXUCT9g==,iv:3leOotkYCMd3VkfGPI4GcdBqyVyc1PoueiixGNOAp+s=,tag:NVgeqZI2ZV5n1QbaBHaxZA==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -40,8 +41,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-03-18T00:31:49Z"
-    mac: ENC[AES256_GCM,data:9u7sMVx0AXTxNpnD+0yJWFinRDUgAVjoqESoYXavpPgPySgDI+hZTJ/U29Bx3BkdiVkDpnszcWEh1dtsje3sNaUbM+MQZcW/dgbyVa42KGSyb1pocmQHa2sPaHNmny4HeMdApGYW+v5Gg8wdR2Zbds3cX9Ocz5HRCYP7/jYoNuw=,iv:iu3ApAnsRxH0q+iWnbLpiklRPwMRLT89H8QM0k3C2XU=,tag:eYpZUf0mi3zq+lMYykzN6A==,type:str]
+    lastmodified: "2024-03-24T20:58:09Z"
+    mac: ENC[AES256_GCM,data:xsc2au/N9/DPKgm9nPs+9NiHM5cstAZ4a8qkyskwptBH1/PaXHVP9W1ucnS+xtcX50PMqDxig9b+hMVZ4w2vkA/R6Hj+AYyGq7uDp9E0IeKGzEiYhWD++LWRyVfnjxolN9oktsqsGK+b6nJ34+pAVoAm8BI9GjfQnHGuxJIKAek=,iv:ZSzoaxfhFNP8D4tsEgkv5mM+agn3BDeE5UF3FOjCLxQ=,tag:KUL3ONj4sW6gHJdkaUO1TA==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.8.1
