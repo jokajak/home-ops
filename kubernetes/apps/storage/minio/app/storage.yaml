@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-minio
+  namespace: storage
+spec:
+  storageClassName: minio
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${SECRET_NFS_SERVER}
+    path: "${SECRET_NFS_PATH}/s3"
+  mountOptions:
+  - nfsvers=4.1
+  - tcp
+  - intr
+  - hard
+  - noatime
+  - nodiratime
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nfs-minio
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: minio
+  resources:
+    requests:
+      storage: 1Mi
