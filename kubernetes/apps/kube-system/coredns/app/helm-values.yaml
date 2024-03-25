@@ -33,7 +33,7 @@ servers:
         configBlock: |-
           ${ROUTER_CIDR_V4} router.internal
       - name: local
-        parameters: ${SECRET_DOMAIN} internal
+        parameters: internal
         configBlock: |-
           forward . ${PIHOLE_ADDR}
           fallthrough
@@ -46,6 +46,26 @@ servers:
       - name: loop
       - name: reload
       - name: loadbalance
+  - zones:
+      - zone: ${SECRET_DOMAIN}
+        scheme: dns://
+        use_tcp: true
+    port: 53
+    plugins:
+      - name: log
+      - name: errors
+      - name: health
+        configBlock: |-
+          lameduck 5s
+      - name: ready
+      - name: prometheus
+        parameters: 0.0.0.0:9153
+      - name: forward
+        parameters: . ${PIHOLE_ADDR}
+      - name: cache
+        parameters: 3600
+      - name: loop
+      - name: reload
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
