@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/helmfile.json
+repositories:
+  - name: coredns
+    url: https://coredns.github.io/helm
+
+releases:
+  - name: coredns
+    namespace: kube-system
+    chart: coredns/coredns
+    version: 1.29.0
+    values: ["../../apps/kube-system/coredns/app/helm-values.yaml"]
+    wait: true

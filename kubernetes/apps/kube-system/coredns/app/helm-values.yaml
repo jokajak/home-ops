@@ -1,6 +1,6 @@
 ---
 fullnameOverride: coredns
-replicaCount: 3
+replicaCount: 2
 k8sAppLabelOverride: kube-dns
 serviceAccount:
   create: true
@@ -13,32 +13,25 @@ deployment:
 servers:
   - zones:
       - zone: .
-        scheme: dns://
-        use_tcp: true
     port: 53
     plugins:
-      - name: log
       - name: errors
       - name: health
         configBlock: |-
           lameduck 5s
       - name: ready
+      - name: log
+        parameters: .
+        configBlock: |-
+          class error
+      - name: prometheus
+        parameters: 0.0.0.0:9153
       - name: kubernetes
         parameters: cluster.local in-addr.arpa ip6.arpa
         configBlock: |-
           pods insecure
           fallthrough in-addr.arpa ip6.arpa
           ttl 30
-      - name: hosts
-        configBlock: |-
-          ${ROUTER_CIDR_V4} router.internal
-      - name: local
-        parameters: internal
-        configBlock: |-
-          forward . ${PIHOLE_ADDR}
-          fallthrough
-      - name: prometheus
-        parameters: 0.0.0.0:9153
       - name: forward
         parameters: . /etc/resolv.conf
       - name: cache
@@ -47,25 +40,13 @@ servers:
       - name: reload
       - name: loadbalance
   - zones:
-      - zone: ${SECRET_DOMAIN}
-        scheme: dns://
-        use_tcp: true
+      - zone: kayses.us
     port: 53
     plugins:
-      - name: log
-      - name: errors
-      - name: health
-        configBlock: |-
-          lameduck 5s
-      - name: ready
-      - name: prometheus
-        parameters: 0.0.0.0:9153
       - name: forward
         parameters: . ${PIHOLE_ADDR}
       - name: cache
         parameters: 3600
-      - name: loop
-      - name: reload
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
