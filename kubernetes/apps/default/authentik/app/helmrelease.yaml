@@ -114,9 +114,3 @@ spec:
 
     redis:
       enabled: false
-
-    resources:
-      server:
-        requests:
-          memory: 1Gi
-          cpu: 50m
