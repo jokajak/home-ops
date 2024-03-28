@@ -102,15 +102,15 @@ spec:
           memory: 512Mi
       startupProbe:
         periodSeconds: 10
+      metrics:
+        serviceMonitor:
+          enabled: true
+      prometheus:
+        rules:
+          enabled: true
 
     postgresql:
       enabled: false
-
-    prometheus:
-      rules:
-        create: true
-      serviceMonitor:
-        create: true
 
     redis:
       enabled: false
