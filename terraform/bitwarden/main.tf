@@ -33,11 +33,6 @@ resource "bitwarden_item_login" "minio" {
 ################################################################################
 # cloudnative postgres credentials
 ################################################################################
-resource "random_password" "cloudnative_pg_user" {
-  length  = 16
-  special = false
-}
-
 resource "random_password" "cloudnative_pg_password" {
   length           = 32
   special          = true
@@ -49,7 +44,7 @@ resource "bitwarden_item_login" "cloudnative_pg" {
   collection_ids  = [var.collection_id]
 
   name     = "cloudnative_pg credentials"
-  username = random_password.cloudnative_pg_user.result
+  username = "postgres"
   password = random_password.cloudnative_pg_password.result
 
   field {
