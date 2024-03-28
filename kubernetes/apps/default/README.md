@@ -3,6 +3,16 @@
 This directory contains all of the applications deployed to the `default`
 namespace.
 
+## authentik
+
+[authentik](https://goauthentik.io/) is used to provide authorization and SSO capabilities for services. The intention
+is to use external credentials like google accounts or github accounts for authentication and authentik local or
+application local groups for authorization.
+
+* [authentik.yaml](./authentik/ks.yaml)
+
+The authentik configuration is stored as IaC using [terraform](../../../terraform/authentik/README.md)
+
 ## unifi
 
 [ubiquiti unifi controller](https://github.com/jacobalberty/unifi-docker) for

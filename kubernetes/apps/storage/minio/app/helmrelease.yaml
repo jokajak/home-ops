@@ -40,7 +40,7 @@ spec:
               MINIO_PROMETHEUS_AUTH_TYPE: public
               MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN}
               MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN}
-              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.${SECRET_DOMAIN},https://s3.${SECRET_DOMAIN},http://minio.storage.svc.cluster.local.
+              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.${SECRET_DOMAIN},https://s3.${SECRET_DOMAIN}
               MINIO_ROOT_USER:
                 valueFrom:
                   secretKeyRef:
