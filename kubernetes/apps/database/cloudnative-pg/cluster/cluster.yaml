@@ -1,0 +1,44 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: database
+  annotations:
+    kyverno.io/ignore: "true"
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.0-10
+  inheritedMetadata:
+    labels:
+      kube-image-keeper.enix.io/image-caching-policy: ignore
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: local-path
+  superuserSecret:
+    name: cloudnative-pg-secret
+  enableSuperuserAccess: true
+  postgresql:
+    parameters:
+      max_connections: "600"
+      shared_buffers: 512MB
+  monitoring:
+    enablePodMonitor: true
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      wal:
+        compression: bzip2
+        maxParallel: 2
+      destinationPath: s3://databases/
+      endpointURL: http://minio.storage.svc.cluster.local.:9000
+      serverName: postgres16-v1
+      s3Credentials:
+        accessKeyId:
+          name: minio-pgsql
+          key: minio_s3_access_key
+        secretAccessKey:
+          name: minio-pgsql
+          key: minio_s3_secret_access_key
