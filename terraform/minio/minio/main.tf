@@ -7,6 +7,7 @@ data "minio_iam_policy_document" "user" {
       "s3:List*",
       "s3:DeleteObject",
       "s3:AbortMultipartUpload",
+      "s3:HeadBucket",
       "s3:ListMultipartUploadParts"
     ])
     resources = sort([

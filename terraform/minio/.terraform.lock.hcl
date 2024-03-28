@@ -1,7 +1,7 @@
-# This file is maintained automatically by "terraform init".
+# This file is maintained automatically by "tofu init".
 # Manual edits may be lost in future updates.
 
-provider "registry.terraform.io/aminueza/minio" {
+provider "registry.opentofu.org/aminueza/minio" {
   version     = "2.0.1"
   constraints = "2.0.1"
   hashes = [
@@ -21,7 +21,7 @@ provider "registry.terraform.io/aminueza/minio" {
   ]
 }
 
-provider "registry.terraform.io/carlpett/sops" {
+provider "registry.opentofu.org/carlpett/sops" {
   version     = "1.0.0"
   constraints = "1.0.0"
   hashes = [
@@ -36,7 +36,7 @@ provider "registry.terraform.io/carlpett/sops" {
   ]
 }
 
-provider "registry.terraform.io/maxlaverse/bitwarden" {
+provider "registry.opentofu.org/maxlaverse/bitwarden" {
   version     = "0.7.2"
   constraints = "0.7.2"
   hashes = [
