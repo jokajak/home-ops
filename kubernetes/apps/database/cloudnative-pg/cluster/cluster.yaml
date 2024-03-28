@@ -5,18 +5,13 @@ kind: Cluster
 metadata:
   name: postgres
   namespace: database
-  annotations:
-    kyverno.io/ignore: "true"
 spec:
   instances: 3
   imageName: ghcr.io/cloudnative-pg/postgresql:16.0-10
-  inheritedMetadata:
-    labels:
-      kube-image-keeper.enix.io/image-caching-policy: ignore
   primaryUpdateStrategy: unsupervised
   storage:
     size: 10Gi
-    storageClass: local-path
+    storageClass: openebs-hostpath
   superuserSecret:
     name: cloudnative-pg-secret
   enableSuperuserAccess: true
