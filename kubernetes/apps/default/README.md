@@ -13,6 +13,12 @@ application local groups for authorization.
 
 The authentik configuration is stored as IaC using [terraform](../../../terraform/authentik/README.md)
 
+## home-assistant
+
+[home-assistant](https://www.home-assistant.io/) provides home automation services.
+
+* [homeassistant.yaml](./home-assistant/ks.yaml)
+
 ## unifi
 
 [ubiquiti unifi controller](https://github.com/jacobalberty/unifi-docker) for

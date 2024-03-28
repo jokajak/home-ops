@@ -30,7 +30,6 @@ spec:
         password: ${BW_PASSWORD}
         clientSecret: ${BW_CLIENTSECRET}
         clientID: ${BW_CLIENTID}
-    network_policy: false
     resources:
       requests:
         memory: 256Mi
