@@ -270,7 +270,7 @@ spec:
             - *host
     persistence:
       enabled: true
-      storageClassName: nfs-dynamic
+      storageClassName: nfs-csi
     testFramework:
       enabled: false
 
