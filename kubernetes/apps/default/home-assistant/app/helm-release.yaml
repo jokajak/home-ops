@@ -34,10 +34,11 @@ spec:
           app:
             image:
               repository: ghcr.io/onedr0p/home-assistant
-              tag: 2024.3.3@sha256:a4c2b7a75e8d5168a9e9f78d9d9f7f36435e2da07899e7faf5f6e3cdc4eebe56
+              tag: 2024.3.3
             env:
               TZ: America/New_York
-              HASS_HTTP_TRUSTED_PROXY_1: ${SERVICE_CIDR_V4}
+              HASS_HTTP_TRUSTED_PROXY_1: ${SERVICE_CIDR}
+              HASS_HTTP_TRUSTED_PROXY_2: ${NODE_CIDR}
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
