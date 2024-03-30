@@ -271,6 +271,12 @@ resource "random_password" "immich_pgpass" {
   override_special = "_=+-,~"
 }
 
+resource "random_password" "immich_pg_superuser_pass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
 resource "bitwarden_item_login" "immich" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
@@ -297,5 +303,10 @@ resource "bitwarden_item_login" "immich" {
   field {
     name   = "pg_password"
     hidden = random_password.immich_pgpass.result
+  }
+
+  field {
+    name   = "pg_superuser_pass"
+    hidden = random_password.immich_pg_superuser_pass.result
   }
 }
