@@ -6,6 +6,7 @@ metadata:
   name: immich-machine-learning
 spec:
   interval: 15m
+  timeout: 15m
   chart:
     spec:
       chart: app-template
@@ -52,8 +53,6 @@ spec:
               readiness:
                 enabled: true
             envFrom:
-              - secretRef:
-                  name: immich-secret
               - configMapRef:
                   name: immich-config
             env:
