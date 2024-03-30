@@ -28,8 +28,6 @@ spec:
     limits:
       memory: 2Gi
   enableSuperuserAccess: true
-  superuserSecret:
-    name: immich-pg-secret
   monitoring:
     enablePodMonitor: true
     # Ref: https://github.com/cloudnative-pg/cloudnative-pg/issues/2501
