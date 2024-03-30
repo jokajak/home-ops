@@ -61,8 +61,8 @@ spec:
       serverName: immich-v1
       s3Credentials:
         accessKeyId:
-          name: minio-pgsql
+          name: minio-immich-pgsql
           key: minio_s3_access_key
         secretAccessKey:
-          name: minio-pgsql
+          name: minio-immich-pgsql
           key: minio_s3_secret_access_key
