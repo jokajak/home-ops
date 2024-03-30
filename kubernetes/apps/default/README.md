@@ -19,6 +19,12 @@ The authentik configuration is stored as IaC using [terraform](../../../terrafor
 
 * [homeassistant.yaml](./home-assistant/ks.yaml)
 
+## immich
+
+[immich](https://github.com/immich-app/immich) is used to backup photos.
+
+* [immich.yaml](./immich/ks.yaml)
+
 ## unifi
 
 [ubiquiti unifi controller](https://github.com/jacobalberty/unifi-docker) for

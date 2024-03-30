@@ -255,3 +255,47 @@ resource "bitwarden_item_login" "emqx" {
   }
 
 }
+
+################################################################################
+# immich credentials
+################################################################################
+resource "random_password" "immich_admin_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "random_password" "immich_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "immich" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "immich credentials"
+  username = "immich_admin"
+  password = random_password.immich_admin_password.result
+
+  uri {
+    value = "https://photos.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name = "pg_username"
+    text = "immich"
+  }
+
+  field {
+    name   = "pg_password"
+    hidden = random_password.immich_pgpass.result
+  }
+}

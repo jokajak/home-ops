@@ -1,0 +1,68 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-database
+  namespace: default
+spec:
+  instances: 3
+  postgresql:
+    shared_preload_libraries:
+      - "vectors.so"
+    parameters:
+      max_connections: "300"
+      shared_buffers: 512MB
+  imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.1-v0.1.13
+
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+  nodeMaintenanceWindow:
+    inProgress: false
+    reusePVC: true
+  resources:
+    requests:
+      cpu: 500m
+    limits:
+      memory: 2Gi
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: immich-pg-secret
+  monitoring:
+    enablePodMonitor: true
+    # Ref: https://github.com/cloudnative-pg/cloudnative-pg/issues/2501
+    podMonitorMetricRelabelings:
+      - {
+          sourceLabels: ["cluster"],
+          targetLabel: cnpg_cluster,
+          action: replace,
+        }
+      - { regex: cluster, action: labeldrop }
+  bootstrap:
+    initdb:
+      database: immich
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS "vectors";
+      owner: immich
+      secret:
+        name: immich-pg-secret
+      dataChecksums: true
+      encoding: "UTF8"
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      wal:
+        compression: bzip2
+        maxParallel: 2
+      destinationPath: s3://databases/
+      endpointURL: https://s3.${SECRET_DOMAIN}
+      serverName: immich-v1
+      s3Credentials:
+        accessKeyId:
+          name: minio-pgsql
+          key: minio_s3_access_key
+        secretAccessKey:
+          name: minio-pgsql
+          key: minio_s3_secret_access_key
