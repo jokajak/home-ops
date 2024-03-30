@@ -26,6 +26,10 @@ data:
     PIHOLE_ADDR: ENC[AES256_GCM,data:SqZ7NgNn7LGoxYguiCU=,iv:t9R7fsM2e/Ns8E3CwUoGlPywh4Kryw/CTlqSJtEppwc=,tag:FvuDe/E75FDQxUMUrgE+9A==,type:str]
     ZWAVE_NODE: ENC[AES256_GCM,data:oz69XEXG4cUf7jvK0aM=,iv:25Yucvyj7YAUx9/xL7JFHK2CvqHoO6PxkaZQMtV8gTs=,tag:x3d4hKTF4PkofZIuhMZLIg==,type:str]
     ROUTER_CIDR_V4: ENC[AES256_GCM,data:MRQfLr5czCksXUCT9g==,iv:3leOotkYCMd3VkfGPI4GcdBqyVyc1PoueiixGNOAp+s=,tag:NVgeqZI2ZV5n1QbaBHaxZA==,type:str]
+    #ENC[AES256_GCM,data:omVHcwU3zr7g1L28gjG1nDqOttkIlK9iV2A=,iv:QT2WUMDRXtKzkoOEPmNtqM5UYxfw9xy6hM7/UN+MdBA=,tag:3Eyewohh2Rz+SJaHWX53Aw==,type:comment]
+    CONTROLLER_IP_1: ENC[AES256_GCM,data:zvhYJsFoW0K0JvcLAbA=,iv:ED4M0AeLayPASzzkvOY9o/rwhpd7KVIqcSaWNVsB21g=,tag:Ggoylrx/Oaz6e3qNHfK4yA==,type:str]
+    CONTROLLER_IP_2: ENC[AES256_GCM,data:Rpuvoa2DWvOEl9IEakA=,iv:goJDOrZDrPNCFO1BFHkEEvyGZwivRnMYdPidQOqs6Y0=,tag:2F+l0zHFzGjuv6WOCiu6TQ==,type:str]
+    CONTROLLER_IP_3: ENC[AES256_GCM,data:koCNPV8oyIm3f9NnwNU=,iv:/PjRL+gHh0nGc5nPfOlplUmUo+3TFad2QvIwdt0U8uQ=,tag:6HRsUc68UIYzG/q36hQ5hA==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -41,8 +45,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-03-24T20:58:09Z"
-    mac: ENC[AES256_GCM,data:xsc2au/N9/DPKgm9nPs+9NiHM5cstAZ4a8qkyskwptBH1/PaXHVP9W1ucnS+xtcX50PMqDxig9b+hMVZ4w2vkA/R6Hj+AYyGq7uDp9E0IeKGzEiYhWD++LWRyVfnjxolN9oktsqsGK+b6nJ34+pAVoAm8BI9GjfQnHGuxJIKAek=,iv:ZSzoaxfhFNP8D4tsEgkv5mM+agn3BDeE5UF3FOjCLxQ=,tag:KUL3ONj4sW6gHJdkaUO1TA==,type:str]
+    lastmodified: "2024-03-30T03:19:41Z"
+    mac: ENC[AES256_GCM,data:DJbBkkpwNRUVzH9hDgZZrUw08dmh38JR2xmRlnQmgq8jbnMXm9BSSuNUDX0MjNd2xi8i4zUvuAMFVr24sLMVe/HuFfyAfXq2Lm5JHbeO+BfBE3x8rEnL4eYfQO+919SWwYW9dMxgtYAgn1jqfy78kdYopxqIn/He3/W3dyPvEIw=,iv:Wthbmew4Eg/JJUS1ndWiXyOYYCCIa3AtRVrzRWcpbHw=,tag:KKFdvtryTuJY8qEJxmUDrQ==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.8.1
