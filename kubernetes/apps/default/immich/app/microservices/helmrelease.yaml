@@ -57,18 +57,11 @@ spec:
               - configMapRef:
                   name: immich-config
             env:
-              DB_DATABASE_NAME: immich
-              DB_HOSTNAME: immich-database-rw.default.svc.cluster.local.
-              DB_USERNAME:
+              DB_URL:
                 valueFrom:
                   secretKeyRef:
-                    name: immich-pg-secret
-                    key: username
-              DB_PASSWORD:
-                valueFrom:
-                  secretKeyRef:
-                    name: immich-pg-secret
-                    key: password
+                    name: immich-database-app
+                    key: uri
     service:
       main:
         controller: immich-microservices
