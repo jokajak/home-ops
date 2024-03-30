@@ -57,6 +57,7 @@ spec:
               - configMapRef:
                   name: immich-config
             env:
+              DB_DATABASE_NAME: immich
               DB_HOSTNAME: immich-database-rw.default.svc.cluster.local.
               DB_USERNAME:
                 valueFrom:
