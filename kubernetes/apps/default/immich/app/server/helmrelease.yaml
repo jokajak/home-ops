@@ -72,9 +72,8 @@ spec:
     ingress:
       main:
         enabled: true
-        className: external
+        className: internal
         annotations:
-          external-dns.alpha.kubernetes.io/target: "external.${SECRET_DOMAIN}"
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
         hosts:
           - host: &host photos.${SECRET_DOMAIN}
