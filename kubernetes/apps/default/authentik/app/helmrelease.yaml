@@ -16,6 +16,13 @@ spec:
         kind: HelmRepository
         name: authentik
         namespace: default
+  install:
+    remediation:
+      retries: 5
+  timeout: 15m
+  upgrade:
+    remediation:
+      retries: 5
   values:
     global:
       deploymentAnnotations:
