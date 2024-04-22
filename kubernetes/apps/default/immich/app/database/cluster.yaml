@@ -42,31 +42,17 @@ spec:
           action: replace,
         }
       - { regex: cluster, action: labeldrop }
-  bootstrap:
-    initdb:
-      database: immich
-      postInitApplicationSQL:
-        - CREATE EXTENSION IF NOT EXISTS "vectors";
-        - CREATE EXTENSION IF NOT EXISTS "cube";
-        - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-        # needed per https://github.com/tensorchord/pgvecto.rs/issues/385#issuecomment-1963823750
-        - ALTER DATABASE immich SET search_path TO "$user", public, vectors;
-        - ALTER SCHEMA vectors OWNER TO "immich";
-        - GRANT SELECT ON TABLE pg_vector_index_stat to immich;
-        # enable pgvecto.rs compatibilityy mode
-        - SET vectors.pgvector_compatibility = on;
-      owner: immich
-      dataChecksums: true
-      encoding: "UTF8"
   backup:
     retentionPolicy: 30d
-    barmanObjectStore:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
       wal:
         compression: bzip2
         maxParallel: 2
       destinationPath: s3://databases/
       endpointURL: https://s3.${SECRET_DOMAIN}
-      serverName: immich-v1
+      serverName: immich-v2
       s3Credentials:
         accessKeyId:
           name: minio-immich-pgsql
@@ -74,3 +60,14 @@ spec:
         secretAccessKey:
           name: minio-immich-pgsql
           key: minio_s3_secret_access_key
+  # Note: previousCluster needs to be set to the name of the previous
+  # cluster when recovering from an existing cnpg cluster
+  bootstrap:
+    recovery:
+      source: &previousCluster immich-v1
+  # Note: externalClusters is needed when recovering from an existing cnpg cluster
+  externalClusters:
+    - name: *previousCluster
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: *previousCluster
