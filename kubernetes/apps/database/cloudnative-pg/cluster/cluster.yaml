@@ -39,13 +39,15 @@ spec:
       - { regex: cluster, action: labeldrop }
   backup:
     retentionPolicy: 30d
-    barmanObjectStore:
+    barmanObjectStore: &barmanObjectStore
+      data:
+        compression: bzip2
       wal:
         compression: bzip2
         maxParallel: 2
       destinationPath: s3://databases/
       endpointURL: https://s3.${SECRET_DOMAIN}
-      serverName: postgres16-v1
+      serverName: postgres16-v2
       s3Credentials:
         accessKeyId:
           name: minio-pgsql
@@ -53,3 +55,14 @@ spec:
         secretAccessKey:
           name: minio-pgsql
           key: minio_s3_secret_access_key
+  # Note: previousCluster needs to be set to the name of the previous
+  # cluster when recovering from an existing cnpg cluster
+  bootstrap:
+    recovery:
+      source: &previousCluster postgres16-v1
+  # Note: externalClusters is needed when recovering from an existing cnpg cluster
+  externalClusters:
+    - name: *previousCluster
+      barmanObjectStore:
+        <<: *barmanObjectStore
+        serverName: *previousCluster
