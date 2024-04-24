@@ -10,7 +10,7 @@ Loki is a log aggregation application.
 
 <https://github.com/grafana/loki>
 
-* [loki/loki.yaml](loki/loki.yaml)
+* [loki/loki.yaml](./loki/ks.yaml)
 
 ## vector
 
