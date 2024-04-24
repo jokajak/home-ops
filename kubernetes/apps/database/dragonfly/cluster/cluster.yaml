@@ -25,15 +25,12 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                  - amd64
-          - matchExpressions:
               - key: feature.node.kubernetes.io/cpu-model.id
                 operator: NotIn
                 values:
                   - "76"
+  nodeSelector:
+    kubernetes.io/arch: amd64
   resources:
     requests:
       cpu: 100m
