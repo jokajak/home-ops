@@ -116,7 +116,7 @@ spec:
       config:
         enabled: true
         size: 20Gi
-        storageClass: openebs-hostpath
+        storageClass: nfs-dynamic
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
