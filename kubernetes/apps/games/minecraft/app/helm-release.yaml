@@ -176,7 +176,7 @@ spec:
       ##   GKE, AWS & OpenStack)
       ##
       # storageClass: "-"
-      storageClass: nfs-dynamic
+      storageClass: nfs-csi
       dataDir:
         enabled: true
         size: 1Gi
