@@ -64,7 +64,7 @@ metadata:
 spec:
   storageClassName: nfs-media
   capacity:
-    storage: 2Gi # this number doesn't matter
+    storage: 30Gi # this number doesn't matter
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
