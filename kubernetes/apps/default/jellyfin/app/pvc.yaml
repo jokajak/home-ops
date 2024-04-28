@@ -55,3 +55,39 @@ spec:
     requests:
       storage: 30Gi
   storageClassName: nfs-csi
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-media
+  namespace: default
+spec:
+  storageClassName: nfs-media
+  capacity:
+    storage: 2Gi # this number doesn't matter
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${SECRET_NFS_SERVER}
+    path: "${SECRET_NFS_PATH}/media"
+  mountOptions:
+    - nfsvers=4.1
+    - tcp
+    - intr
+    - hard
+    - noatime
+    - nodiratime
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shared-media
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: nfs-media

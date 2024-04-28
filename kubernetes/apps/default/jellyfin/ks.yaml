@@ -6,10 +6,10 @@ metadata:
   name: default-jellyfin
   namespace: flux-system
 spec:
-  path: ./kubernetes/apps/default/jellyfin/base
+  path: ./kubernetes/apps/default/jellyfin/app
   sourceRef:
     kind: GitRepository
-    name: flux-system
+    name: home-kubernetes
   interval: 30m
   prune: true
   wait: true
