@@ -83,7 +83,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: shared-media
+  name: nfs-media
 spec:
   accessModes:
     - ReadWriteMany
