@@ -77,7 +77,8 @@ spec:
       # whitespaces.
       # The server logs will print xuids as players connect.
       # ex: ops: "12345678,0987654"
-      ops: ${MINECRAFT_OPERATOR_XUIDS}
+      # ops: ${MINECRAFT_OPERATOR_XUIDS}
+      ops:
       # A comma-seperated list of xuid's for members on server with no
       # whitespaces.
       # ex: ops: "12345678,0987654"
