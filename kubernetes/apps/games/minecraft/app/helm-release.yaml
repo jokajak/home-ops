@@ -9,7 +9,7 @@ spec:
   timeout: 15m
   chart:
     spec:
-      chart: minecraft-bedrock
+      chart: minecraft
       version: 2.6.0
       sourceRef:
         kind: HelmRepository
