@@ -64,9 +64,9 @@ metadata:
 spec:
   storageClassName: nfs-media
   capacity:
-    storage: 30Gi # this number doesn't matter
+    storage: 30Gi # this number must be bigger than the claim
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   nfs:
     server: ${SECRET_NFS_SERVER}
