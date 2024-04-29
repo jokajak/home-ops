@@ -103,7 +103,7 @@ spec:
               - path: /config
       media:
         enabled: true
-        existingClaim: shared-media
+        existingClaim: nfs-media
         globalMounts:
           - path: /media
       transcode:
