@@ -73,12 +73,8 @@ spec:
       # A comma-separated list of player names to whitelist with no whitespace.
       # ex: whitelistUsers: player1,player2,player3
       whitelistUsers:
-      # A comma-seperated list of xuid's for operators on server with no
-      # whitespaces.
-      # The server logs will print xuids as players connect.
-      # ex: ops: "12345678,0987654"
-      # ops: ${MINECRAFT_OPERATOR_XUIDS}
-      ops:
+      # A comma-separated list of player names who should be admins.
+      ops: ${MINECRAFT_OPERATOR_USERNAMES}
       # A comma-seperated list of xuid's for members on server with no
       # whitespaces.
       # ex: ops: "12345678,0987654"
