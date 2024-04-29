@@ -45,7 +45,6 @@ spec:
                 memory: 866Mi
               limits:
                 memory: 1390Mi
-                gpu.intel.com/i915: 1
             probes:
               startup:
                 enabled: true
