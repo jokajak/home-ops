@@ -30,7 +30,7 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
-  # Values link: https://github.com/itzg/minecraft-server-charts/blob/master/charts/minecraft-bedrock/values.yaml
+  # Values link: https://github.com/itzg/minecraft-server-charts/blob/master/charts/minecraft/values.yaml
   values:
     # ref: https://hub.docker.com/r/itzg/minecraft-server/
     image:

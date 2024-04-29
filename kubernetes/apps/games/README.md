@@ -6,6 +6,7 @@ identified.
 
 ## minecraft
 
-Minecraft is deployed as bedrock edition so that it can be played on the console.
+Minecraft is deployed as standard edition because bedrock is on the switch
+can't directly access the server so I'll have to use a proxy for it.
 
 * [minecraft.yaml](./minecraft/ks.yaml)
