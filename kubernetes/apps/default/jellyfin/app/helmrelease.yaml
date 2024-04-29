@@ -64,7 +64,6 @@ spec:
             command:
               - sh
               - -c
-              - chown -R 568:568 /media
               - chown -R 568:568 /config/transcodes
             securityContext:
               runAsUser: 0
