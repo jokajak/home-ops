@@ -52,7 +52,7 @@ spec:
                 enabled: true
                 spec:
                   delay: 10s
-                  failureThreshold: 3
+                  failureThreshold: 10
                   periodSeconds: 10
               startup:
                 enabled: true
