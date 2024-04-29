@@ -50,8 +50,16 @@ spec:
                 enabled: true
               readiness:
                 enabled: true
+                spec:
+                  delay: 10s
+                  failureThreshold: 3
+                  periodSeconds: 10
               startup:
                 enabled: true
+                spec:
+                  delay: 10s
+                  failureThreshold: 10
+                  periodSeconds: 10
             resources:
               requests:
                 memory: 2Gi
