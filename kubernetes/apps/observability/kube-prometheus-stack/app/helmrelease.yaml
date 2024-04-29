@@ -122,7 +122,7 @@ spec:
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: nfs-dynamic
+              storageClassName: nfs-csi
               resources:
                 requests:
                   storage: 10Gi

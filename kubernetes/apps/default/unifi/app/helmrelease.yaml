@@ -116,7 +116,7 @@ spec:
       config:
         enabled: true
         size: 20Gi
-        storageClass: nfs-dynamic
+        storageClass: nfs-csi
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
