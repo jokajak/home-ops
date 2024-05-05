@@ -24,7 +24,7 @@ spec:
       retries: 3
   values:
     controllers:
-      geysermc:
+      geyser-connect:
         replicas: 1
         strategy: Recreate
         containers:
@@ -81,7 +81,7 @@ spec:
                 matchLabels:
                   app.kubernetes.io/name: *app
     service:
-      app:
+      geyser-connect:
         controller: *app
         ports:
           minecraft:
