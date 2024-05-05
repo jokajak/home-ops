@@ -28,7 +28,7 @@ spec:
         replicas: 1
         strategy: Recreate
         containers:
-          app:
+          geyser-connect:
             image:
               repository: ghcr.io/jokajak/geyser-mc
               tag: 2.3.0-2
