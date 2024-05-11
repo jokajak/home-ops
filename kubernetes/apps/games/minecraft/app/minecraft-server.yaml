@@ -63,6 +63,8 @@ spec:
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
       version: "LATEST"
+      # This can be one of "VANILLA", "FORGE", "SPIGOT", "BUKKIT", "PAPER", "FTBA", "SPONGEVANILLA", "CURSEFORGE"
+      type: "PAPER"
       # One of: peaceful, easy, normal, and hard
       difficulty: peaceful
       # A boolean to indicate if whitelist is enabled or not. If this is enabled
@@ -108,6 +110,12 @@ spec:
       # loadBalancerSourceRanges: []
       ## Set the externalTrafficPolicy in the Service to either Cluster or Local
       externalTrafficPolicy: Cluster
+
+      # List with URLs and paths to jar files, additionally may be a directory with jars
+      # This works for both mods and plugins depending on server type
+      modUrls: []
+      pluginUrls:
+        - https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
 
     persistence:
       ## minecraft data Persistent Volume Storage Class

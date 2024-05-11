@@ -44,7 +44,7 @@ spec:
                       - "nc -z -u localhost 19132"
                   initialDelaySeconds: 15
                   periodSeconds: 20
-                  timeoutSeconds: 1
+                  timeoutSeconds: 2
                   failureThreshold: 3
               readiness:
                 enabled: false
@@ -57,7 +57,7 @@ spec:
                       - "nc -z -u localhost 19132"
                   initialDelaySeconds: 15
                   periodSeconds: 10
-                  timeoutSeconds: 1
+                  timeoutSeconds: 2
                   failureThreshold: 3
             resources:
               requests:
