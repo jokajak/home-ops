@@ -34,7 +34,7 @@ spec:
               tag: 2.3.0-2
             probes:
               liveness:
-                enabled: true
+                enabled: false
                 custom: true
                 spec:
                   exec:
@@ -47,7 +47,7 @@ spec:
                   timeoutSeconds: 1
                   failureThreshold: 3
               readiness:
-                enabled: true
+                enabled: false
                 custom: true
                 spec:
                   exec:
@@ -79,6 +79,9 @@ spec:
     service:
       geyser-connect:
         controller: *app
+        type: LoadBalancer
+        externalTrafficPolicy: Cluster
+        loadBalancerIP: ${LB_CIDR_GEYSERMC_V4}
         ports:
           minecraft:
             port: 19132
