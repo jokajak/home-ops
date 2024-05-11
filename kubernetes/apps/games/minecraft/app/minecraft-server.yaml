@@ -115,6 +115,9 @@ spec:
       # This works for both mods and plugins depending on server type
       modUrls: []
       pluginUrls:
+        # geyser to allow bedrock to join the server
+        - https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        # floodgate to allow users without java minecraft to join
         - https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
 
     persistence:
