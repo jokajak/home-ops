@@ -48,15 +48,23 @@ spec:
             probes:
               liveness:
                 enabled: true
+                custom: true
+                type: TCP
+                spec:
+                  tcpSocket:
+                    port: 8443
               readiness:
                 enabled: true
+                custom: true
                 spec:
-                  delay: 10s
-                  failureThreshold: 10
-                  periodSeconds: 10
+                  tcpSocket:
+                    port: 8443
               startup:
                 enabled: true
+                custom: true
                 spec:
+                  tcpSocket:
+                    port: 8443
                   delay: 10s
                   failureThreshold: 10
                   periodSeconds: 10
