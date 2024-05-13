@@ -33,17 +33,17 @@ spec:
           - name: INIT_POSTGRES_USER
             valuesFrom:
               secretKeyRef:
-                name: immich-pg-secret
+                name: immich-database-app
                 key: username
           - name: INIT_POSTGRES_PASS
             valuesFrom:
               secretKeyRef:
-                name: immich-pg-secret
+                name: immich-database-app
                 key: password
           - name: INIT_POSTGRES_HOST
             valuesFrom:
               secretKeyRef:
-                name: immich-database-superuser
+                name: immich-database-app
                 key: host
           - name: INIT_POSTGRES_SUPER_PASS
             valuesFrom:
@@ -53,8 +53,8 @@ spec:
           - name: INIT_POSTGRES_DBNAME
             valuesFrom:
               secretKeyRef:
-                name: immich-database-superuser
-                key: immich
+                name: immich-database-app
+                key: dbname
     controllers:
       immich-server:
         strategy: RollingUpdate
