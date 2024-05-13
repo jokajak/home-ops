@@ -25,41 +25,42 @@ spec:
     remediation:
       retries: 5
   values:
-    initContainers:
-      initdb:
-        image: ghcr.io/onedr0p/postgres-init:16.2
-        imagePullPolicy: IfNotPresent
-        env:
-          - name: INIT_POSTGRES_USER
-            valuesFrom:
-              secretKeyRef:
-                name: immich-database-app
-                key: username
-          - name: INIT_POSTGRES_PASS
-            valuesFrom:
-              secretKeyRef:
-                name: immich-database-app
-                key: password
-          - name: INIT_POSTGRES_HOST
-            valuesFrom:
-              secretKeyRef:
-                name: immich-database-app
-                key: host
-          - name: INIT_POSTGRES_SUPER_PASS
-            valuesFrom:
-              secretKeyRef:
-                name: immich-database-superuser
-                key: password
-          - name: INIT_POSTGRES_DBNAME
-            valuesFrom:
-              secretKeyRef:
-                name: immich-database-app
-                key: dbname
     controllers:
       immich-server:
         strategy: RollingUpdate
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          initdb:
+            image:
+              repository: ghcr.io/onedr0p/postgres-init
+              tag: 16.2
+            env:
+              - name: INIT_POSTGRES_USER
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-app
+                    key: username
+              - name: INIT_POSTGRES_PASS
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-app
+                    key: password
+              - name: INIT_POSTGRES_HOST
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-app
+                    key: host
+              - name: INIT_POSTGRES_SUPER_PASS
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-superuser
+                    key: password
+              - name: INIT_POSTGRES_DBNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-app
+                    key: dbname
         containers:
           main:
             image:
