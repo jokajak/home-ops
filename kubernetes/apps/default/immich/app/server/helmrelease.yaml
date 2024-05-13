@@ -25,6 +25,36 @@ spec:
     remediation:
       retries: 5
   values:
+    initContainers:
+      initdb:
+        image: ghcr.io/onedr0p/postgres-init:16.2
+        imagePullPolicy: IfNotPresent
+        env:
+          - name: INIT_POSTGRES_USER
+            valuesFrom:
+              secretKeyRef:
+                name: immich-pg-secret
+                key: username
+          - name: INIT_POSTGRES_PASS
+            valuesFrom:
+              secretKeyRef:
+                name: immich-pg-secret
+                key: password
+          - name: INIT_POSTGRES_HOST
+            valuesFrom:
+              secretKeyRef:
+                name: immich-database-superuser
+                key: host
+          - name: INIT_POSTGRES_SUPER_PASS
+            valuesFrom:
+              secretKeyRef:
+                name: immich-database-superuser
+                key: password
+          - name: INIT_POSTGRES_DBNAME
+            valuesFrom:
+              secretKeyRef:
+                name: immich-database-superuser
+                key: immich
     controllers:
       immich-server:
         strategy: RollingUpdate
