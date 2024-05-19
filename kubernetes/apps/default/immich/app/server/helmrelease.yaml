@@ -61,7 +61,7 @@ spec:
               DB_DATABASE_NAME:
                 valueFrom:
                   secretKeyRef:
-                    name: immich-database-rw
+                    name: immich-database-app
                     key: dbname
               DB_PASSWORD:
                 valueFrom:
