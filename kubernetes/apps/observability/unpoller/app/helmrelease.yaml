@@ -1,5 +1,5 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2beta1.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/common-3.1.0/charts/library/common/values.schema.json
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
@@ -10,7 +10,7 @@ spec:
   chart:
     spec:
       chart: app-template
-      version: 2.4.0
+      version: 3.1.0
       sourceRef:
         kind: HelmRepository
         name: bjw-s
@@ -27,9 +27,18 @@ spec:
     keepHistory: false
   values:
     controllers:
-      main:
+      unpoller:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        pod:
+          securityContext:
+            runAsUser: 2000
+            runAsGroup: 2000
+            fsGroup: 2000
+            fsGroupChangePolicy: "OnRootMismatch"
         containers:
-          main:
+          unpoller:
             image:
               repository: ghcr.io/unpoller/unpoller
               tag: v2.11.2
@@ -41,27 +50,34 @@ spec:
               UP_UNIFI_DEFAULT_USER: ${SECRET_UNPOLLER_USER}
               UP_UNIFI_DEFAULT_PASS: ${SECRET_UNPOLLER_PASS}
               UP_INFLUXDB_DISABLE: true
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+              startup:
+                enabled: true
+                spec:
+                  failureThreshold: 30
+                  periodSeconds: 5
             resources:
               requests:
-                cpu: 5m
-                memory: 36M
+                cpu: 10m
+                memory: 100Mi
               limits:
-                memory: 128M
-        pod:
-          securityContext:
-            runAsUser: 568
-            runAsGroup: 568
+                memory: 500Mi
     service:
-      main:
+      app:
+        controller: unpoller
         ports:
           http:
             port: 9130
     serviceMonitor:
-      main:
-        enabled: true
+      app:
+        serviceName: unpoller
         endpoints:
           - port: http
             scheme: http
             path: /metrics
             interval: 2m # Unifi API only polls at 2m intervals
-            scrapeTimeout: 10s
+            scrapeTimeout: 5s
