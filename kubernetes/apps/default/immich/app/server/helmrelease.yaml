@@ -58,11 +58,31 @@ spec:
               - configMapRef:
                   name: immich-config
             env:
-              DB_URL:
+              DB_DATABASE_NAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-rw
+                    key: dbname
+              DB_PASSWORD:
                 valueFrom:
                   secretKeyRef:
                     name: immich-database-superuser
-                    key: uri
+                    key: password
+              DB_USERNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-superuser
+                    key: username
+              DB_PORT:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-superuser
+                    key: port
+              DB_HOSTNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: immich-database-superuser
+                    key: host
     service:
       main:
         controller: immich-server
