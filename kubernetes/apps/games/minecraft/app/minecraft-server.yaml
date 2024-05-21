@@ -120,6 +120,9 @@ spec:
         # floodgate to allow users without java minecraft to join
         - https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
 
+    serviceAnnotations:
+      external-dns.alpha.kubernetes.io/hostname: minecraft.${SECRET_DOMAIN}
+
     persistence:
       ## minecraft data Persistent Volume Storage Class
       ## If defined, storageClassName: <storageClass>
