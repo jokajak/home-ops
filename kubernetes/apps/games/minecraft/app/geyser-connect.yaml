@@ -81,6 +81,8 @@ spec:
         controller: *app
         type: LoadBalancer
         externalTrafficPolicy: Cluster
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: minecraft.${SECRET_DOMAIN}
         loadBalancerIP: ${LB_CIDR_GEYSERMC_V4}
         ports:
           minecraft:
