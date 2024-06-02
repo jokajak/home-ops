@@ -53,6 +53,8 @@ spec:
         chunk_encoding: snappy
       storage:
         type: s3
+        bucketNames:
+          chunks: loki
         s3:
           s3forcepathstyle: true
           insecure: true
