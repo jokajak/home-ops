@@ -70,6 +70,7 @@ spec:
               - configMapRef:
                   name: immich-config
             env:
+              IMMICH_WORKERS_INCLUDE: "api"
               DB_DATABASE_NAME:
                 valueFrom:
                   secretKeyRef:
