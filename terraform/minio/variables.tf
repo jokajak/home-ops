@@ -5,7 +5,7 @@ variable "minio_secret_id" {
 
 variable "buckets" {
   type        = list(string)
-  default     = ["backups", "logs", "databases"]
+  default     = ["backups", "logs", "databases", "loki"]
   description = "Buckets to create in s3"
 }
 
