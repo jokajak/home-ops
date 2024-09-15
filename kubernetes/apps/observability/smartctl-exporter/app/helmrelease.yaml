@@ -26,7 +26,7 @@ spec:
   uninstall:
     keepHistory: false
   dependsOn:
-    - name: kube-prometheus-stack
+    - name: victoriametrics
       namespace: observability
   values:
     fullnameOverride: *app
