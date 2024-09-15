@@ -9,4 +9,5 @@ resources:
   - ./grafana/ks.yaml
   - ./kube-state-metrics/ks.yaml
   - ./unpoller/ks.yaml
+  - ./victoriametrics/ks.yaml
   - ./vector/ks.yaml
