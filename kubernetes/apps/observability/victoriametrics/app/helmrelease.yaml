@@ -39,6 +39,11 @@ spec:
 
     defaultDashboardsEnabled: true
 
+    vmsingle:
+      spec:
+        storage:
+          storageClassName: nfs-csi
+
     #################################################
     ###              dependencies               #####
     #################################################
