@@ -1,0 +1,55 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2beta1.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoriametrics
+  namespace: observability
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: victoria-metrics-k8s-stack
+      version: 0.25.16
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics
+        namespace: observability
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  dependsOn:
+    - name: csi-driver-nfs
+      namespace: kube-system
+  values:
+    # -- victoria-metrics-operator dependency chart configuration.
+    # -- For possible values refer to https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-metrics-operator#parameters
+    # -- also checkout here possible ENV variables to configure operator behaviour https://docs.victoriametrics.com/operator/vars
+    victoria-metrics-operator:
+      operator:
+        # -- By default, operator converts prometheus-operator objects.
+        disable_prometheus_converter: true
+
+    defaultDashboardsEnabled: true
+
+    #################################################
+    ###              dependencies               #####
+    #################################################
+    # Grafana dependency chart configuration. For possible values refer to https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration
+    grafana:
+      enabled: false
+
+    ## install vm operator crds
+    crds:
+      enabled: true
+
+    ## install prometheus operator crds
+    prometheus-operator-crds:
+      enabled: false
