@@ -31,33 +31,33 @@ spec:
       gatus:
         annotations:
           reloader.stakater.com/auto: "true"
-        initContainers:
-          init-db:
-            image:
-              repository: ghcr.io/onedr0p/postgres-init
-              tag: 16
-            envFrom: &envFrom
-              - secretRef:
-                  name: gatus-secret
-          init-config:
-            dependsOn: init-db
-            image: &configSyncImage
-              repository: ghcr.io/kiwigrid/k8s-sidecar
-              tag: 1.27.6
-            env:
-              FOLDER: /config
-              LABEL: gatus.io/enabled
-              NAMESPACE: ALL
-              RESOURCE: both
-              UNIQUE_FILENAMES: true
-              METHOD: WATCH
-            restartPolicy: Always
-            resources: &resources
-              requests:
-                cpu: 10m
-                memory: 10Mi
-              limits:
-                memory: 256Mi
+        # initContainers:
+        # init-db:
+        #   image:
+        #     repository: ghcr.io/onedr0p/postgres-init
+        #     tag: 16
+        #   envFrom: &envFrom
+        #     - secretRef:
+        #         name: gatus-secret
+        # init-config:
+        #   dependsOn: init-db
+        #   image: &configSyncImage
+        #     repository: ghcr.io/kiwigrid/k8s-sidecar
+        #     tag: 1.27.6
+        #   env:
+        #     FOLDER: /config
+        #     LABEL: gatus.io/enabled
+        #     NAMESPACE: ALL
+        #     RESOURCE: both
+        #     UNIQUE_FILENAMES: true
+        #     METHOD: WATCH
+        #   restartPolicy: Always
+        #   resources: &resources
+        #     requests:
+        #       cpu: 10m
+        #       memory: 10Mi
+        #     limits:
+        #       memory: 256Mi
         containers:
           app:
             image:
@@ -68,7 +68,7 @@ spec:
               GATUS_CONFIG_PATH: /config
               GATUS_DELAY_START_SECONDS: 5
               CUSTOM_WEB_PORT: &port 80
-            envFrom: *envFrom
+            # envFrom: *envFrom
             probes:
               liveness: &probes
                 enabled: true
@@ -86,7 +86,12 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            resources: *resources
+            resources: &resources
+              requests:
+                cpu: 10m
+                memory: 10Mi
+              limits:
+                memory: 256Mi
         pod:
           dnsConfig:
             options:
