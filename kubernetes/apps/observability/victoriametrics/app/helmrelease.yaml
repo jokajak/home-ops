@@ -51,9 +51,7 @@ spec:
     # Grafana dependency chart configuration. For possible values refer to https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration
     grafana:
       enabled: false
-      sidecar:
-        datasources:
-          enabled: true
+      forceDeployDatasource: true
 
     ## install vm operator crds
     crds:
