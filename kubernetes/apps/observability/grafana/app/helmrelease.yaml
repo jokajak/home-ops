@@ -72,6 +72,8 @@ spec:
         check_for_updates: false
         check_for_plugin_updates: false
         reporting_enabled: false
+    plugins:
+      - https://github.com/VictoriaMetrics/victorialogs-datasource/releases/download/v0.2.1/victorialogs-datasource-v0.2.1.zip;victorialogs-datasource
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
@@ -127,7 +129,7 @@ spec:
             type: prometheus
             uid: prometheus
             access: proxy
-            url: http://kube-prometheus-stack-prometheus.observability.svc.cluster.local:9090
+            url: http://vmsingle-vm-victoria-metrics-k8s-stack.observability.svc.cluster.local.:9090
             jsonData:
               prometheusType: Prometheus
             isDefault: true

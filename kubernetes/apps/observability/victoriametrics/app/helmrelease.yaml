@@ -38,10 +38,13 @@ spec:
         disable_prometheus_converter: true
 
     defaultDashboardsEnabled: true
+    dashboards:
+      vmalert: true
+      operator: true
 
     vmsingle:
       spec:
-        retentionPeriod: 3y
+        retentionPeriod: 2y
         storage:
           storageClassName: nfs-csi
 
@@ -51,7 +54,6 @@ spec:
     # Grafana dependency chart configuration. For possible values refer to https://github.com/grafana/helm-charts/tree/main/charts/grafana#configuration
     grafana:
       enabled: false
-      forceDeployDatasource: true
 
     ## install vm operator crds
     crds:
