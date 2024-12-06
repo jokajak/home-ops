@@ -96,6 +96,7 @@ spec:
             image: &image
               repository: ghcr.io/k8snetworkplumbingwg/multus-cni
               tag: v4.1.3-thick
+              pullPolicy: Always
 
             env:
               MULTUS_NODE_NAME:
