@@ -33,8 +33,6 @@ spec:
     cluster:
       name: home-kubernetes
       id: 1
-    containerRuntime:
-      integration: containerd
     # NOTE: This might need to be set if you have more than one active NIC on your hosts
     # devices:
     #   - eno0
