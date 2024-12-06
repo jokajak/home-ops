@@ -121,13 +121,15 @@ spec:
                   port: http
 
     persistence:
-      storageClass: nfs-csi
-      data:
-        enabled: true
-        size: 1Gi
-
       tmp:
         type: emptyDir
         medium: Memory
         globalMounts:
           - path: /tmp
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: nfs-csi
+        retain: true
