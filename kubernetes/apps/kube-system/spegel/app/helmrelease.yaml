@@ -8,6 +8,7 @@ spec:
   chart:
     spec:
       chart: spegel
+      # renovate: datasource=github-releases depName=spegel-org/spegel
       version: v0.0.18
       sourceRef:
         kind: HelmRepository
