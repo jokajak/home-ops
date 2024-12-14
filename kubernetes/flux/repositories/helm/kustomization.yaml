@@ -10,4 +10,4 @@ resources:
   - ./openebs.yaml
   - ./postfinance.yaml
   - ./stakater.yaml
-  - ./xenitab.yaml
+  - ./spegel.yaml

@@ -9,10 +9,10 @@ spec:
     spec:
       chart: spegel
       # renovate: datasource=github-releases depName=spegel-org/spegel
-      version: v0.0.18
+      version: v0.0.27
       sourceRef:
         kind: HelmRepository
-        name: xenitab
+        name: spegel
         namespace: flux-system
   install:
     remediation:
