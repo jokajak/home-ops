@@ -39,6 +39,7 @@ data:
     LAN_CIDR: ENC[AES256_GCM,data:HRt8r9PBjhKCZrEm7E56Fw==,iv:5bCLUwBH94leR1N9z8W8M2Rp8ebtEJx6hfYY55g39BA=,tag:VZYtEdZbsqXgL13AFRt33g==,type:str]
     LAN_GATEWAY: ENC[AES256_GCM,data:8BSeAkEnxRUNJP65hA==,iv:jtXZBG+Dl7VXpq3/PTLcoRWHjBWkNBkNfyHdGBF3MrI=,tag:iLe69ewe73T63i8bOZdXUg==,type:str]
     DNS_SUFFIX: ENC[AES256_GCM,data:bUEeIC1urF0f,iv:TUuVvTdKSBA2USg5Pqq77AWyi20OGA7YJe/Yv0hSCQ8=,tag:Yl4K6EhcCSimrfDxFV7ZvQ==,type:str]
+    MATTER_HUB_CIDR_V4: ENC[AES256_GCM,data:hWym/wsPzw5pgunMsuzj,iv:1SUJAehW1wTWyH1CUJ4PdMbzc94L0xqfeZX2bvJ7z4g=,tag:D6PR3vU0ZEjKjAe9BIp/2Q==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -54,8 +55,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-12-16T01:07:20Z"
-    mac: ENC[AES256_GCM,data:N00F8OPcZGrsaHh8FPyDEJpOQvuwyI5328H78SkHejp23lxJfsUWgAHSPAHTgd9lsbkE4muwKpqXTk99bGgFwvSeSftTHsojy9/LzXPxjUq7dO2BSN2Xv//KI+MzMGqn4iX8H7j9wp8XRuKpihq0fSNlwbvTP2WABdwahqYt/Lk=,iv:ZDStMVwFBMfGyYOdGsZrFc0U851FCg+eL3SBFnzFwTM=,tag:Ensd/SzpyZ2UKAp8NC7Y8A==,type:str]
+    lastmodified: "2024-12-16T03:55:46Z"
+    mac: ENC[AES256_GCM,data:j8Fwfd4X9R40Rc2FPppm4eJ631S4lfkaAIekkzVmDHFftJGb1xO6ykME5J5VsSnX95VUfjHm7/8NU0/IQlfrHIXNgCqjRLZOrcYBbe3NWU3EGzq7lheDwfBlORR9IrynaluprkAVmHVlpNniXK0QUdH7BZ03tMQJQ6QJOPioFtI=,iv:SJTHTt8RV2Sun1Pf8J3sgWeLXUNdGx7GPF8F8GSGOpI=,tag:eVvxLywWzUDEF+SK61p2zw==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.9.1

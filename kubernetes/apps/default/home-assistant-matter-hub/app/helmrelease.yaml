@@ -76,7 +76,7 @@ spec:
               [{
                 "name":"iot-vlan",
                 "namespace": "network",
-                "ips": ["${IOT_CIDR}"],
+                "ips": ["${MATTER_HUB_CIDR_V4}"],
                 # printf '02:00:00:%02X:%02X:%02X\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
                 # 02 indicates a locally administered address
                 "mac": "02:00:00:B5:46:C3", # randomly generated
