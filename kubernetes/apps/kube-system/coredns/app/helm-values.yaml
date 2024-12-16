@@ -33,14 +33,14 @@ servers:
           fallthrough in-addr.arpa ip6.arpa
           ttl 30
       - name: forward
-        parameters: . /etc/resolv.conf
+        parameters: . ${ROUTER_CIDR_V4}
       - name: cache
         parameters: 30
       - name: loop
       - name: reload
       - name: loadbalance
   - zones:
-      - zone: kayses.us
+      - zone: ${DNS_SUFFIX}
     port: 53
     plugins:
       - name: forward

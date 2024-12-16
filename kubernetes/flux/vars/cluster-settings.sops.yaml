@@ -38,6 +38,7 @@ data:
     IOT_GATEWAY: ENC[AES256_GCM,data:lGPyVaPz+qyvAWU=,iv:EwnpOsRyoMKaXMGCREQS4LfQVchFHZVXeyTYG1D4oOs=,tag:4H2ynoO6o3MwPYd1J89Tew==,type:str]
     LAN_CIDR: ENC[AES256_GCM,data:HRt8r9PBjhKCZrEm7E56Fw==,iv:5bCLUwBH94leR1N9z8W8M2Rp8ebtEJx6hfYY55g39BA=,tag:VZYtEdZbsqXgL13AFRt33g==,type:str]
     LAN_GATEWAY: ENC[AES256_GCM,data:8BSeAkEnxRUNJP65hA==,iv:jtXZBG+Dl7VXpq3/PTLcoRWHjBWkNBkNfyHdGBF3MrI=,tag:iLe69ewe73T63i8bOZdXUg==,type:str]
+    DNS_SUFFIX: ENC[AES256_GCM,data:bUEeIC1urF0f,iv:TUuVvTdKSBA2USg5Pqq77AWyi20OGA7YJe/Yv0hSCQ8=,tag:Yl4K6EhcCSimrfDxFV7ZvQ==,type:str]
 sops:
     kms: []
     gcp_kms: []
@@ -53,8 +54,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2024-12-06T03:00:41Z"
-    mac: ENC[AES256_GCM,data:nny3dP7YN6WjGlR6FvrfyWeZWQ9tavb/VO63MueOSDhCGcZ25avmSWlhFV/ut8CVisU7/wpz0/sr+EX/VvOF4daUpsKDJozJROF9tUKe0lCGtwBux0caNpcwoL2G8idq1eDSJ3MkQNXq4Sc2DtZ2kkGN2yda2AGwM09iVTdverk=,iv:DkK1fBr0Un8hmCYhhmh1VdjlfOmk4a4Sx1zf7PyPFbM=,tag:jAq0ZumWT8wIG/4Hspwkfg==,type:str]
+    lastmodified: "2024-12-16T01:07:20Z"
+    mac: ENC[AES256_GCM,data:N00F8OPcZGrsaHh8FPyDEJpOQvuwyI5328H78SkHejp23lxJfsUWgAHSPAHTgd9lsbkE4muwKpqXTk99bGgFwvSeSftTHsojy9/LzXPxjUq7dO2BSN2Xv//KI+MzMGqn4iX8H7j9wp8XRuKpihq0fSNlwbvTP2WABdwahqYt/Lk=,iv:ZDStMVwFBMfGyYOdGsZrFc0U851FCg+eL3SBFnzFwTM=,tag:Ensd/SzpyZ2UKAp8NC7Y8A==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.9.1
