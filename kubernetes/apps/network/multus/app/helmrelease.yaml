@@ -117,8 +117,8 @@ spec:
         initContainers:
           cni-plugins-installer:
             image:
-              repository: ghcr.io/angelnu/cni-plugins
-              tag: 1.5.1
+              repository: ghcr.io/jokajak/cni-plugins
+              tag: 1.6.1
 
             resources:
               requests:
