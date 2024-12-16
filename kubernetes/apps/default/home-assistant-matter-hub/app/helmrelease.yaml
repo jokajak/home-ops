@@ -52,7 +52,7 @@ spec:
               HAMH_LOG_LEVEL: debug
               HAMH_WEB_PORT: &port 8482
               HAMH_STORAGE_LOCATION: /data
-              HAMH_MDNS_NETWORK_INTERFACE: eno1.50
+              HAMH_MDNS_NETWORK_INTERFACE: eth0.50
 
             envFrom:
               - secretRef:
