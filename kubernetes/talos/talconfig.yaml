@@ -1,0 +1,267 @@
+#ENC[AES256_GCM,data:7ORvP+l+ACYeMRWYltNSJM0yfk/Wvbn7sewo+/ZpoOP39So4foFraLdf930ZJVEFR0Ja3esXOJrLBp5rTHC0SKqVaqPO/kgg4IGVosn5c4lhCKBCg8qn3/Aq2vYntds34Ex+Rqlz3kq7b4WI+U+fsuF+G6MsE1WUu/3fs3YLOw==,iv:qwlHzKGLdKn6cp0kR9rcHsCMiVvAT3rDa5KV7Vro7iM=,tag:D1psrMHa36NDJI1yBNzOXQ==,type:comment]
+#ENC[AES256_GCM,data:+pZf9Cv/mKd6USeVZKb00ebhwAq4iBKM0200YbwX2Cvw7r3OpB2BtNaODBMQIr8GB6J9FkwjFnvY/yJmS/KucQSKYTMkiLHAkfdDOVq5nby+TbfBENKX5Hq2WQ8C04FPvw==,iv:fww0m3PWASmS18Gk9RTSdp9rWCKiU0+SoIIbgBQsNoE=,tag:PGgQPHjaP1xPg/UANJTVNQ==,type:comment]
+talosVersion: ENC[AES256_GCM,data:9/g6Vbty,iv:0tXyNWztWM+RKvAOUu4nDv2jv/+2f+CM7fgaByogPSY=,tag:WNLUn0GjgwpGoG/oq5TmLg==,type:str]
+#ENC[AES256_GCM,data:rZL3v8jwelkkOuOd5qdOKDVucu5EtEeF4+tAxsL7Ml7DQpUf77+D9fdr41G42nDT78g7vgp6vNjXNhp1aV5C,iv:f42Yew26HJqCT35LU9ohg7ltcnRy6P04/O7iOttAbpM=,tag:NRUtriYr8R0tuucUAFJUXg==,type:comment]
+kubernetesVersion: ENC[AES256_GCM,data:hqI46IwCIw==,iv:nizp1M+Flng55XWf8uNQMqgBT9IGBE+TjrrwDhjUuOw=,tag:N80gB7c6QF0ue0+zw9LPFg==,type:str]
+clusterName: ENC[AES256_GCM,data:O+5KINX2ZSzA2CVbJ2FU,iv:btUG/b6MPtCZLDZxMRMUo3DCp0hgtCEtkCOl9/PumDM=,tag:qruuyPofj+R+kkjKn85eIQ==,type:str]
+endpoint: ENC[AES256_GCM,data:lMnlGsGp0tC2kL3TB+2WiQ8DpuUoNoCZvLnn,iv:ycLNMdwHzKDD7kHHfwqD09vlvGeXX9wwjJH4KtzKmzA=,tag:T9uwF118xgyrKhUGXwVahw==,type:str]
+clusterPodNets:
+    - ENC[AES256_GCM,data:gVcVPDCJ/L/xrkt8,iv:1dNbfS/g1FZKAVvTAZj9+5qgxFefvJPC/ZI6Uv9hi5w=,tag:+yBRQZmZqF1OgY8gRPyiCg==,type:str]
+clusterSvcNets:
+    - ENC[AES256_GCM,data:gp2h3fqVmag6QUsh,iv:Kg6THKcD6DKefNSIuj2eA7ZVQFqRCD0JNEQmZAjaFXs=,tag:atDP6ADb7fvVzXPeaTsHZw==,type:str]
+additionalApiServerCertSans:
+    - ENC[AES256_GCM,data:IdqcbNQL1QSEhbGAAWk=,iv:drx40pCNCG8/I8cCEB/NWb1WhzUSxynlCXeuNH/Anj4=,tag:NDcaKNbfYntq7C29RqsbrQ==,type:str]
+    - ENC[AES256_GCM,data:JcXM9ZswP05yCw==,iv:QMDCTZX7oQuNscLpkG5TLcnhNsTMlOUwo+hIzej1kLw=,tag:yC5aDYV0mjzEt9J86nxrNQ==,type:comment]
+    - ENC[AES256_GCM,data:BQc0dx0LqRuj,iv:EihIWkRXHkFlDDVR6lRiW3qvQYYsBBjYGqbUKB4iubk=,tag:Cosos6Qd0nHbbcc8XHfilg==,type:str]
+    - ENC[AES256_GCM,data:GmO1AEFvw6xcbrJM15o=,iv:lixKgCbhHAGw5ZFPIgBVaOM7qPft6IXztJTJ0/ELYX8=,tag:z5F+lF2F1ffxq1SbtmRY4Q==,type:str]
+    - ENC[AES256_GCM,data:ycEWUnnGn+P92ob75miLDcnomE2o,iv:IlYkOw9Tzphy+34t13D2N69bY7jDXLmzHjDXgmhWY+0=,tag:HDJXidVVxdaWRxQJfxa2Yg==,type:str]
+additionalMachineCertSans:
+    - ENC[AES256_GCM,data:bNgwzm0mWzn4asrvF7w=,iv:7NXiA85i7OT3qoxk3QMugJndEhRxYa2newF7V+pwLPM=,tag:JXutKIJZdWzCxC5CStnqSg==,type:str]
+    - ENC[AES256_GCM,data:M5SnqPBwKd32Kg==,iv:bIAU9uz5E6bBgcudvTIcqnojW86JCylQIgvp2qhEUac=,tag:yb8C5wEYyMnZhFTPqY90JQ==,type:comment]
+    - ENC[AES256_GCM,data:givYR4fy0cxc,iv:yv7ris2JQuCk6h8w/+8FtCH+A1pykh3y2r1ybsybGhM=,tag:KY8V05JZo5VjkIqs/CSjcg==,type:str]
+    - ENC[AES256_GCM,data:Lo0xgbFBThXo2ODSuok=,iv:AN5YMObSPuJ5ub20w/cJJxTNSRfTg4681fuQLHfGq7w=,tag:CLhrxZAp2OIjF1sBvRrvIA==,type:str]
+    - ENC[AES256_GCM,data:89l4wKXksSiWkxRuFw8q8sTKrkmZ,iv:V9FnzpwQgxnSGcYTkJaGkdJ6o7xX/RMK1zGGGnwY6Yo=,tag:zJZuLZye7ouK5df/xaoUxQ==,type:str]
+cniConfig:
+    name: ENC[AES256_GCM,data:AD20VA==,iv:KQpoEghXTy0tGpNp7ZuOies9NtUF06qNj/oXVYV+zds=,tag:H+C7bDbrHTxX14IxL+AviQ==,type:str]
+nodes:
+    - hostname: ENC[AES256_GCM,data:MOASwtkIqMkW1kQFNis=,iv:AjclaF031CpuBGYhN9qa1YLNCl3GneVaH9SJeHGFXSU=,tag:/1fwbPdQe8oS3qxDBgpeoQ==,type:str]
+      ipAddress: ENC[AES256_GCM,data:1t5vBxNdbPtQZZBuKq4=,iv:IdCzRYnOtZMw+mK4fm+WcPDRN9cbCGQc2xrkT6eS8h8=,tag:mT3x3rFQ6MEwps8/NMEinA==,type:str]
+      installDisk: ENC[AES256_GCM,data:1nS3/knnPLE=,iv:l7HCDHRQgAm6bJjSllVvAwwfK32GLeHkeJd2x+f2/JA=,tag:6ZzaDW8vqw3VCGDIBtZGMg==,type:str]
+      nodeAnnotations:
+        installerImage: ENC[AES256_GCM,data:B473vwnRMpCYbHtFdMO0kUVzP3q3466qtf0PyUXSeVk2+1iPxss5eB+WeJHLIJcM,iv:c1mPhSxcB1o/0mNKeDgeEjKuDWe3/PcrCfo5Qk+uENc=,tag:PUyTAV5vnh4zb/5quzBJpA==,type:str]
+      controlPlane: ENC[AES256_GCM,data:aDBNhA==,iv:n3bfFnT7bUi9YAkTGzCiAAFNN1yW+gt8L4F9kePorzI=,tag:UYMJpRr20uTWjxYdUzwT4w==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:Hgw=,iv:Fx5avUr6RjPwwx8sMhbSCiwnG3HlyHgngoiLKEB3T3o=,tag:3yH6kIL+dyN5FKCkZyWCIg==,type:str]
+          dhcp: ENC[AES256_GCM,data:2far8L8=,iv:03f0QutBs+CuAiWzu26SaUXgZrKvQlyJE2cFp7eZ8JU=,tag:G2u+ykEqG0xlptHk+9U7Ew==,type:bool]
+          mtu: ENC[AES256_GCM,data:r78abQ==,iv:p+H8O2dWMzKECNw0s1e9zOA/pmPmrFjraioLMfMTFnQ=,tag:NlJk9ZEeMFnZOZoaJIBTXw==,type:int]
+          vip:
+            ip: ENC[AES256_GCM,data:nskGKOkHD0g8MlhVog4=,iv:kWLPTkjSxN4JlBCnOeoUANbCRw7R5W/IzSLuGMMvo30=,tag:Wx5Gw45hLg00Rt5rLim73g==,type:str]
+          addresses:
+            - ENC[AES256_GCM,data:Wp7mcsfDuEF0jA4iQNmE6dM=,iv:Gbca3ll0LOQwjSD2QgYVxQUmBAtTHF7AAEfyGQWaqHU=,tag:oW7Q5HGpmsPPDIQFhw8Rlw==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:jqMSmjnBRJc7,iv:kMClDsDmx7Jw/UqxbZWggL1zgogc55YgaqfZ6gh0Ay8=,tag:2UpLjcrHbuzRy9FcAnpT6A==,type:str]
+              gateway: ENC[AES256_GCM,data:QXTANRrzJ065b9byEA==,iv:bbhMAs8wXkBDQcX1s9N5cq7K//JgFzpaGfofW334bsg=,tag:GvRlod2w1ewIlr/HsaHSpA==,type:str]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:agY=,iv:S5Ip+Oux8TDx7n13h4IzDUGPsRx+6HMeYUWjnA9lpx4=,tag:K++gD9jxLO7ILmcPGMDEmA==,type:int]
+              mtu: ENC[AES256_GCM,data:qXRbwA==,iv:npz0QKezlShAiDD5CKc2JcWMbDCbe+dviLceTjT2DxI=,tag:GtF9HqWjZWtFqDgu5g4DAA==,type:int]
+              dhcp: ENC[AES256_GCM,data:+42Xcw==,iv:C8kU3MNYiFIrd7WF6L32GuCYep8Ow5gd54mzys7aJik=,tag:pFHzKvfuTIZjlEPMfNom/g==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:7F6tQA==,iv:cvBvbwM4Mrl5lGZs3QVsLAImhm2d9DemrfiobPlhWFA=,tag:8c+Boc0o3ChFhag65NR4UQ==,type:int]
+    - hostname: ENC[AES256_GCM,data:TACAaybqvHVXbBHFeSwhebg=,iv:jUJ4VBM4FAofMGnSD4GErl+f/gM8dKTcjKFPI6NjSW4=,tag:riJHOMmogwPNAbuuP3JuuQ==,type:str]
+      ipAddress: ENC[AES256_GCM,data:k/0yZi/c817zej/EwMY=,iv:VR659X1ccONA0WekbxUpBV/Zxi54sPDOjnA2Bn9I/LE=,tag:1AJpoYjKQ0VyGbQxwcHn/g==,type:str]
+      installDisk: ENC[AES256_GCM,data:MiLL5wvzNmw=,iv:CjNRy8k7DJZzGSrDEEpQzK0UQ/VAqC4cyhz0V+iQYec=,tag:Rc2tf5OwB0AgnI/mKXXm6g==,type:str]
+      controlPlane: ENC[AES256_GCM,data:wCFA0A==,iv:+yOxMwGPtZvF9vIr4qP8BK5fpyIRrjL5/B06YUMuZL0=,tag:R0c8ve8avA8a5XQlAlPnYQ==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:jY8=,iv:zplLT05lGKejSnKqBOPh+ecobh/S1hOxdt2B07WRxxY=,tag:+WKxKo0NeWZK1LO900Ojtw==,type:str]
+          dhcp: ENC[AES256_GCM,data:H0QZw+Y=,iv:4nyDutURw5AbJSYEYQPV3STKzdAjq2oWxbEIqIe0kDc=,tag:WVrRgckPV8w39V8I5J/VBA==,type:bool]
+          mtu: ENC[AES256_GCM,data:hvBtkg==,iv:bQv7/YQT/4sULCKZqaiZMDDiPM7cK2Ra/HSfOd7dZVs=,tag:bnJO14desaqhQOjhwLm3ng==,type:int]
+          vip:
+            ip: ENC[AES256_GCM,data:EAuji5M5dHHScFUx4/Y=,iv:tjfwidVtKWtazZyJC2P0jz0O8DlhRhhpm/uAQsq6N7c=,tag:J3296LtEBqLKPcNxGsPuhQ==,type:str]
+          addresses:
+            - ENC[AES256_GCM,data:G5hU+/J+8HZTCzC6eAiinSY=,iv:rTKV0hQFgGvjUG7LnxnbJkvlWUPgkg9h2Qm49hQzzzA=,tag:qEjsSUaHv4Ku1yeOLtCPzw==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:wmdDiNlkrQm0,iv:PUDtewVNZNey0a7JgdBaVSY6O/aYJIw+USxiDdorteg=,tag:Ho4mDX0m8AMOqoBtXcSw0g==,type:str]
+              gateway: ENC[AES256_GCM,data:MKCf/TolnqxW56qenw==,iv:UKfeqXFPjLOrpx0KPK5EX4BD6FZC59mLIdJPYvpy+ts=,tag:3IdpmMANrvEXkSi1ZVhvow==,type:str]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:R5c=,iv:ELXmoJKaIfv6W6miehKwY9bKju1Td6U+7scGtyzRAmk=,tag:70ozTDvVi4V5PI4RXxUdSQ==,type:int]
+              mtu: ENC[AES256_GCM,data:fmynXg==,iv:X8lQgTxShLBX0PWLWOx1oPYlzw2YRpL3vIq4rXD5kBs=,tag:K514mXL4XYO2BikLBKG+kQ==,type:int]
+              dhcp: ENC[AES256_GCM,data:anNovw==,iv:7IPDZsGRh6PYUkUjQXx/FhAahjDBmSs4A0hncUX3rS4=,tag:pSnknUmdOBdp+3n3Lu5GwA==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:MKfN9A==,iv:usgJcZMseGpgqBlXkIh4suuNM5+IAYXf854OoQihL9U=,tag:lyb9ykKdn2vS4uM87oF4KQ==,type:int]
+    - hostname: ENC[AES256_GCM,data:MSnXiLpxF6ANuVYTvgNVGnAX9+9qXfs=,iv:ipUbXVh0CsYy9fFUd/V7WmzQIhimRfs5j/RuDTX+m8M=,tag:vqYLmzxEzaQ3EtBGvaoBhA==,type:str]
+      ipAddress: ENC[AES256_GCM,data:YkzMxxYbJVfWEqGbefo=,iv:3Rxk+0CET+5Om4VF6u4nqt6MHpoqfTp1E/hrqQA9vok=,tag:KSBmLq4C99MHXGXlqUVeug==,type:str]
+      installDisk: ENC[AES256_GCM,data:etr3vN408bI=,iv:GLqDw7BHpIKJVDK5HuPsTNMUDkk/1qqRyZDezAh1yeI=,tag:NEPBtlafke99NbD5uNiLpw==,type:str]
+      #ENC[AES256_GCM,data:gbQxMLC71O/3n/linvHX80B218/QF1aEp7Q3m4ETkfRFL+gs26RoB1W50PoxrJf/PMjDHvkv2N48ht5qUD57UBEaUYMHcS7AJW8KM1OJy63p5N2KCxexeOs0Wy2E3Mv3hfuN2Dy/3tMf/YmmlBEbeUlYmRPjqsMFQtkuLPNn26h2E9WNGS6oQc6ILlNK6ca+qTkcMK5TzVBI7A==,iv:40vLaw1VsIfVIwkAaI7X9AJYSh5n1NrFnjm4+qZOW6M=,tag:oa8n6EUKiWinH2RG/vfL9g==,type:comment]
+      talosImageURL: ENC[AES256_GCM,data:8y+/rsDJqRQtlS0hTxng6XsX0YfzdUWeLDAhrbwM3HNjuuhcTV+/4xcRylAcDpcD0UNxEZb3yQ6Bs65XR9UwoRAa9qmThYQIN4syVmELazKYCGXkbrPaK0BNxlvtotxNAS1t,iv:SwPYABJI4ukvbJyCiFt+G8zc8CpRTKf5Y4/ZptNZvQQ=,tag:ZSZIJLhcHwIjFvm7I/hXjQ==,type:str]
+      controlPlane: ENC[AES256_GCM,data:Cy510Mg=,iv:HFZN2d3fLqj0v+MhoYmNp9Ojd1rLIIfNWYzJpp6dmQw=,tag:vaao91jzriDS5i7XzcMhLA==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:Wno=,iv:kmfDGefyZsRqkbEvzrUJ2C+tK7QKMpdFEEr3e1bqR6k=,tag:o+mQYANZz7uaJe78oYJLJQ==,type:str]
+          dhcp: ENC[AES256_GCM,data:6fxyue0=,iv:tS6pLaVKkTJ6yxXNk9fWLU6drLe4654DwCC6vLM3K80=,tag:5x4Ra5FoUSX1KWaYLGDj6g==,type:bool]
+          mtu: ENC[AES256_GCM,data:WP/Irg==,iv:APW4K573QlzAaLvplNuXr7gdGUo8t9iCH3PZtkBB7yA=,tag:Z/DNTxyELEwwZMeSnFcAdg==,type:int]
+          addresses:
+            - ENC[AES256_GCM,data:tM2aL4/pGL+eqeaCUMYxYYA=,iv:vG53UdJ+sOtnSQLyKIIaRu2ES9731JbOUlMoKqrYpeQ=,tag:dIgztl68h6NRSXLiqHP+vg==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:eghJT5WVkeZM,iv:NCHgZ1cuRfiAq91RXrZlB/QYjbJT6mjS7ZevQUS3J38=,tag:2G9ebCqaty6MaayoH4PTFA==,type:str]
+              gateway: ENC[AES256_GCM,data:iv25iCrA4jfrQqKbww==,iv:ZceZjTMQfKsOR5ZImcQKVdZoPm6Rd/Pni/mNFcf/BJc=,tag:7RzWJp+eWqFuiYW8iq7ZDw==,type:str]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:oGE=,iv:5lYMBkDc5xPbVfbpLFL7G1hvcgPidh6LKXwdvu1TXVw=,tag:x2QpH65Smnu4F+ssWtrhnQ==,type:int]
+              mtu: ENC[AES256_GCM,data:gz+EoQ==,iv:wBvZcTowKBDtwJ8nQ6RxdFWwOHp0DYxRu+wp6/Gee8s=,tag:+t1p1XmLgD8jXaryq7tJAQ==,type:int]
+              dhcp: ENC[AES256_GCM,data:5vfQgw==,iv:M6GNZ98pDMPcJxL2JcyQlwhinY3Bbu4keHR+Npq/gRQ=,tag:C0lIGQ7YIBWzLqxxhUvN/A==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:aPRO7A==,iv:AIO3NhQVWlbiJjwJFFyD0cCXSC9YHC8fGrSMMTdp+Dw=,tag:L8lW4jH//eB1H5Zfux1CHQ==,type:int]
+    - hostname: ENC[AES256_GCM,data:TZfylQ9zjVt6cLyZ44XWUbCf8g==,iv:f7af9OWGphySq3VSne30Faf/iLUyb1q3HyI70FZodL4=,tag:J3/hKD7NZubNNV2ZSJJw+g==,type:str]
+      ipAddress: ENC[AES256_GCM,data:YTUyN3idLNTsBB6WRog=,iv:VIs2M2a0sXYCKQqybixdKZ6iFaqtnq5CKsoFO92vcbg=,tag:MgBd/AaYkV/6HML6W74mTg==,type:str]
+      installDisk: ENC[AES256_GCM,data:r7OCQJO05x4=,iv:BBX+cYzt6YecX+0eZ5vF40fpYh87xAK/QN2KVNnnhaw=,tag:AUk4CbGsXiEv1IZAZbsP9w==,type:str]
+      talosImageURL: ENC[AES256_GCM,data:piDmUP5piiTcGrWvjD/PEDc9ebVH8ftxoJNswDHalyGDb3pxZRMLObDvbR+/rFXnSfMDPEf0xpZPC5rtGGvk+Bg4BTPEo0tGuD8XhxYTnWbGavEod/8TgoLf3lo=,iv:WtpEO6gxIiUOeDSiVSU28SMisK0jZP31SAdY5mojRQo=,tag:tde59zfnkFVog9UiBLQaEA==,type:str]
+      nodeAnnotations:
+        installerImage: ENC[AES256_GCM,data:99kx/wPu4L+rI76eE+LpSaSlDNrhvLf2POSfBsp4kOuxWcy7VXShL8xK41KG9FpT,iv:c7olZQuQQ135FHUumhcC6zfvJYa9Y7SD4FtMZAMBMA8=,tag:1p/bhdDu8PofbbpYD+VkrQ==,type:str]
+      controlPlane: ENC[AES256_GCM,data:Gs+c2iM=,iv:stEVBd8BmtoGLCRQAqyZDpP27xlS7IKEVRL3BAPQNDs=,tag:yrBXgweRfCf95O+8xURbXg==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:hqF2,iv:GxA6I+CGLmL7ah+7KKL+cJNcANePdr2LJy2866qaWbU=,tag:GH51NhtGfUhX9dCzM38S8w==,type:str]
+          dhcp: ENC[AES256_GCM,data:/uIYCo8=,iv:lrlO73PYfY7fajKWQAym7jY2Lbbj9h9frXKGcSYSu+k=,tag:/P5uDY9GsS5KrJ1j/Ld9Zg==,type:bool]
+          addresses:
+            - ENC[AES256_GCM,data:ddOLs47wW6CX4LTo1xQOKgY=,iv:IQKsWx+uBnDHHUH1bI2uHukkORrd1tUa1Tq7wfqIvi0=,tag:Ht5RUZNKKmjrS5lz6aLz8A==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:uaigLwzR4bla,iv:0q6pzr1GNcRo/Qqn0WIiKtX6zdqq5pwu2MlpWmTcrOc=,tag:LOvECi8npj5apyxEQqArPA==,type:str]
+              gateway: ENC[AES256_GCM,data:ZZixKfxOYhsIqadbZQ==,iv:KlaZ32PoR34d/QvZnl+GShzWyolw3J1q752CdKkd5Cs=,tag:DF7srmT/wWJC4gb3OSKCKQ==,type:str]
+          mtu: ENC[AES256_GCM,data:kitucg==,iv:qvGW44dFtvlxkpauzXKjgjREbBIKI/Gl1ulT8yX/1WM=,tag:XwmVVnkckQROJ3b0VUkDBA==,type:int]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:roQ=,iv:vUxiYGR+4tDWScY2XPkYbyKS7iFN9EFV004sGcvkeZ8=,tag:8JB0tqEWAWNH8dkOjJ2gzA==,type:int]
+              mtu: ENC[AES256_GCM,data:Jl2rhA==,iv:GraAk7gEyjzJ2Sbqf3VVtAVHyjYBYkWQAQTvdeBC0a0=,tag:f7VIAUxs4+wggdhpOjSRRQ==,type:int]
+              dhcp: ENC[AES256_GCM,data:GF/zww==,iv:T/80aOzIL//rEcGaJzO1Rl6Dm3mobn7ZK1TqJ+6JkZg=,tag:xV6kFfYShrDSXz7iRgOUoQ==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:offlEA==,iv:HYeEjURaMH5D4gIXGPxGYYw2mFJE0MVBSQ8N4ZY1ysQ=,tag:qugYUWub+HKEfbkEg65qDA==,type:int]
+    - hostname: ENC[AES256_GCM,data:IdKPXHOeKLdnXZ/Ev7Jjc6uzlg==,iv:p5NehiJ5trRgA1ax+McMKqvx0qlNvd/lVG5QQE/JABI=,tag:IMmIX/tMJLFuMC5ukzno4g==,type:str]
+      ipAddress: ENC[AES256_GCM,data:L8/f+5eq9pSB5ZW1P74=,iv:roe1mW8DZn0zDnLyElES42i7+K2ZQDUED203APuEfGM=,tag:Fp7baK+kxqOraAKnIFze8w==,type:str]
+      installDisk: ENC[AES256_GCM,data:ufJqnibamkg=,iv:qnOVRpmrWZcUM6nmisG5NhMnfsoLDRCRBrNK/SpVhGM=,tag:alOOx53a1UGpJ6w4Yb38+A==,type:str]
+      nodeAnnotations:
+        installerImage: ENC[AES256_GCM,data:ARSupVbIUk0xi/e5QAGakV7q9ZC6NJadvSnyKljtTwSshtZjseu+68rkU2iiQX4Q,iv:hixZ/PJ8S0/i7FRSmc8MO7aK9ZHCcNnpRJNK8qzGoqY=,tag:2VWIErdv2jKWSLn2eG0cJA==,type:str]
+      controlPlane: ENC[AES256_GCM,data:rFg4zh4=,iv:32/3HwYR2ygOa6wNZhzFW98PYihYrFRs6UMPEl4nlL0=,tag:a5AubLiK6RcwTVUk5froIg==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:/Jq9,iv:vHO0xzJkZKtUAmbNoiO+1E/FvOLjsO3aPpJltzEXs6c=,tag:UlpdDPxvW5Bl/xSXvSs0AQ==,type:str]
+          dhcp: ENC[AES256_GCM,data:+0jcvgw=,iv:Zxe6eBj+IkMyqpoRV27XEZ/d0vIc6aqTC+VbfHjAYlY=,tag:7694cAFJBA7FyNxqA6RHZg==,type:bool]
+          addresses:
+            - ENC[AES256_GCM,data:zsCyObLZdO99O6OpS7oa4zc=,iv:KyixL3Q18KvZo8rmHqIk0UldU6ImNrARz4THzE9t/v4=,tag:lIk3FMWxcNjjrmGKR9nZFQ==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:jH5R2G3lo2Nm,iv:q8Mao01ieV8k9nN4HjOVAO5dukxFH9zqjMEp2IN/Nmg=,tag:vEoPO1Hfh0ptaZp7YBmBHg==,type:str]
+              gateway: ENC[AES256_GCM,data:HT7OoliKIC8I3mLowg==,iv:+3vwKnBse6u6u0G4sdV0FgLzzhBgxYxboLuqVvSDpR4=,tag:tevS+du9wuD7tORxn7CC4g==,type:str]
+          mtu: ENC[AES256_GCM,data:bF3BlA==,iv:AENw7A/E3lykZzS6cK0twHNwUQociSvvXfMAReggzUs=,tag:zsDswWswzLF3AM3e+P+uPQ==,type:int]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:Ch8=,iv:aH5DLT8/JA3JgwWT/DYL9+Kd7oB2bUM/2Nga4Ts2blA=,tag:W1AkF8S46VfE814zwXVOgg==,type:int]
+              mtu: ENC[AES256_GCM,data:UnfmWQ==,iv:S5Xo3mpiUo/ydipqqu9xhaS8K01G4DD6OzMwethAwls=,tag:QPSXemxayA1bZR5FcO2sRw==,type:int]
+              dhcp: ENC[AES256_GCM,data:kGJ1Kw==,iv:jWpVw3wyu9hh1fhC5VU/8ZDJbbKU5Z+NLcb7hjA2zCk=,tag:28W8F63nGMTxQEkCzpvGJw==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:nmKX4g==,iv:XExpQBk0KKICT/HifBST7ZWuuOiva9uv6oV6Wp9ECwA=,tag:jlC4QFnfdaNWh5WmdP8jrg==,type:int]
+    - hostname: ENC[AES256_GCM,data:e3KMOETUme74q5uhzw02,iv:1UdwvcpJcURs1HJD0ry7lxCZsLDlsgpnlK+p5a6AZ3E=,tag:qcyK6ySn2IRQiKa3752CqA==,type:str]
+      ipAddress: ENC[AES256_GCM,data:+iTAj2Z4Cqtajzsg9+g=,iv:KzqHVJz/9gt/xTg0vsOJ9tpCD6IZQGfe0n2Skzg6D/M=,tag:D8udwkd5aU6R72iXC0AdFw==,type:str]
+      installDisk: ENC[AES256_GCM,data:ZC01eRCA9h4=,iv:EkVY0sn4u6WaMdif3EBV++J7/YOvWtqW6VQHDqqjvEw=,tag:Y4gntmH6SOphrwiQhaACew==,type:str]
+      nodeAnnotations:
+        installerImage: ENC[AES256_GCM,data:Ag1rJxizeEoE7eeNp628OMiuqTrtU/Wx1ksyfB3W9eVHahtJAEokbgjmJdGUTSwy,iv:Z0ZagngewUY0Fc3GsOOcwzuMOv5JTuAURazuaRegcQY=,tag:TSjuDADYWejbjokycui6qA==,type:str]
+      controlPlane: ENC[AES256_GCM,data:P17RMw==,iv:ol6uc+3HAqAV1n5c35Ymc4FSYVJ9HpCHgm6Rwx8QkbQ=,tag:hUgtEBMPIrLXzl4P9VC/qA==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:CdU=,iv:t4+aQJUluWfiCnPaSu/qf8v7Pp7M0FDR7+ncWPmdOpA=,tag:EmVhXVSU6WeGn6grhRg/PA==,type:str]
+          dhcp: ENC[AES256_GCM,data:eac9sW0=,iv:kovNZ33tmHAzgiQUG8IVy8RvPqWmDo6IGqlXi1zbkPM=,tag:tdkpzJM65UCtNeMCos9kwg==,type:bool]
+          mtu: ENC[AES256_GCM,data:uwrhcQ==,iv:GnudQg4wwXvnhrkFkns6WtaCxauDcc5E4+ZHu22Ohjw=,tag:tUWBLgFiW0m5ZT9HcwFeCw==,type:int]
+          addresses:
+            - ENC[AES256_GCM,data:xt2hlKYVEC/5oRLAe8yGAxE=,iv:peHQ8H8t6msVyn588k+LylFAdIlr2UA9YKvXZhfjZ1s=,tag:aDhojM7wmv5HAPzzKsEk7g==,type:str]
+          routes:
+            - network: ENC[AES256_GCM,data:cgT3YOt1mNAI,iv:tnTkD4mAVNj6AIvqxphHDNTCI1Pz6CrtXHmLpVPb3NE=,tag:8uDq1WGuLHkLaT2nCqNwvg==,type:str]
+              gateway: ENC[AES256_GCM,data:S6DwHwx7pz7aET5GsA==,iv:Am2ueZkY5J/BFFYeMBcly5fpxY7qRba6eQcxC7sbdXs=,tag:RApdco9ro3Zw1o8r5N5zMw==,type:str]
+          vip:
+            ip: ENC[AES256_GCM,data:YpmTbVg/FgAuxqCiKjo=,iv:LIcHf34ovLfylOECpq7lkK/VhSnZYhIQCxVSsXLGauM=,tag:JuOZqeQLRrH+Cl2SxG9egQ==,type:str]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:yNg=,iv:CpdfOcJEddHA9sMMCASfW5VCDah4hF9ROjO0ebzjppE=,tag:Lskqo0QL/QhYltkNbbkpcQ==,type:int]
+              mtu: ENC[AES256_GCM,data:HGMNuA==,iv:uI2zdfgTwS9CFvAzrYCTR0MpaE/1/kgXxbQA2odxz7s=,tag:T680syuATk1mqMpksPcmPg==,type:int]
+              dhcp: ENC[AES256_GCM,data:zSRM9Q==,iv:Q1kApS1mWxijC5CllwmI4sHepPQPCSQdcsYugGU9Arc=,tag:btayfrK0UVwMt8FWBtGqTQ==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:LfvDhw==,iv:75S4yTMd/CpE1dZJjShOqaj26rx5sJbOvFSAJgGRtZM=,tag:wQAPNMPPiIZv4OiAnkr3Sw==,type:int]
+    - hostname: ENC[AES256_GCM,data:bxDN8nohlwO/CItWrK4=,iv:ZEC5dxA6cp0+5SNADL60UGDSlUasWMUq/a06gS5v91M=,tag:9EBqblX8YRZfooL12AdLpQ==,type:str]
+      ipAddress: ENC[AES256_GCM,data:xy9gDcSfJgG6ZgHDEYE=,iv:Niq6v6ZLw6693PzIxp2yYz3ya9T00AVx98K4sXo2fvE=,tag:+Ov7/kzi5T7DYWaDcTZCNg==,type:str]
+      installDisk: ENC[AES256_GCM,data:DciQvTQZFdA=,iv:5e7k8Sa0QK2yVquWY5oTB7UuyDkyOtxWBO04KA5eY3g=,tag:1rX929kdUaK60EkaV32+ZA==,type:str]
+      nodeAnnotations:
+        installerImage: ENC[AES256_GCM,data:A4hY0/gdes67c5JeiQiw60eX6ibcn00/ALuKHiSZhSbfsQ6nofkQno6BLSy9d8HS,iv:N0cHgoGVeuni9Y5rEpiQxQanFyHkfReQklSh6n7QANU=,tag:65MStDUUsSgwLhNwhnVE1w==,type:str]
+      controlPlane: ENC[AES256_GCM,data:exL8imI=,iv:Uhm+RmeUgRJM9SL+D77MQ18McLK7+h9uE2bgD9O+tIg=,tag:hpe8Df+wQ4KUdc0M7Fx0yQ==,type:bool]
+      networkInterfaces:
+        - deviceSelector:
+            busPath: ENC[AES256_GCM,data:ryU=,iv:Dlc4HHLVjCVE6eajquhX9REqEJMnMGmK1hG1aXoa0pw=,tag:jNiJfvne91IBFufZaqlq/A==,type:str]
+          dhcp: ENC[AES256_GCM,data:lTSnAGA=,iv:Etzsyt1zCk6Wwe5S5ugAVTx+2VWJotAnAgUDIvtEGqc=,tag:10JM25HzqcQC4I5ULPOcMA==,type:bool]
+          addresses:
+            - ENC[AES256_GCM,data:/m43XHPwphFI1ofw3z4vBNA=,iv:hM7NIY179G0vdQ3vICIp5Wcpo+cxG2CFa4udEa6V6pA=,tag:5UG9VWcvoa4r1mfykNDrJQ==,type:str]
+          mtu: ENC[AES256_GCM,data:q06QyA==,iv:7RX9vbePCBJCCa5U6fkMqf3klHipZGwox/gYkgGSOD8=,tag:c2KMklrRzFtXVEqiQFvqNQ==,type:int]
+          routes:
+            - network: ENC[AES256_GCM,data:jZsOP/yTypQI,iv:F38CeUHPbEaqtN4c6R8XRW/JjJTLnnFocnullm8DEjM=,tag:KFKuApxcuEtLCDwASDH0pA==,type:str]
+              gateway: ENC[AES256_GCM,data:kIARtNofCkNexGcjWg==,iv:zP7EIOqgwUo4hZcqdHpnkDCQyStRQf5FRHnJklOZ6yc=,tag:xKV0qcIAmnMJtIrM5CHoCg==,type:str]
+          vlans:
+            - vlanId: ENC[AES256_GCM,data:9RI=,iv:4D0MZavb8hjd+gZ4911fVEiLSacNlKUG+8NxVndpJzQ=,tag:yoTWuBfC4SH4w4KmMQ5VQA==,type:int]
+              mtu: ENC[AES256_GCM,data:QG8hEg==,iv:VU730L8IPtj5A4qmbo4V5z0NWsXFU8e5OdZ5eVlh5QM=,tag:rVcKwGxF2Y8lwjw9hqsi6Q==,type:int]
+              dhcp: ENC[AES256_GCM,data:6XiehA==,iv:spzFsRJ6jvTPcJJcpo3Qv2lWZWaHekNUVGt3Hw6G1LQ=,tag:yCgqOkuxV0KIRPaHkJoMBw==,type:bool]
+              dhcpOptions:
+                routeMetric: ENC[AES256_GCM,data:VbcEqA==,iv:gL39lOsTCiTHn1RBO9jayuIPja8R69qCpzmVrCn6+Iw=,tag:izWOUlipeIg+exv6eNdCJw==,type:int]
+controlPlane:
+    schematic:
+        customization:
+            #ENC[AES256_GCM,data:JxIw8xWHdd69gVoA+TIyOTgecj7pkx9HbESOxSJFs9T0ryXYtUgCKbf2+0I2P38EKpVL,iv:/FbQavHBH3oX8Rybu8fR6zN7/J29EMrWRScG+HQdeto=,tag:/y36K/8XaZ4jY3n6A2XN5Q==,type:comment]
+            extraKernelArgs:
+                - ENC[AES256_GCM,data:yRgLPufvY8mDxSZgJw==,iv:E/6uZtvEeCm+Y3QGYQK5XRwfpmobr1+rmSKVvu7Jlzw=,tag:v8eNFsYvbs7dvYT4GN4+vA==,type:str]
+            systemExtensions:
+                officialExtensions:
+                    - ENC[AES256_GCM,data:46SWHY2A+MDoLeTsMZ8k,iv:OtoWzPXz6F3BbqhOgx3iuDJJpMY+HhtJvDpk0u2xVAk=,tag:7YAjSUFeNAHmzhFOSfTvig==,type:str]
+                    - ENC[AES256_GCM,data:g/CuIAmqfwYxNgJXoti3/oeOiY+xfg==,iv:e9lAj3RCGHpcUMTJfwNZvxV4jqbCsgVm4HRMG/eu0Vo=,tag:gHdTAisfBt23pi6LB0Rz0A==,type:str]
+                    - ENC[AES256_GCM,data:qe8PpFMFo+Kt/TIVrJYIjQyGOgug54HkvmQ=,iv:UcMWY1NwvheoeE9nqODjwgdc+NrpOnQMwm6hKHe/Lqs=,tag:aoKHJm0vC+9OwLNxxMT+gQ==,type:str]
+                    - ENC[AES256_GCM,data:EjddPTCnUUnfsdLP1tQG,iv:M1dfHR6lb1YWCD0ga2cIURO44Lt5My8k0Ghz/KaLQtA=,tag:Q20hmHZeMuqEilcfS+VcUw==,type:str]
+                    - ENC[AES256_GCM,data:LSVdUfE7FRRDPZyoVsWLLh9NwA==,iv:hPLW6VfyMciW67smyee7wPKc+A4JynxFA8jLouROWC8=,tag:kliLzim0CG7kghDsKs5DXQ==,type:str]
+    patches:
+        - ENC[AES256_GCM,data:/7FnIlcKMQlyK/aeeXkuvlHr0CvM,iv:236X/7qY33RY7xAloK0YeUXFrhNA40N6ncKbIH2wPg8=,tag:0ST3bDaD8iqBM8K9Gf6pAw==,type:comment]
+        - ENC[AES256_GCM,data:zP35Nt31JVMPWSg+s7oO8zO2PmwJyqLlQgIwqxpNzf5eAgunOZBZsGDCBTmj1SpFi7Ly/KqJQReNZcwoPyf3TduttH2NgN72Oix6EZ8V71jA+Tpa8j1Ecf3CnvCihbTUu9kMxU76X8Dbgi1k6XIBMHBZgpd6QXxWMwCRBk+EPD3Ch+3AhLoKf3wPkpmw/Tj/ZuNz5EieYe+j12VZ1j0vLJHWrXOkAHkuvmL4sIfyCpSyZmLxkmvhslQ+/QoVTcAZT4/D/xmvMRbbshM9gQAqFDaJHQug1TkOAYe4qSYxjcwHzr7/HzdqOyIlp1UM57MjkObfgHDwvAivrZYNvzmCgRIorvXeKvHlt1P8XbzQULiQYCxqKWUkxZwxsb/S4sPYAuwMU02SDKkzvhoxh+5NIbckREtX++n4PuLedIYqM3FVZ5OP7lAgJ/M98MotS9v2Jagy6J4fLqxNz16c0XVLuV/BBQZPNuP9gL5bBYeVEhqa43HOWhWBfFPPTu7zzRfnIfnwtQVvmyHTwjvBwwOU+IV/ZaV+lRpsbiT7I9ccLw6aYjz1Rro1fRs+Ykg7Jr5/Zz9Y8g/VUOQPAb77J27LP+8OHSIEgtKcqby/24RU0QQyj9x+te8oltRbc+dGQmnoK7L0OX5v7wLYadrAULLEn+/rxy1JpOzfrcFad9RzScIIP1CMNMj2xp0bjV3vergQgrK6ZTqMgA==,iv:MAu+Mp7FgNiAddvMLL5repWPlFxYrI78a7KcUT6gCnA=,tag:1DwfIOmtRTVhlTocmzkGUg==,type:str]
+        - ENC[AES256_GCM,data:54soW2HBzXZIzYmxgnEPmKW9pg9VP2pGE2gTxthAIRnV,iv:K+dCCFUDwi360YIs/sMnRaXRRdBEjfX6gCTn2qfEr7U=,tag:tteHu6+Zd0vCJc/23xcZzw==,type:comment]
+        - ENC[AES256_GCM,data:PvDwFgWTm9T09Be2zNyRfnseeQM/lRDSs4q1KSs5HdokQZljZP2odgL+EPvkigt6+w==,iv:VTkIdh5nonBLybD6P9S8lih8Xpg2ArMWFS88j5gMvY8=,tag:tgojOojf4zWUZUffPTw6ZQ==,type:str]
+        - ENC[AES256_GCM,data:RsaI/LTLcX7cCIwkGvMViJSE4d7eSnxoaw==,iv:LznloWYzz8qX3x9qFp1+4oGsz5wtuYBqn1W8sm8DAys=,tag:HrD4OD65HXRH5ENrhhFiwg==,type:comment]
+        - ENC[AES256_GCM,data:r6T2KWXZvuTRwAsyYI+huw51yrvk5RfFIPkjg+7+JJwW6egFulyDUry3u3UERbceV6a+x0RYKovU29UFzq67loADANrj02vBFa568EnMFCOtdgMLVg2JaVslg3erb+FV8Wp6iOM3seScQxL8MeK2wF0qNPjQkA==,iv:80oo7IKdbRcuqeJZaIQ+ZXiAxAbtN5L+snOwwkcMHs4=,tag:Z2f5iRLWHTtHMxs97PXOqw==,type:str]
+        - ENC[AES256_GCM,data:UP7aXY07iyAxIZjoQX/dAnQZ,iv:DFEnbwDSIFlI3WsGMmo0up9AaeKfIeAO/M1ItMkdV74=,tag:KiW7RN08ooPvoS/AC/YcuQ==,type:comment]
+        - ENC[AES256_GCM,data:MUVVa/LLx/xEYnw/sJf+BVo8hpZsEMQ2Ghz0jhqsFetsVwdhypOmv8rDcSCf5LsCgDqY/Rq2AyOw3ev3dIFo8gLGZwMpv3MhFnMcQ6iwjFVL+ydGSZSsB2Q6y6hNd3+X1xwlzTuz72inPXvHgVJq22XBCjeYBiAWB/+/q+xvZXKitHGrUt6jsW5Ap1lw8oYuvWdiFrnLBdba1AMGbz2H1EcjjcPBwxCLBSfLN7/Ggw2shKJELtdcV65e7k/PTEVlxhT7eyQgyrny,iv:3HZ878xP/zTWM5JmaC9ciS9XCJ7isG24osIQHXXxYBQ=,tag:UFKsAd/ZY578p1KwupzAXw==,type:str]
+        - ENC[AES256_GCM,data:GleGNxkXGkuAzDllzy7lLCA=,iv:z8SVCQYzxZ/zosoQbTouWWJaZOVNayj1wnSyk+jVoWo=,tag:/oFlT+lJC8PrZ7CJ+m8Trg==,type:comment]
+        - ENC[AES256_GCM,data:YNqxo9eEVNo7Ebn01k3KT3oaG4LxZDAmgBLoGhYYmLSYs+EWPSY2qpO/ercuVJFkmW2Pl0rKK5mMm0/gPXqT2dtMwuEFNldg,iv:/q94ArJvplbueXC4PWVlcd1dajhLIibdCCBNrBXwP3c=,tag:KZUoQs3bplryyZkGXlWeIw==,type:str]
+        - ENC[AES256_GCM,data:+O8bJNSEG+KA2a1T1S4FYVU=,iv:oRZU8FyFycx+2GGd2vMnt2rQcSWvPorqnN3b6bOXm6E=,tag:DDx8iLO50LhFZmUpNwnDCg==,type:comment]
+        - ENC[AES256_GCM,data:fUCkYyrfHz1uHAl4Z4xiVx5FVsZ4g4uVFmDit3873s1mVq5WHmRb05Rcg+jwkdtrcswz2xS4/FPrn5s=,iv:HhboiEORGX+VnGw9nkex4NyQ+lrzZlKJC4QeLJYH2yk=,tag:S0Fk0CKeUEnFhMKXowK98g==,type:str]
+        - ENC[AES256_GCM,data:agn7TgMPcbeLoo9asyk=,iv:pVrhnNVg5sjSPMNqcqvKgqvxGNa7g2Bx3aROS7mzDZw=,tag:Fi6y2EYG3IJQady8COC/lA==,type:comment]
+        - ENC[AES256_GCM,data:82VTzZYmMT8Dm4tnDIordIaVuh3Tl6hrgnMthMbJehgy7ieb+D1JQmlSJqY9P1gz/VWju4496HN2BIBsPGJ76KIg0WRQFc0rlChcdss=,iv:bLeNWUENdt2Mo/8EXURiHpPmj0Wg0yCvW/bd8f18SdU=,tag:xnNFuPJvFTbMjbzAaJBe6A==,type:str]
+        - ENC[AES256_GCM,data:y/STavcz3WSBh5aYdreeHxoEt6TPxMs=,iv:akFjGRMMFWK1/pFJJUYRTyJyxub8ZPNc8Q/wjsurenY=,tag:J2u4pD2yoywhhnGnovaBNQ==,type:comment]
+        - ENC[AES256_GCM,data:fZE7dCISnHzP95ElHfroO0yNiROB74xrNALt1UNjxzj49Jw5vLKb7b+QtVAe3XT0jnsbhE1uEDFfTh8Up8uXjNSx6U4etdfOfzoENfjXmaOaNV7DCVOPpuFdEDEoMlgAfa0u8BdD80rsa7WC8azbOVYdoQCO9PWyxmUaVBJ0lxQs0ENiLOAlST6hzA==,iv:sxV13Pb9kd+Y/Go75C618VCDUo1Lv8O1keAV7SFCuRg=,tag:kDb0L5PreOzdKTX/YSKgTA==,type:str]
+        - ENC[AES256_GCM,data:UNaEdmxotMA+SrJ+3JHlrdnFRUcCGA==,iv:VfCUZGFIdGqb6e7Zbo3avzQXdUxDmRtd8xZM3Or1NxM=,tag:CvOyo1Z06goXh4LEKk/MCQ==,type:comment]
+        - ENC[AES256_GCM,data:FxPyPH0vhjk6FzLE5z7brPGl6y52YH1L33b+HL1BHSg/lZqNjTwHsqoLsNG02hRHa1+KFS4RS0MPwIur2sIcK6KnoEBbT4aJiZxsYJe9oFuqpKMG/Pc2UUpxVMrUA67FwPslXrb9liYnDbPGdiH+VBRmTs+yJSd1tHN21/advgfcXEGEdK3yicXBo+qBazMJSZ1tAS3t0TNDHPYHTdpBlG9ullQGKQxZEs4rsmqfalU5/ys4uQIvo6hzP/5akDyi0UU5KRK6nDXJih/I6r/DSXv6W3HPErYkJwPM,iv:phH+PiHEA967n4doelsbAWhnSHt4+tNFLeC+yoEfwt4=,tag:6HZeHaFegbjgfS5Spn9gGg==,type:str]
+        - ENC[AES256_GCM,data:K1lus1ls2de9oczxYVEJxrAGyA==,iv:YhpzbiI2K5XdRWMWHotL3piG4zBP3wbjloH/duUfDII=,tag:QuMgKUhSUZ0u1PISAcUbwg==,type:comment]
+        - ENC[AES256_GCM,data:Wg295cQnbNymm7xbowypj9x+Adp8VqlCzKuxIulbC40PT3dscB8m/z7Y1lHiT/HvEsTJjCsPgPHMebJTGPBYLUAMBcH6iy4zIMTtxOheDJEAhzPHGGppn6F0lqkmIDjjQPFd3IwzHZWZ2vwgYoZxml/Vw6D2qEMB88OXyIUA58o=,iv:cSxEjySt9w5XP+BCpeRnDFFFv774/Tb5mEWNyY2rMsg=,tag:iFRvltDhlnqMosPplz5GvQ==,type:str]
+        - ENC[AES256_GCM,data:pP3GzlmoVJ8sOei0tjdNJ8Fin4iJFydbY0GLA6fedbZHZ47uSgPbNp637e6VtA==,iv:/oRwnH88yDaaxRycOqrKYUO21Iy9c4CZy6hBAttf1ck=,tag:4gMmBxrDh4iCsbHlxL/fsA==,type:comment]
+        - ENC[AES256_GCM,data:+DKJ1V1CC4Ts+HNZZ53eLUi4cR8pWgPkHdpE/8dbNKfTbtdc47M47topBaV8pwx/N3oSaXL9xq8=,iv:9zYNcPYaYJBQy9MwW+Feal4n+HR/rXOHkynGCg0T654=,tag:EjPY1/HrJPwwDx+m222g/w==,type:str]
+        - ENC[AES256_GCM,data:aFej8Yzi1+6tJXfw+gCbs3ND9yZwtPU3zjuXRg==,iv:3xk5dQMxl5MUihCqAhr/ZdvPVWbRajoB6lka81oEjoQ=,tag:TujxIIq5KxLf2bV6byD/BQ==,type:comment]
+        - ENC[AES256_GCM,data:uqsLwcBiz1ALU7Xz4GwsK/WfXS7mmafOVsVI97jzDL1awjBIin0wHmyPFXtxPNeJl9g46KxjC06En2Xj5tV/GxKiZZ7GDwlKkJz0XfbpxBGr6FIzMq//Nf4tmoijCq3BUi6qxMwtQYcbzV/n26jCf0Hpk+B5J1V/5eVbimf8dr9WPzh+xHgQ3kk79nfeZ2QU3v5o3UiVZaBnIzv40ghZeS8ohVkukKCH/A==,iv:SrwPD0TMsfCcueiZ16OzrWOgb9glcHzMEV6o2mFcpxU=,tag:LR5Z1TgY0LharVH8kcEJTA==,type:str]
+        - ENC[AES256_GCM,data:eecnLO2qXGjVxRjYtM381zreLJbUexU7Kh8U34fSMupFCg==,iv:8Vjfp1Zu4gpugm4Pe7VG9WfiFDLiOyX1PZgLpoKppNg=,tag:FmuqlHLdN7Yg9yx2TiMG5g==,type:comment]
+        - ENC[AES256_GCM,data:VTA55rkbmDxBnlu6VHEKU+BzMD+J7Zy8k5Cy+ojT8BoVE8IKkjpWtm3EKmbjm717nTZTpcu8PaFdqkCzNe9G1BvIwTsJruJB7BWIX59qcufnLR8HBeeg3ksiHZz98Fub5Tx6D9tzW46BBxSc4hVsEGXamW3nc8crPq0k1ZCTuWQU2d2QqNRzer/Ok1UZX2mjvH3JiT4gDUoRDwn3f8Jt7tE2mwzQ+33FA3jZi/l0RFlRJ7EMF6H1vALre92dJFWNIN64z82sdg==,iv:t85y9ayevrOYSiPzb0ffrYlPW+V5P+uTnxRy+sCDOaU=,tag:VWFWbEvSsJZNSNddTIQKAw==,type:str]
+worker:
+    schematic:
+        customization:
+            #ENC[AES256_GCM,data:3etOjYYEkr5HX1V2XCJJOQWhd8hELsjCYEZOnL6VfOFnFw1u/zbFIM70x6fdLUJURtBr,iv:Ccgg1fTCtCAgTlAgTG+0i3z1joQ9M3OqXvaPGook2Sw=,tag:ZMQH3U2lgOJ8eX1G9+6Olg==,type:comment]
+            extraKernelArgs:
+                - ENC[AES256_GCM,data:1dHNBVLWHcBN6wemLQ==,iv:74jMMXKpnjJlzyWtwwa4qJlueakOMxu6t+BDXn2/kr8=,tag:v8cIow5IS15Akh9XDL7aDg==,type:str]
+            systemExtensions:
+                officialExtensions:
+                    - ENC[AES256_GCM,data:ojltqvMPLhR0wnygTaUX,iv:Oh/3Zf0wBYj/0g+2Dfvzonv2XubX8y85gr4oCRxdD04=,tag:6jt+rwYBtEdWkXWyBJEkpA==,type:str]
+                    - ENC[AES256_GCM,data:vci5MylOYw4y6C1G4GK2qBwvkGKADyOa3t4=,iv:BhYiI8IgK5o7OqG13qoi7AREBbpS9fb0SRY8FiI2cwg=,tag:NbcTNPKZl2mevTBVoSCDGg==,type:str]
+                    - ENC[AES256_GCM,data:Ev1bOKV8hmuHqbymmA5r,iv:SNX8qlxBokmj5iLjI7XBNCrBDP+iGtFdK+8QS7gp8Eg=,tag:jCgvbXjXwtGTOcmrbYpHsQ==,type:str]
+                    - ENC[AES256_GCM,data:ylSrftpxPmrUv2WM6FTsqp9aCQ==,iv:leYIICJ8lzwcqvX6z/6xOhXm44EdYS8uJBmqtRPbeqc=,tag:Fa6qqWKZMPkjFW4IY3XdMg==,type:str]
+    patches:
+        - ENC[AES256_GCM,data:3k11v9Al/ZVR0PY6zdUdVWQuv8tLcwgjeuUPdqabG/PXxQCdz6fLu7VVMGsIARqlmwqttU8CiVp87miXQy1+A/7XTqFKrerz4qFQoTnwbgCAUYpEWyQ2vAqXrHGwsoz40+fM151TabLZ5adCfDvK6tj9ezyo6pRx5DnwyPRInBYXagz6rws3OsH0Q+32hXxPb3eVYd8umlD0hGaxsfzbvDBby+yJ/ZXCQUy4TBnq0SiW4B2meNmnyhn+rMsCpRHgwqBIQDMGGN5iBKLpu/VdUtegOhEREAuFSZf3zoUH/LwdxVetPqSngUXhe48cUGPu4spos+4o3s2Mqw48D9OUsE3xH+VAADGyLQF+vYU8tnLFuLjGSMx+eH0dCSysDXa1LK92ZjmV7wTKxevcyw/TOX2ptiv80NzhMRA2NjPRvkjmJ549czBSFSr2uxBQpZ4B0mlgIw30GeJGzlXy+9qbPFY/aHxfUbhQfzAe8jUGKjMezoX10buYgWWf4zlSGMMIXWAtxsOKUme5Xtw1+YY8iUKM9zEgkZqYtg+9EKo/IN72+9rDvL7LIE2FseYafXOYjXXofmHAo2C2h77yPcBDw2sLtmnfALL65vlXXX8Fq3NwLEfI2cTAxNffpiXMnI17vtCJVbUVoM3ULWQPVrUbGgNdOkN0btukglAeyiLRV268GaEHWKNPOTEaN+jHTB3lC1gmTgo+oQ==,iv:Sg5vD+pBJxUUKXdgC6tGYvOM/5KGQmQxw1ExgulQRLA=,tag:6H1OuDSMs8d5qz4Iqbdt8A==,type:str]
+        - ENC[AES256_GCM,data:tF8e50fNmW6HR/1Artnesc5/lJnc279fHHBVIAxf/O3MQkdcad9PoMCylEuYVQGAew==,iv:Fs7JdAW+lERWNWL5nnFNPsngGZn2UHHX5vufdydKuhM=,tag:YQweXcVgqLFkiF+PEnVgIQ==,type:str]
+        - ENC[AES256_GCM,data:V4nWQvgPEkGKFrasj7Z8qKhkZD9xM34KX3DrM52OayJ2iJ1MqqKJWCDXHLTJwvaEb8cHlbwD+fAjsBCSsI5/nH9qbUJQT7krMVBOC5JlaO2FazNbI+T5NrSIW8Y+5V0JD5I/6tZP0b/hZVgpvDV81BKiCbilqQ==,iv:ni2b8WblvVIK/+TaA6HXanWtXNNS5sINFRf+5Du6n0E=,tag:hF2Lb4V8J1jc7e5waMU7Nw==,type:str]
+        - ENC[AES256_GCM,data:vsoTsmOV7zexqbtU9TDyF0iSoJNGP5pimG/cROmG2gWR48ntsaqygSLge0XEhvKKgtH3yLBPOrEl1hv7c71Qua6w1LYyUdpOegV2CTL5gHPGVo4ASE1sxsU6lEvuiYefgZ3mhHvMvnKYxYzBbQF5sKvr5fJgmal5p5YNvTsu0tlBqH1VWyuwV4Ul5TlcEWFYHCniG/XkjPPln6Ch7HhYhqMTkGrHCtJDfwaKc7SWZ/oA18ohfB9uSyPkjyZpEawnVZhJb9TBeQ35,iv:pm9KWP/z3t7V9KQbePaO3sla2FGzrVdjaDvCZfVKw0k=,tag:kX5sgsBftTWPy50NpiJllw==,type:str]
+        - ENC[AES256_GCM,data:bTzeLPHLQC7LbBybcAlNkXJBigSdL3Fyj6HBJ1jzLtXuv4791A956S8HFBz30agf2OqA+6/AK0r5ZeXpsTPEryomDOCo5K3s,iv:SbQcna9xmzX9Sfhi7Q2fRc+cE43/lhFVS1QxhjXKIw4=,tag:DiLJ2jwfEUYari7KxCN45Q==,type:str]
+        - ENC[AES256_GCM,data:l9O4xk7nnDdea0zG8z2kM0IUEsg4u9wEEcgykKysnvBDxZCcKB7YQ5nErIBuH0EEzvMplu/QDLzOo+w=,iv:UAbNJozRdvjgY7ONS1LKlHy9KniBgELaxOSHWagrkZ0=,tag:/2/NFNlrmasW2HZ28VtH+g==,type:str]
+        - ENC[AES256_GCM,data:yA+f0/shZvRLCQOE7dcNK/+jTzBq5N6GKNB54qMdDfB3J6xoUf8i40vUpImZmUHklifN7pvtilRZXl2XK6NDeUvVys29Nc5FV8D2pNE=,iv:+mXqx1zVNy/0VTug058730s6moTplW1+6PZKBnUXm4o=,tag:BumP4D7BqVKOPRf17TQjAw==,type:str]
+        - ENC[AES256_GCM,data:cFknwFsTpJXixZqvyQAzh9fPKQmXpkpB/lfAJKfJGOtjyoM3CYIDHXKjnUiMjpVL0OwTa3fOaf4JTUkMX9nCIveFZMB9PtsWPHx4QuwOXmiORFgsb1JzuRDvZAYvz0bsmZzDQopdkqz6IahhVzKLlogmmHk7iCIo+UBOy/hFqi/+AbjR/SbAvl///g==,iv:M9EUQdb3Q9790URqnOqopf2/rBbZlxjR0l+0Junm4mA=,tag:whBG+xKbysvsC7oB0OcIrQ==,type:str]
+        - ENC[AES256_GCM,data:0h8uREaxeau+QMHkOy2vNC3DIzTuca7B51FQX+p+d9FvjAeGwbeLFN0/7sv/waAxqr5cLmmZ8l8jlds9biGkfYgczSdd8QG/8BwlRoNkYypHQzireSr+V+evx3BUbeIu0tSU5kk42x3tJSG43I4ypbSHFmxbnu0EVUsmbYcnHVNu8x7eOqr03Hivu0qt+ihFokez5pS+Raf27IPzzF1qZlLybm5FRGoWesK9pO6jsYMLLXszSz+YSnCZx5dNGLq8UQQ21d2buw==,iv:YRbCs7ds8Qoxqa26DWoEkGBAdtg/p3y+1OMAh3On23s=,tag:JkZ6mUaP3tUZtWkf+yKbDA==,type:str]
+sops:
+    kms: []
+    gcp_kms: []
+    azure_kv: []
+    hc_vault: []
+    age:
+        - recipient: age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68
+          enc: |
+            -----BEGIN AGE ENCRYPTED FILE-----
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBXc0s2ckhrUnZZUmtWcjE2
+            WElVMjNlNXJXbkdXWmNleDlJeDF1QkZ2ZG0wCjdEWHlpUVhtNGw0Z1haRzJ1U0Jq
+            WXJTMDZ2K29hWVRVL1pPaUV0a0ZRYmsKLS0tIFV6MjhSWnJRNURBSWlXSUxNN1A5
+            U0w0TXIwZkIvOWtOT0dheVpoT0hSWnMK1fseWoA6tj/BDRL+cY+34DepbyFJRX83
+            UIuFFll6KimjZ/IP/Z4uj//nXLCiQDqa2Zb6lGIoJ4Ciq0IXFGBcrQ==
+            -----END AGE ENCRYPTED FILE-----
+    lastmodified: "2024-12-20T03:21:17Z"
+    mac: ENC[AES256_GCM,data:gHQ7xH0ytTL+d+z6h70tFFHV3ryo/vgIXnf1nVTIl2Yplp0uWT9iOqu5u9diZdt2p2Pal1ehqy+MyqNRF6ePMoC6O8z0ldmADYZYNOUYAuKHZXDGVQ76OTp2wHENDnue5blCNwRjOi036ymLr56+00FM2An71uBZxasUX544OqQ=,iv:LrUhnLwooAefY0QsorkR3D9xcDPMwJXiaEzs/wdfXcc=,tag:SehWnSRIKvmzaYMhe2E3og==,type:str]
+    pgp: []
+    unencrypted_suffix: _unencrypted
+    version: 3.9.1

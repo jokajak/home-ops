@@ -2,3 +2,5 @@
 *.yaml.j2 linguist-language=YAML
 *.sops.* diff=sopsdiffer
 *.sops.toml linguist-language=JSON
+
+kubernetes/talos/talconfig.yaml filter=git-sops diff=git-sops
