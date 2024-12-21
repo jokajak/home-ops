@@ -14,14 +14,14 @@ spec:
           "type": "macvlan",
           "master": "eth0.50",
           "mode": "bridge",
-          "capabilities": {
-            "ips": true
-          },
+          "capabilities": { "ips": true },
           "ipam": {
             "type": "static",
             "routes": [
-              { "dst": "${IOT_CIDR}", "gw": "${IOT_GATEWAY}" },
-              { "dst": "${LAN_CIDR}", "gw": "${IOT_GATEWAY}" }
+              {
+                "dst": "${LAN_CIDR}",
+                "gw": "${IOT_GATEWAY}"
+              }
             ]
           }
         },
