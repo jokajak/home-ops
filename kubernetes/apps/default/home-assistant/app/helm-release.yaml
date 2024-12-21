@@ -37,8 +37,8 @@ spec:
               tag: 2024.11.3
             env:
               TZ: America/New_York
-              HASS_HTTP_TRUSTED_PROXY_1: ${SERVICE_CIDR}
-              HASS_HTTP_TRUSTED_PROXY_2: ${NODE_CIDR}
+              HASS_HTTP_TRUSTED_PROXY_1: ${SERVICE_CIDR:=127.0.0.1}
+              HASS_HTTP_TRUSTED_PROXY_2: ${NODE_CIDR:=10.0.0.0/8}
             securityContext:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
@@ -68,7 +68,7 @@ spec:
         annotations:
           hajimari.io/icon: "vscode-icons:file-type-homeassistant"
         hosts:
-          - host: &host "home.${SECRET_DOMAIN}"
+          - host: &host "home.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:
