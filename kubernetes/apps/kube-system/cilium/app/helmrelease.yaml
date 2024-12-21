@@ -33,6 +33,8 @@ spec:
     cluster:
       name: home-kubernetes
       id: 1
+    cni:
+      exclusize: false # permit multus usage
     # NOTE: This might need to be set if you have more than one active NIC on your hosts
     # devices:
     #   - eno0
