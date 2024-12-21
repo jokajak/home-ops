@@ -3,18 +3,16 @@ apiVersion: "k8s.cni.cncf.io/v1"
 kind: NetworkAttachmentDefinition
 metadata:
   name: iot-vlan
-  namespace: network
 spec:
-  config: |-
+  config: |
     {
       "cniVersion": "0.3.1",
-      "name": "iot-vlan",
       "plugins": [
         {
           "type": "macvlan",
+          "capabilities": { "ips": true },
           "master": "eth0.50",
           "mode": "bridge",
-          "capabilities": { "ips": true },
           "ipam": {
             "type": "static",
             "routes": [
