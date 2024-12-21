@@ -36,7 +36,7 @@ spec:
         pod:
           nodeSelector:
             zwave.feature.node.kubernetes.io/zwave: "true"
-            kubernetes.io/hostname: "${ZWAVE_NODE}"
+            kubernetes.io/hostname: "${ZWAVE_NODE:=zwave.internal}"
         containers:
           main:
             image:
@@ -80,7 +80,7 @@ spec:
       main:
         className: internal
         hosts:
-          - host: &host "zwave.${SECRET_DOMAIN}"
+          - host: &host "zwave.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:
