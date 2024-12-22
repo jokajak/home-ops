@@ -77,6 +77,8 @@ spec:
             k8s.v1.cni.cncf.io/networks: '[
               {
               "name":"iot-vlan",
+              "interface": "eth0.50",
+              "namespace": "network",
               "ips": ["${MATTER_HUB_CIDR_V4}"],
               "mac": "02:00:00:B5:46:C3",
               "gateway": ["${IOT_GATEWAY}"]
