@@ -35,6 +35,19 @@ spec:
       id: 1
     cni:
       exclusive: false # permit multus usage
+      resources:
+        requests:
+          cpu: 100m
+          memory: 10Mi
+        limit:
+          memory: 150Mi
+    envoy:
+      resources:
+        requests:
+          cpu: 100m
+          memory: 10Mi
+        limit:
+          memory: 100Mi
     # NOTE: This might need to be set if you have more than one active NIC on your hosts
     # devices:
     #   - eno0
@@ -66,6 +79,12 @@ spec:
         enabled: true
         annotations:
           grafana_folder: Cilium
+      resources:
+        requests:
+          cpu: 100m
+          memory: 10Mi
+        limit:
+          memory: 75Mi
     prometheus:
       enabled: true
       serviceMonitor:
