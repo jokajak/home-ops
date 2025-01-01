@@ -14,12 +14,11 @@ spec:
     server: ${SECRET_NFS_SERVER}
     path: "${SECRET_NFS_PATH}/s3"
   mountOptions:
-  - nfsvers=4.1
-  - tcp
-  - intr
-  - hard
-  - noatime
-  - nodiratime
+    - nfsvers=4.1
+    - tcp
+    - hard
+    - noatime
+    - nodiratime
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
