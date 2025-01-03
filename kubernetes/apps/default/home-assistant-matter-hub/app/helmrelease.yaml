@@ -70,6 +70,11 @@ spec:
               readOnlyRootFilesystem: false
               capabilities: { drop: ["ALL"] }
 
+            resources:
+              requests:
+                memory: 100Mi
+              limits:
+                memory: 150Mi
         pod:
           annotations:
             # printf '02:00:00:%02X:%02X:%02X\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
