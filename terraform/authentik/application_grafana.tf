@@ -28,7 +28,7 @@ resource "authentik_provider_oauth2" "grafana_oauth" {
 
   allowed_redirect_uris = [
     {
-      matching_mode = "string",
+      matching_mode = "strict",
       url           = "https://grafana.${var.domain}/login/generic_oauth"
     }
   ]
