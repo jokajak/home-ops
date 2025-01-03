@@ -49,14 +49,10 @@ resource "authentik_source_oauth" "github" {
   oidc_jwks_url = "https://token.actions.githubusercontent.com/.well-known/jwks"
 }
 
-data "authentik_scope_mapping" "oauth2" {
+data "authentik_property_mapping_provider_scope" "oauth2" {
   managed_list = [
     "goauthentik.io/providers/oauth2/scope-openid",
     "goauthentik.io/providers/oauth2/scope-email",
     "goauthentik.io/providers/oauth2/scope-profile"
   ]
-}
-
-data "authentik_source" "inbuilt" {
-  managed = "goauthentik.io/sources/inbuilt"
 }

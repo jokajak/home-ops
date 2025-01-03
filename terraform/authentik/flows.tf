@@ -45,9 +45,9 @@ resource "authentik_flow_stage_binding" "authenticator-webauthn-setup-binding-00
 ## Authentication flow
 ########################################
 resource "authentik_flow" "authentication" {
-  name               = "authentication-flow"
+  name               = "Main Authentication Flow"
   title              = "Welcome!"
-  slug               = "authentication-flow"
+  slug               = "main-authentication-flow"
   designation        = "authentication"
   policy_engine_mode = "all"
 }
