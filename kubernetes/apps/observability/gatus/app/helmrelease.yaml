@@ -31,33 +31,24 @@ spec:
       gatus:
         annotations:
           reloader.stakater.com/auto: "true"
-        # initContainers:
-        # init-db:
-        #   image:
-        #     repository: ghcr.io/onedr0p/postgres-init
-        #     tag: 16
-        #   envFrom: &envFrom
-        #     - secretRef:
-        #         name: gatus-secret
-        # init-config:
-        #   dependsOn: init-db
-        #   image: &configSyncImage
-        #     repository: ghcr.io/kiwigrid/k8s-sidecar
-        #     tag: 1.27.6
-        #   env:
-        #     FOLDER: /config
-        #     LABEL: gatus.io/enabled
-        #     NAMESPACE: ALL
-        #     RESOURCE: both
-        #     UNIQUE_FILENAMES: true
-        #     METHOD: WATCH
-        #   restartPolicy: Always
-        #   resources: &resources
-        #     requests:
-        #       cpu: 10m
-        #       memory: 10Mi
-        #     limits:
-        #       memory: 256Mi
+        initContainers:
+          init-config:
+            image:
+              repository: ghcr.io/kiwigrid/k8s-sidecar
+              tag: 1.28.4
+            env:
+              FOLDER: /config
+              LABEL: gatus.io/enabled
+              NAMESPACE: ALL
+              RESOURCE: both
+              UNIQUE_FILENAMES: true
+              METHOD: WATCH
+            restartPolicy: Always
+            resources: &resources
+              requests:
+                cpu: 10m
+              limits:
+                memory: 256Mi
         containers:
           app:
             image:
@@ -85,12 +76,7 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            resources: &resources
-              requests:
-                cpu: 10m
-                memory: 10Mi
-              limits:
-                memory: 256Mi
+            resources: *resources
         pod:
           dnsConfig:
             options:
