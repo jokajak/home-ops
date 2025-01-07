@@ -1,0 +1,260 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/budimanjojo/talhelper/master/pkg/config/schemas/talconfig.json
+---
+# renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+talosVersion: v1.8.1
+# renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+kubernetesVersion: v1.31.3
+
+clusterName: &cluster home-kubernetes
+endpoint: https://192.168.116.39:6443
+clusterPodNets:
+  - "10.42.0.0/16"
+clusterSvcNets:
+  - "10.43.0.0/16"
+additionalApiServerCertSans: &sans
+  - "192.168.116.39"
+  - 127.0.0.1 # KubePrism
+  - "kubeapi.int.kayses.us"
+additionalMachineCertSans: *sans
+cniConfig:
+  name: none
+
+nodes:
+  - hostname: "foyer-dell-mff"
+    ipAddress: "192.168.116.40"
+    installDisk: "/dev/sda"
+    nodeAnnotations:
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    controlPlane: true
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.116.40/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.116.1"
+        vip:
+          ip: "192.168.116.39"
+  - hostname: "basement-dell-sff"
+    ipAddress: "192.168.116.42"
+    installDisk: "/dev/sda"
+    controlPlane: true
+    nodeAnnotations:
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.116.42/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.116.1"
+        vip:
+          ip: "192.168.116.39"
+  - hostname: "foyer-dell-3040"
+    ipAddress: "192.168.116.46"
+    installDisk: "/dev/sda"
+    nodeAnnotations:
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    controlPlane: true
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.116.46/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.116.1"
+        vip:
+          ip: "192.168.116.39"
+  - hostname: "basement-hp-800g2"
+    ipAddress: "192.168.116.47"
+    installDisk: "/dev/sda"
+    nodeAnnotations:
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    controlPlane: false
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.116.47/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.116.1"
+  - hostname: "basement-hp-800g3"
+    ipAddress: "192.168.116.48"
+    installDisk: "/dev/sda"
+    nodeAnnotations:
+      installerImage: "{{ .MachineConfig.MachineInstall.InstallImage }}"
+    controlPlane: false
+    networkInterfaces:
+      - interface: eth0
+        dhcp: false
+        addresses:
+          - "192.168.116.48/24"
+        mtu: 1500
+        routes:
+          - network: 0.0.0.0/0
+            gateway: "192.168.116.1"
+controlPlane:
+  schematic:
+    customization:
+      # disable predictable names so that multus is easier
+      extraKernelArgs:
+        - net.ifnames=0
+      systemExtensions:
+        officialExtensions:
+          - siderolabs/crun
+          - siderolabs/intel-ucode
+          - siderolabs/nut-client
+  patches:
+    # Configure containerd
+    - &containerdPatch |-
+      machine:
+        files:
+          - op: create
+            path: /etc/cri/conf.d/20-customization.part
+            content: |-
+              [plugins."io.containerd.grpc.v1.cri"]
+                enable_unprivileged_ports = true
+                enable_unprivileged_icmp = true
+              [plugins."io.containerd.grpc.v1.cri".containerd]
+                discard_unpacked_layers = false
+              [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+                discard_unpacked_layers = false
+              [plugins."io.containerd.cri.v1.images"]
+                discard_unpacked_layers = false
+
+    # Disable search domain everywhere
+    - &disableSearchDomainPatch |-
+      machine:
+        network:
+          disableSearchDomain: true
+
+    # Enable cluster discovery
+    - &discoveryPatch |-
+      cluster:
+        discovery:
+          registries:
+            kubernetes:
+              disabled: false
+            service:
+              disabled: false
+
+    # Configure kubelet
+    - &kubeletPatch |-
+      machine:
+        kubelet:
+          extraArgs:
+            image-gc-low-threshold: 50
+            image-gc-high-threshold: 55
+            rotate-server-certificates: true
+          nodeIP:
+            validSubnets:
+              - "192.168.116.0/24"
+
+    # Enable KubePrism
+    - &kubePrismPatch |-
+      machine:
+        features:
+          kubePrism:
+            enabled: true
+            port: 7445
+
+    # Force nameserver
+    - &nameserverPatch |-
+      machine:
+        network:
+          nameservers:
+            - 192.168.116.11
+
+    # Configure NTP
+    - &ntpPatch |-
+      machine:
+        time:
+          disabled: false
+          servers:
+            - time.cloudflare.com
+
+    # Custom sysctl settings
+    - &sysctlPatch |-
+      machine:
+        sysctls:
+          fs.inotify.max_queued_events: 65536
+          fs.inotify.max_user_watches: 524288
+          fs.inotify.max_user_instances: 8192
+
+    # Cluster configuration
+    - |-
+      cluster:
+        allowSchedulingOnMasters: true
+        controllerManager:
+          extraArgs:
+            bind-address: 0.0.0.0
+        coreDNS:
+          disabled: true
+        proxy:
+          disabled: true
+        scheduler:
+          extraArgs:
+            bind-address: 0.0.0.0
+
+    # ETCD configuration
+    - |-
+      cluster:
+        etcd:
+          extraArgs:
+            listen-metrics-urls: http://0.0.0.0:2381
+          advertisedSubnets:
+            - "192.168.116.0/24"
+
+    # Disable default API server admission plugins.
+    - |-
+      - op: remove
+        path: /cluster/apiServer/admissionControl
+
+    # Enable K8s Talos API Access
+    - |-
+      machine:
+        features:
+          kubernetesTalosAPIAccess:
+            enabled: true
+            allowedRoles:
+              - os:admin
+            allowedKubernetesNamespaces:
+              - system-upgrade
+
+    # Mount openebs-hostpath in kubelet
+    - &openEbsPatch |-
+      machine:
+        kubelet:
+          extraMounts:
+            - destination: /var/openebs/local
+              type: bind
+              source: /var/openebs/local
+              options:
+                - bind
+                - rshared
+                - rw
+
+worker:
+  schematic:
+    customization:
+      # disable predictable names so that multus is easier
+      extraKernelArgs:
+        - net.ifnames=0
+  patches:
+    - *containerdPatch
+    - *disableSearchDomainPatch
+    - *discoveryPatch
+    - *kubeletPatch
+    - *kubePrismPatch
+    - *nameserverPatch
+    - *ntpPatch
+    - *sysctlPatch
+    - *openEbsPatch
