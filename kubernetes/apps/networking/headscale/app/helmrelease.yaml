@@ -86,11 +86,15 @@ spec:
               - path: /etc/headscale/policy.json
                 subPath: policy.json
       var-lib-headscale:
-        existingClaim: headscale
-        advancedMounts:
-          headscale:
-            app:
-              - path: /var/lib/headscale
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /var/lib/headscale
+            readOnly: false
       tmp:
         type: emptyDir
         advancedMounts:
