@@ -90,6 +90,8 @@ spec:
             value: ${VPN_SERVER_COUNTRIES}
           - name: SHADOWSOCKS
             value: "on"
+          - name: PUBLICIP_ENABLED
+            value: "false"
 
         envFrom:
           - secretRef:
