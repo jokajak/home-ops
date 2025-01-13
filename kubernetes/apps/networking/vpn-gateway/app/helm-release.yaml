@@ -16,10 +16,6 @@ spec:
         namespace: networking
   #See https://github.com/angelnu/helm-charts/blob/main/charts/apps/pod-gatewa/values.yaml
   values:
-    resources:
-      requests:
-        limits:
-          squat.ai/tun: "1"
     image:
       repository: ghcr.io/angelnu/pod-gateway
       # I am using dev version for testing - others should be using latest
@@ -39,6 +35,10 @@ spec:
             repository: docker.io/qmcgaw/gluetun
             tag: latest
 
+        resources:
+          requests:
+            limits:
+              squat.ai/tun: "1"
         env:
           - name: VPN_SERVICE_PROVIDER
             value: ${VPN_SERVICE_PROVIDER}
