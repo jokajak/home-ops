@@ -26,6 +26,15 @@ spec:
         # Use dev version
         pullPolicy: Always
         tag: dev
+    lifecycle:
+      postStart:
+        exec:
+          command:
+            [
+              "/bin/sh",
+              "-c",
+              "(ip rule del table 51820; ip -6 rule del table 51820) || true",
+            ]
     service:
       main:
         type: ClusterIP
@@ -39,9 +48,12 @@ spec:
         type: LoadBalancer
         externalTrafficPolicy: Cluster
         ports:
-          shadowsocks:
+          shadowsocks-udp:
             port: 8388
             protocol: UDP
+          shadowsocks-tcp:
+            port: 8388
+            protocol: TCP
 
     addons:
       vpn:
