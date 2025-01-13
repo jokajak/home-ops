@@ -29,7 +29,7 @@ resource "authentik_provider_oauth2" "headscale_oauth" {
   allowed_redirect_uris = [
     {
       matching_mode = "strict",
-      url           = "https://hs.${var.domain}/"
+      url           = "https://hs.${var.domain}/oidc/callback"
     }
   ]
 
@@ -41,7 +41,7 @@ resource "authentik_application" "headscale_application" {
   protocol_provider  = authentik_provider_oauth2.headscale_oauth.id
   group              = authentik_group.headscale_users.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://hs.${var.domain}/login/generic_oauth"
+  meta_launch_url    = "https://hs.${var.domain}/"
   policy_engine_mode = "any"
 }
 
