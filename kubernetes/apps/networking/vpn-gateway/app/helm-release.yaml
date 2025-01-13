@@ -26,6 +26,23 @@ spec:
         # Use dev version
         pullPolicy: Always
         tag: dev
+    service:
+      main:
+        type: ClusterIP
+        clusterIP: None
+        ports:
+          http:
+            port: 4789
+            protocol: UDP
+      shadowsocks:
+        primary: false
+        type: LoadBalancer
+        externalTrafficPolicy: Cluster
+        ports:
+          shadowsocks:
+            port: 8388
+            protocol: UDP
+
     addons:
       vpn:
         enabled: true
