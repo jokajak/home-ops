@@ -35,10 +35,10 @@ spec:
             repository: docker.io/qmcgaw/gluetun
             tag: latest
 
-        resources:
-          requests:
-            limits:
-              squat.ai/tun: "1"
+        # resources:
+        #   requests:
+        #     limits:
+        #       squat.ai/tun: "1"
         env:
           - name: VPN_SERVICE_PROVIDER
             value: ${VPN_SERVICE_PROVIDER}
