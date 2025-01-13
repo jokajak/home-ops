@@ -34,6 +34,14 @@ spec:
           image:
             repository: docker.io/qmcgaw/gluetun
             tag: latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - NET_RAW
+              - NET_ADMIN
 
         resources:
           limits:
