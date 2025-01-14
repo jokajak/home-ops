@@ -14,3 +14,18 @@ volumeBindingMode: Immediate
 mountOptions:
   - nfsvers=4.1
   - noatime
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nfs-csi-data
+provisioner: nfs.csi.k8s.io
+parameters:
+  server: ${SECRET_NFS_SERVER}
+  share: ${SECRET_NFS_DATA_PATH}
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+# Note: The first two options are strictly for NFSv4.1
+mountOptions:
+  - nfsvers=4.1
+  - noatime
