@@ -69,7 +69,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   nfs:
     server: ${SECRET_NFS_SERVER}
-    path: "/volume1/Media"
+    path: "${SECRET_NFS_MEDIA_PATH}"
   mountOptions:
     - nfsvers=4.1
     - tcp
