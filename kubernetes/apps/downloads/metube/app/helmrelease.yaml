@@ -82,4 +82,4 @@ spec:
         path: ${SECRET_NFS_MEDIA_PATH:=temp}
         globalMounts:
           - path: /downloads
-            subPath: media
+            subPath: metube
