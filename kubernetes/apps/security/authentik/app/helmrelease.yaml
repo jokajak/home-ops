@@ -101,7 +101,7 @@ spec:
           cpu: 100m
           memory: 512Mi
         limits:
-          memory: 512Mi
+          memory: 1024Mi
       startupProbe:
         periodSeconds: 10
       metrics:
@@ -122,4 +122,4 @@ spec:
           cpu: 100m
           memory: 512Mi
         limits:
-          memory: 512Mi
+          memory: 1024Mi
