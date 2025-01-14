@@ -113,7 +113,7 @@ spec:
         existingClaim: nfs-media
         globalMounts:
           - path: /media
-            readOnly: true
+            readOnly: false
       transcode:
         enabled: true
         existingClaim: jellyfin-transcode
