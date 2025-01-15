@@ -29,7 +29,7 @@ spec:
     keepHistory: false
   values:
     controllers:
-      main:
+      app:
         containers:
           app:
             image:
