@@ -81,7 +81,6 @@ spec:
       api-data:
         enabled: true
         existingClaim: mealie
-        advancedMounts:
-          main:
-            api:
-              - path: /app/data
+        globalMounts:
+          - path: /app/data
+            readOnly: false
