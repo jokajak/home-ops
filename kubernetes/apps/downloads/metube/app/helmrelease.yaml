@@ -84,7 +84,7 @@ spec:
             readOnly: false
       downloads:
         type: nfs
-        server: ${SECRET_NFS_SERVER:=nfs}
+        server: ${SECRET_NFS_SERVER:=nfs.internal}
         path: ${SECRET_NFS_MEDIA_PATH:=temp}
         globalMounts:
           - path: /downloads
