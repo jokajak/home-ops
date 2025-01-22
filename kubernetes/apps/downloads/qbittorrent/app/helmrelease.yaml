@@ -52,6 +52,7 @@ spec:
               VPN_INTERFACE: wg0
               FIREWALL_INPUT_PORTS: 8080
               FIREWALL_OUTBOUND_SUBNETS: ${CLUSTER_CIDR:=10.96.0.0/12},${SERVICE_CIDR:=10.244.0.0/16} # Allow access to k8s subnets
+              SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES}
             envFrom:
               - secretRef:
                   name: ${VPN_SERVICE_PROVIDER:=custom}
