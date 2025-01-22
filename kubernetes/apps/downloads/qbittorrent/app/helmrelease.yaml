@@ -157,7 +157,7 @@ spec:
       downloads:
         type: nfs
         server: ${SECRET_NFS_SERVER:=nfs.internal}
-        path: ${SECRET_NFS_MEDIA_PATH:=temp}
+        path: ${SECRET_NFS_DATA_PATH:=temp}
         globalMounts:
           - path: /downloads
             subPath: torrents
