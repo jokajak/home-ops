@@ -42,9 +42,9 @@ data:
     MATTER_HUB_CIDR_V4: ENC[AES256_GCM,data:hWym/wsPzw5pgunMsuzj,iv:1SUJAehW1wTWyH1CUJ4PdMbzc94L0xqfeZX2bvJ7z4g=,tag:D6PR3vU0ZEjKjAe9BIp/2Q==,type:str]
     #ENC[AES256_GCM,data:obsJRA==,iv:IPMrd9ZUCXpOYx7jb3FuN6DxP7ZhzjIaKFwyDWNH5vI=,tag:nH5ufgbAtbkFD0+RSAnhvA==,type:comment]
     VPN_SERVICE_PROVIDER: ENC[AES256_GCM,data:MuVW/eCJ,iv:/f7oaTIEAlMue2SNV/kFZ2ADB4/rU0yIp1Fe1wqkUWk=,tag:D2swvpjN/tHyoGdNSPOiUw==,type:str]
-    VPN_SERVER_COUNTRIES: ENC[AES256_GCM,data:p6FoSgQ8oz+3Ohg=,iv:/9FYE9+9kvH7A4fTBHMwgPvcxREu7+jtQ7wSJ29sGTY=,tag:iXlhDzhUZD/2QQSFJSUe5w==,type:str]
+    VPN_SERVER_COUNTRIES: ENC[AES256_GCM,data:SWAfFshovPkSfwL1Tg==,iv:repHUlszkEfSW24/mO7KYx4eMqPudy/r82oYks+glxM=,tag:aAtXOHEuiTEFnlnD6sMXsA==,type:str]
     #ENC[AES256_GCM,data:vN0E6QujNWPbHCm5,iv:WwJvaRwOvGRUOCUc8y4SvQO4L151JGOUROGF09K2Wiw=,tag:F+k14OW929IRgV3G0c39zg==,type:comment]
-    VPN_COUNTRY_CODE: ENC[AES256_GCM,data:7AU=,iv:jiZOIehdwVySdgSX5gaqGaV1hQHOJ44iVtJNNnzC5Es=,tag:FRXvvGDvVvbdTiZxjZkiUg==,type:str]
+    VPN_COUNTRY_CODE: ENC[AES256_GCM,data:FZc=,iv:pqHP+5lMWP8d0iSXJwyqbg43ajxNvAs4jSU+xTYzxXk=,tag:n0Rn/utQU9u9KrtEJyTVJw==,type:str]
     VPN_FORWARDED_PORT: ENC[AES256_GCM,data:WV2oolA=,iv:kzXN1ILTCya6jNoVtqiWT0TSuN+1koqqKOUGAAV9b/c=,tag:bAvrlcrruOMOQMhPVbCDoQ==,type:str]
 sops:
     kms: []
@@ -61,8 +61,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-01-13T17:39:51Z"
-    mac: ENC[AES256_GCM,data:BcjTivUEv12+PrTJaFbHXIAXlRRmWAd17xOYkwovkLdAuKUPKKqyCbK3T2+jHgxTkh8OTH8+Bg26JulV04p69jTduPXKz8QEgt8h9L1kapfi4GDXUMbH8lCNg3WXLP9HeGIOHbKpvXt8ESMXJUHLixcUNpSrTRlphu6ipEIg/fw=,iv:J0E8MJs3fUsdrBAtKxFIW7zGKcRe2El6gRflS0N1PVo=,tag:AYRPmKR0RVMCba1h3YtECA==,type:str]
+    lastmodified: "2025-01-22T01:55:20Z"
+    mac: ENC[AES256_GCM,data:ki8DbYHfYVdyv45fDtKTGItHzs2TCIaozR2O9+NvO2SzEOZ3pTpZZX2Vplymnlw8Km1e0QeZxPhJk+vHwal/PLYcnv3bAoaNt1ZyG/TbRa8v/cUbm/DNzdVI1wXu0KIVAhfSguJENdRgestbH5h6OkZP1MwuPsVpsyFxC992HnY=,iv:6NrIJRdU+NXPKkgXcI90x6l5rQQXQBrWyT7hDSVSsnM=,tag:oO3V01v1fom5Bqs+4fzhrw==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.9.3
