@@ -10,9 +10,6 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: cluster-apps-external-secrets
-    - name: cluster-apps-external-secrets-bitwarden
   path: ./kubernetes/apps/default/calibre/app
   prune: true
   sourceRef:
@@ -24,3 +21,6 @@ spec:
   postBuild:
     substitute:
       APP: *app
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-external-secrets-bitwarden
