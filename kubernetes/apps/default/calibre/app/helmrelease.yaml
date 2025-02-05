@@ -1,0 +1,86 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: &app calibre
+  namespace: default
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.1.0
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      strategy: rollback
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      calibre:
+        containers:
+          app:
+            image:
+              repository: ghcr.io/linuxserver/calibre
+              tag: version-v7.9.0
+            env:
+              TZ: "${TIMEZONE}"
+              PUID: "1026"
+              PGID: "1000"
+            resources:
+              requests:
+                cpu: 15m
+                memory: 324M
+              limits:
+                memory: 604M
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: 8080
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:bookshelf
+        hosts:
+          - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+            paths:
+              - path: /
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+    persistence:
+      config:
+        enabled: true
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /config
+            readOnly: false
+      books:
+        enabled: true
+        type: nfs
+        server: ${SECRET_NFS_SERVER:=nfs.internal}
+        path: ${SECRET_NFS_MEDIA_PATH:=temp}
+        globalMounts:
+          - path: ${SECRET_NFS_MEDIA_PATH:=temp}
