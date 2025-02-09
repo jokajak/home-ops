@@ -85,9 +85,10 @@ spec:
     ingress:
       main:
         enabled: true
-        className: internal
+        className: external
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+          nginx.ingress.kubernetes.io/whitelist-source-range: "${JELLYFIN_ALLOWLIST:=192.168.0.0/16,10.0.0.0/8,172.16.0.0/12}"
         hosts:
           - host: &host jellyfin.${SECRET_DOMAIN}
             paths:
