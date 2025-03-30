@@ -11,8 +11,8 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: ${SECRET_NFS_SERVER}
-    path: "${SECRET_NFS_PATH}/s3"
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_PATH:=/data}/s3"
   mountOptions:
     - nfsvers=4.1
     - tcp

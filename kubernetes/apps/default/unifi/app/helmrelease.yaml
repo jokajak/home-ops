@@ -79,7 +79,7 @@ spec:
         controller: main
         type: LoadBalancer
         externalTrafficPolicy: Cluster
-        loadBalancerIP: ${LB_UNIFI_CIDR_V4}
+        loadBalancerIP: ${LB_UNIFI_CIDR_V4:=192.168.1.1}
         ports:
           http:
             port: 8443

@@ -1,11 +1,12 @@
----
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: default
 resources:
-  - ./externalsecret.yaml
-  - ./helmrelease.yaml
-  - ./helmrepository.yaml
-commonLabels:
-  app.kubernetes.io/name: authentik
-  app.kubernetes.io/instance: authentik
+- ./externalsecret.yaml
+- ./helmrelease.yaml
+- ./helmrepository.yaml
+labels:
+- includeSelectors: true
+  pairs:
+    app.kubernetes.io/instance: authentik
+    app.kubernetes.io/name: authentik

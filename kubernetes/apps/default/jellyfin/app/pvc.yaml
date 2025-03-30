@@ -15,8 +15,8 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: ${SECRET_NFS_SERVER}
-    path: "${SECRET_NFS_PATH}/jellyfin"
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_PATH:=/data}/jellyfin"
   mountOptions:
     - nfsvers=4.1
     - tcp
@@ -68,8 +68,8 @@ spec:
     - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: ${SECRET_NFS_SERVER}
-    path: "${SECRET_NFS_MEDIA_PATH}"
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_MEDIA_PATH:=/data}"
   mountOptions:
     - nfsvers=4.1
     - tcp

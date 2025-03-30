@@ -4,7 +4,7 @@ kind: Plan
 metadata:
   name: kubernetes
 spec:
-  version: "${KUBE_VERSION}"
+  version: "${KUBE_VERSION:='1.31'}"
   serviceAccountName: system-upgrade
   secrets:
     - name: talos
@@ -17,7 +17,7 @@ spec:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
   prepare: &prepare
-    image: "ghcr.io/siderolabs/talosctl:${SYSTEM_VERSION}"
+    image: "ghcr.io/siderolabs/talosctl:${SYSTEM_VERSION:=1.8}"
     envs:
       - name: NODE_IP
         valueFrom:
@@ -39,7 +39,7 @@ kind: Plan
 metadata:
   name: talos
 spec:
-  version: "${SYSTEM_VERSION}"
+  version: "${SYSTEM_VERSION:='1.8'}"
   serviceAccountName: system-upgrade
   secrets:
     - name: talos

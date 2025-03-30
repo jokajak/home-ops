@@ -38,7 +38,7 @@ spec:
               repository: bellamy/wallos
               tag: 2.48.0
             env:
-              TZ: ${TIMEZONE}
+              TZ: ${TIMEZONE:=US}
             resources:
               requests:
                 cpu: 50m

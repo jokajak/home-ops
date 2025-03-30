@@ -48,7 +48,7 @@ spec:
               tag: 3.0.0-alpha.51
 
             env:
-              TZ: ${TIMEZONE}
+              TZ: ${TIMEZONE:=US}
               HAMH_LOG_LEVEL: debug
               HAMH_WEB_PORT: &port 8482
               HAMH_STORAGE_LOCATION: /data
@@ -84,9 +84,9 @@ spec:
               "name":"iot-vlan",
               "interface": "eth0.50",
               "namespace": "network",
-              "ips": ["${MATTER_HUB_CIDR_V4}"],
+              "ips": ["${MATTER_HUB_CIDR_V4:=192.168.1.2}"],
               "mac": "02:00:00:B5:46:C3",
-              "gateway": ["${IOT_GATEWAY}"]
+              "gateway": ["${IOT_GATEWAY:=192.168.1.1}"]
               }]'
 
     defaultPodOptions:

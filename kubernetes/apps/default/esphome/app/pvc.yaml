@@ -15,8 +15,8 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   nfs:
-    server: ${SECRET_NFS_SERVER}
-    path: "${SECRET_NFS_PATH}/esphome"
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_PATH:=/data}/esphome"
   mountOptions:
     - nfsvers=4.1
     - tcp

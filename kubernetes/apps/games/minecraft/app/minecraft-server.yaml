@@ -76,7 +76,7 @@ spec:
       # ex: whitelistUsers: player1,player2,player3
       whitelistUsers:
       # A comma-separated list of player names who should be admins.
-      ops: ${MINECRAFT_OPERATOR_USERNAMES}
+      ops: ${MINECRAFT_OPERATOR_USERNAMES:=minecraft_operator_usernames}
       # A comma-seperated list of xuid's for members on server with no
       # whitespaces.
       # ex: ops: "12345678,0987654"
@@ -106,7 +106,7 @@ spec:
       # type of kubernetes service to use
       serviceType: LoadBalancer
       ## Set the port used if the serviceType is NodePort
-      loadBalancerIP: ${LB_CIDR_MINECRAFT_V4}
+      loadBalancerIP: ${LB_CIDR_MINECRAFT_V4:=192.168.1.2}
       # loadBalancerSourceRanges: []
       ## Set the externalTrafficPolicy in the Service to either Cluster or Local
       externalTrafficPolicy: Cluster

@@ -36,7 +36,7 @@ spec:
               repository: ghcr.io/linuxserver/calibre
               tag: version-v7.9.0
             env:
-              TZ: "${TIMEZONE}"
+              TZ: "${TIMEZONE:=US}"
               PUID: "1026"
               PGID: "1000"
             resources:

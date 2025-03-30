@@ -33,18 +33,18 @@ servers:
           fallthrough in-addr.arpa ip6.arpa
           ttl 30
       - name: forward
-        parameters: . ${ROUTER_CIDR_V4}
+        parameters: . ${ROUTER_CIDR_V4:=192.168.1.1}
       - name: cache
         parameters: 30
       - name: loop
       - name: reload
       - name: loadbalance
   - zones:
-      - zone: ${DNS_SUFFIX}
+      - zone: ${DNS_SUFFIX:=.internal}
     port: 53
     plugins:
       - name: forward
-        parameters: . ${PIHOLE_ADDR}
+        parameters: . ${PIHOLE_ADDR:=192.168.1.1}
       - name: cache
         parameters: 3600
 affinity:

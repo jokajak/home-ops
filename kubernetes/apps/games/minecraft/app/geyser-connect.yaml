@@ -83,7 +83,7 @@ spec:
         externalTrafficPolicy: Cluster
         annotations:
           external-dns.alpha.kubernetes.io/hostname: minecraft.${SECRET_DOMAIN:=internal}
-        loadBalancerIP: ${LB_CIDR_GEYSERMC_V4}
+        loadBalancerIP: ${LB_CIDR_GEYSERMC_V4:=192.168.1.2}
         ports:
           minecraft:
             port: 19132

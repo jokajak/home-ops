@@ -47,8 +47,8 @@ spec:
               UP_UNIFI_DEFAULT_ROLE: home-ops
               UP_UNIFI_DEFAULT_URL: https://unifi.${SECRET_DOMAIN:=internal}
               UP_UNIFI_DEFAULT_VERIFY_SSL: false
-              UP_UNIFI_DEFAULT_USER: ${SECRET_UNPOLLER_USER}
-              UP_UNIFI_DEFAULT_PASS: ${SECRET_UNPOLLER_PASS}
+              UP_UNIFI_DEFAULT_USER: ${SECRET_UNPOLLER_USER:=unpoller_user}
+              UP_UNIFI_DEFAULT_PASS: ${SECRET_UNPOLLER_PASS:=unpoller_pass}
               UP_INFLUXDB_DISABLE: true
             probes:
               liveness:

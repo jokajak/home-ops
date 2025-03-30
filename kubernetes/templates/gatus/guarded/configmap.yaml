@@ -2,13 +2,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "${APP:-unknown}-gatus-ep"
+  name: "${APP:=unknown}-gatus-ep"
   labels:
     gatus.io/enabled: "true"
 data:
   config.yaml: |
     endpoints:
-      - name: "${APP} Exposure"
+      - name: "${APP:=app} Exposure"
         group: internal-guarded
         url: 1.1.1.1
         interval: 1m
@@ -16,13 +16,13 @@ data:
           hide-hostname: true
           hide-url: true
         dns:
-          query-name: "${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN:=internal}"
+          query-name: "${GATUS_SUBDOMAIN:=${APP:=app}}.${SECRET_DOMAIN:=internal}"
           query-type: A
         conditions:
           - "len([BODY]) == 0"
-      - name: "${APP}"
+      - name: "${APP:=app}"
         group: internal
-        url: "https://${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN:=internal}"
+        url: "https://${GATUS_SUBDOMAIN:=${APP:=app}}.${SECRET_DOMAIN:=internal}"
         interval: 1m
         conditions:
-          - "[STATUS] == ${GATUS_STATUS:-200}"
+          - "[STATUS] == ${GATUS_STATUS:=200}"
