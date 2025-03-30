@@ -48,7 +48,7 @@ spec:
         type: LoadBalancer
         externalTrafficPolicy: Cluster
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: ${VPN_SERVICE_PROVIDER}.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/hostname: ${VPN_SERVICE_PROVIDER:=openvpn}.${SECRET_DOMAIN:=internal}
         ports:
           shadowsocks-udp:
             port: 8388
@@ -79,7 +79,7 @@ spec:
             squat.ai/tun: "1"
         env:
           - name: VPN_SERVICE_PROVIDER
-            value: ${VPN_SERVICE_PROVIDER}
+            value: ${VPN_SERVICE_PROVIDER:=openvpn}
           - name: VPN_TYPE
             value: wireguard
           - name: VPN_INTERFACE
@@ -89,7 +89,7 @@ spec:
           - name: DOT
             value: "off"
           - name: SERVER_COUNTRIES
-            value: ${VPN_SERVER_COUNTRIES}
+            value: ${VPN_SERVER_COUNTRIES:=us}
           - name: SHADOWSOCKS
             value: "on"
           - name: PUBLICIP_ENABLED
@@ -97,7 +97,7 @@ spec:
 
         envFrom:
           - secretRef:
-              name: ${VPN_SERVICE_PROVIDER}
+              name: ${VPN_SERVICE_PROVIDER:=openvpn}
 
         livenessProbe:
           exec:
@@ -144,6 +144,6 @@ spec:
         IP: 10
         ports:
           - type: udp
-            port: ${VPN_FORWARDED_PORT}
+            port: ${VPN_FORWARDED_PORT:=1234}
           - type: tcp
-            port: ${VPN_FORWARDED_PORT}
+            port: ${VPN_FORWARDED_PORT:=1234}

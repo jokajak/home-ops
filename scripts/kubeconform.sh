@@ -33,6 +33,7 @@ find "${KUBERNETES_DIR}/flux" -type f -name $kustomize_config -print0 | while IF
     echo "=== Validating kustomizations in ${file/%$kustomize_config} ==="
     kustomize build "${file/%$kustomize_config}" "${kustomize_args[@]}" | \
       yq "del(.sops)" | \
+      flux envsubst --strict | \
       kubeconform "${kubeconform_args[@]}"
     if [[ ${PIPESTATUS[0]} != 0 ]]; then
       exit 1
