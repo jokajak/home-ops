@@ -38,9 +38,9 @@ spec:
               MINIO_PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local.:9090
               MINIO_PROMETHEUS_JOB_ID: minio
               MINIO_PROMETHEUS_AUTH_TYPE: public
-              MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN}
-              MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN}
-              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.${SECRET_DOMAIN},https://s3.${SECRET_DOMAIN}
+              MINIO_BROWSER_REDIRECT_URL: https://minio.${SECRET_DOMAIN:=internal}
+              MINIO_SERVER_URL: https://s3.${SECRET_DOMAIN:=internal}
+              MINIO_API_CORS_ALLOW_ORIGIN: https://minio.${SECRET_DOMAIN:=internal},https://s3.${SECRET_DOMAIN:=internal}
               MINIO_ROOT_USER:
                 valueFrom:
                   secretKeyRef:
@@ -72,13 +72,13 @@ spec:
       main:
         className: internal
         hosts:
-          - host: "minio.${SECRET_DOMAIN}"
+          - host: "minio.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:
                   identifier: main
                   port: http
-          - host: "s3.${SECRET_DOMAIN}"
+          - host: "s3.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:

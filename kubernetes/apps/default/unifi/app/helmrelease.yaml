@@ -120,7 +120,7 @@ spec:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
           hajimari.io/icon: mdi:lan
         hosts:
-          - host: &host "unifi.${SECRET_DOMAIN}"
+          - host: &host "unifi.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:

@@ -90,7 +90,7 @@ spec:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
           nginx.ingress.kubernetes.io/whitelist-source-range: "${JELLYFIN_ALLOWLIST:=192.168.0.0/16,10.0.0.0/8,172.16.0.0/12}"
         hosts:
-          - host: &host jellyfin.${SECRET_DOMAIN}
+          - host: &host jellyfin.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 pathType: Prefix

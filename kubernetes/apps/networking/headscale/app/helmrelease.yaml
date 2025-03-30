@@ -112,12 +112,12 @@ spec:
       headscale:
         className: external
         annotations:
-          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/target: external.${SECRET_DOMAIN:=internal}
           # websockets?
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
           nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
         hosts:
-          - host: &host hs.${SECRET_DOMAIN}
+          - host: &host hs.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 service:

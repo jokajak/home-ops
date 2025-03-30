@@ -109,7 +109,7 @@ spec:
         annotations:
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
         hosts:
-          - host: &host photos.${SECRET_DOMAIN}
+          - host: &host photos.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 pathType: Prefix

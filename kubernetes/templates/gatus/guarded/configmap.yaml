@@ -16,13 +16,13 @@ data:
           hide-hostname: true
           hide-url: true
         dns:
-          query-name: "${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN}"
+          query-name: "${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN:=internal}"
           query-type: A
         conditions:
           - "len([BODY]) == 0"
       - name: "${APP}"
         group: internal
-        url: "https://${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN}"
+        url: "https://${GATUS_SUBDOMAIN:-${APP}}.${SECRET_DOMAIN:=internal}"
         interval: 1m
         conditions:
           - "[STATUS] == ${GATUS_STATUS:-200}"

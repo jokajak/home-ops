@@ -117,9 +117,9 @@ spec:
           nginx.org/websocket-services: matterhub
           hajimari.io/enable: "true"
           hajimari.io/icon: "simple-icons:matterdotjs"
-          external-dns.alpha.kubernetes.io/hostname: internal.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/hostname: internal.${SECRET_DOMAIN:=internal}
         hosts:
-          - host: matterhub.${SECRET_DOMAIN}
+          - host: matterhub.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 service:

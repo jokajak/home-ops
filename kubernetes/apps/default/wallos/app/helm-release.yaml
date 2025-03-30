@@ -55,7 +55,7 @@ spec:
         enabled: true
         className: internal
         hosts:
-          - host: &host subs.${SECRET_DOMAIN}
+          - host: &host subs.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 service:

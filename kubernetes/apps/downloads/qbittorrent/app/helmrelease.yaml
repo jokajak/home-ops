@@ -136,7 +136,7 @@ spec:
       app:
         className: "internal"
         hosts:
-          - host: qbittorrent.${SECRET_DOMAIN}
+          - host: qbittorrent.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 service:

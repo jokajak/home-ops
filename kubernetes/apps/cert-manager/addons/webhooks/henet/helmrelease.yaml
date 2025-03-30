@@ -25,6 +25,6 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    groupName: "${SECRET_DOMAIN}"
+    groupName: "${SECRET_DOMAIN:=internal}"
     secretName:
       - cert-manager-webhook-henet-secret

@@ -66,7 +66,7 @@ spec:
         controller: vector-aggregator
         type: LoadBalancer
         annotations:
-          external-dns.alpha.kubernetes.io/hostname: vector.${SECRET_DOMAIN}
+          external-dns.alpha.kubernetes.io/hostname: vector.${SECRET_DOMAIN:=internal}
         ports:
           http:
             primary: true

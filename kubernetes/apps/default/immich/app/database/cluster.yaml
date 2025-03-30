@@ -50,7 +50,7 @@ spec:
         compression: bzip2
         maxParallel: 2
       destinationPath: s3://databases/
-      endpointURL: https://s3.${SECRET_DOMAIN}
+      endpointURL: https://s3.${SECRET_DOMAIN:=internal}
       serverName: immich-v2
       s3Credentials:
         accessKeyId:

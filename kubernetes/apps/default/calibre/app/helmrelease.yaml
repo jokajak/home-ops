@@ -58,7 +58,7 @@ spec:
         annotations:
           hajimari.io/icon: mdi:bookshelf
         hosts:
-          - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN}"
+          - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 service:

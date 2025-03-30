@@ -34,7 +34,7 @@ spec:
             name: external-dns-secret
             key: password
     extraArgs:
-      - --pihole-server=http://${PIHOLE_ADDR}:8888
+      - --pihole-server=http://${PIHOLE_ADDR:=pihole.internal}:8888
     # IMPORTANT: If you have records that you manage manually in Pi-hole, set
     # the policy to upsert-only so they do not get deleted.
     policy: upsert-only # don't overwrite manual entries
@@ -43,7 +43,7 @@ spec:
     # logs when ExternalDNS attempts to create TXT records.
     registry: "noop"
     sources: ["crd", "ingress"]
-    domainFilters: ["${SECRET_DOMAIN}"]
+    domainFilters: ["${SECRET_DOMAIN:=internal}"]
     serviceMonitor:
       enabled: true
     podAnnotations:

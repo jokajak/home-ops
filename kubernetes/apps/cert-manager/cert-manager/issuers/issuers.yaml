@@ -5,20 +5,20 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: "${SECRET_ACME_EMAIL}"
+    email: "${SECRET_ACME_EMAIL:=le@example.com}"
     privateKeySecretRef:
       name: letsencrypt-production
     solvers:
       - dns01:
           webhook:
-            groupName: "${SECRET_DOMAIN}"
+            groupName: "${SECRET_DOMAIN:=internal}"
             solverName: hurricane-electric
             config:
               secretName: cert-manager-webhook-henet-secret
               apiUrl: https://dyn.dns.he.net
         selector:
           dnsZones:
-            - "${SECRET_DOMAIN}"
+            - "${SECRET_DOMAIN:=internal}"
 ---
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
@@ -27,17 +27,17 @@ metadata:
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: "${SECRET_ACME_EMAIL}"
+    email: "${SECRET_ACME_EMAIL:=le@example.com}"
     privateKeySecretRef:
       name: letsencrypt-staging
     solvers:
       - dns01:
           webhook:
-            groupName: "${SECRET_DOMAIN}"
+            groupName: "${SECRET_DOMAIN:=internal}"
             solverName: hurricane-electric
             config:
               secretName: cert-manager-webhook-henet-secret
               apiUrl: https://dyn.dns.he.net
         selector:
           dnsZones:
-            - "${SECRET_DOMAIN}"
+            - "${SECRET_DOMAIN:=internal}"

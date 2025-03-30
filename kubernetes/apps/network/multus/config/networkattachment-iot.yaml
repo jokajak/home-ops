@@ -17,8 +17,8 @@ spec:
             "type": "static",
             "routes": [
               {
-                "dst": "${LAN_CIDR}",
-                "gw": "${IOT_GATEWAY}"
+                "dst": "${LAN_CIDR:=192.168.1.1/24}",
+                "gw": "${IOT_GATEWAY:=192.168.1.1}"
               }
             ]
           }

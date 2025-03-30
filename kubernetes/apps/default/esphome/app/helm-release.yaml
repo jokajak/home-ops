@@ -55,7 +55,7 @@ spec:
         enabled: true
         className: internal
         hosts:
-          - host: &host esphome.${SECRET_DOMAIN}
+          - host: &host esphome.${SECRET_DOMAIN:=internal}
             paths:
               - path: /
                 service:

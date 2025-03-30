@@ -17,7 +17,7 @@ data:
           hide-hostname: true
           hide-url: true
         dns:
-          query-name: zwave.${SECRET_DOMAIN}
+          query-name: zwave.${SECRET_DOMAIN:=internal}
           query-type: A
         conditions:
           - "len([BODY]) == 0"

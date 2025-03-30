@@ -35,7 +35,7 @@ spec:
       existingSecret: grafana-admin-secret
     env:
       GF_EXPLORE_ENABLED: true
-      GF_SERVER_ROOT_URL: "https://grafana.${SECRET_DOMAIN}"
+      GF_SERVER_ROOT_URL: "https://grafana.${SECRET_DOMAIN:=internal}"
       GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
       GF_FEATURE_TOGGLES_ENABLE: publicDashboards
       GF_SECURITY_COOKIE_SAMESITE: grafana
@@ -44,16 +44,16 @@ spec:
       - name: grafana-secrets
     grafana.ini:
       auth:
-        signout_redirect_url: "https://auth.${SECRET_DOMAIN}/application/o/grafana/end-session/"
+        signout_redirect_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/grafana/end-session/"
         oauth_auto_login: false
         oauth_allow_insecure_email_lookup: true
       auth.generic_oauth:
         name: authentik
         enabled: true
         scopes: "openid profile email groups"
-        auth_url: "https://auth.${SECRET_DOMAIN}/application/o/authorize/"
-        token_url: "https://auth.${SECRET_DOMAIN}/application/o/token/"
-        api_url: "https://auth.${SECRET_DOMAIN}/application/o/userinfo/"
+        auth_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/authorize/"
+        token_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/token/"
+        api_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/userinfo/"
         # Optionally map user groups to Grafana roles
         role_attribute_path: contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'people') && 'Viewer'
         icon: signin
@@ -266,7 +266,7 @@ spec:
       annotations:
         hajimari.io/icon: simple-icons:grafana
       hosts:
-        - &host "grafana.${SECRET_DOMAIN}"
+        - &host "grafana.${SECRET_DOMAIN:=internal}"
       tls:
         - hosts:
             - *host
