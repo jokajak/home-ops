@@ -27,9 +27,9 @@ spec:
   values:
     bitwarden_eso_provider:
       auth:
-        password: ${BW_PASSWORD}
-        clientSecret: ${BW_CLIENTSECRET}
-        clientID: ${BW_CLIENTID}
+        password: ${BW_PASSWORD:=BW_PASSWORD}
+        clientSecret: ${BW_CLIENTSECRET:=BW_CLIENTSECRET}
+        clientID: ${BW_CLIENTID:=BW_CLIENTID}
     resources:
       requests:
         memory: 256Mi
