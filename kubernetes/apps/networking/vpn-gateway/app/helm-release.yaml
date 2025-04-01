@@ -65,15 +65,6 @@ spec:
           image:
             repository: ghcr.io/qdm12/gluetun
             tag: v3.39.1
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-            add:
-              - NET_RAW
-              - NET_ADMIN
-
         resources:
           limits:
             squat.ai/tun: "1"
