@@ -94,6 +94,8 @@ spec:
             value: "on"
           - name: PUBLICIP_ENABLED
             value: "false"
+          - name: PUBLICIP_FILE
+            value: "/tmp/public_ip"
 
         envFrom:
           - secretRef:
