@@ -55,6 +55,20 @@ spec:
             runAsNonRoot: true
             fsGroup: 568
             fsGroupChangePolicy: OnRootMismatch
+          annotations:
+            # printf '02:00:00:%02X:%02X:%02X\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
+            # 02 indicates a locally administered address
+            k8s.v1.cni.cncf.io/networks: |
+              [
+                {
+                "name":"iot-vlan",
+                "interface": "eth0.50",
+                "namespace": "network",
+                "ips": ["${HOME_ASSISTANT_IOT_CIDR_V4:=192.168.1.3}"],
+                "mac": "02:00:00:B5:46:C4",
+                "gateway": ["${IOT_GATEWAY:=192.168.1.1}"]
+                }
+              ]
     service:
       app:
         controller: home-assistant

@@ -39,7 +39,8 @@ data:
     LAN_CIDR: ENC[AES256_GCM,data:HRt8r9PBjhKCZrEm7E56Fw==,iv:5bCLUwBH94leR1N9z8W8M2Rp8ebtEJx6hfYY55g39BA=,tag:VZYtEdZbsqXgL13AFRt33g==,type:str]
     LAN_GATEWAY: ENC[AES256_GCM,data:8BSeAkEnxRUNJP65hA==,iv:jtXZBG+Dl7VXpq3/PTLcoRWHjBWkNBkNfyHdGBF3MrI=,tag:iLe69ewe73T63i8bOZdXUg==,type:str]
     DNS_SUFFIX: ENC[AES256_GCM,data:bUEeIC1urF0f,iv:TUuVvTdKSBA2USg5Pqq77AWyi20OGA7YJe/Yv0hSCQ8=,tag:Yl4K6EhcCSimrfDxFV7ZvQ==,type:str]
-    MATTER_HUB_CIDR_V4: ENC[AES256_GCM,data:hWym/wsPzw5pgunMsuzj,iv:1SUJAehW1wTWyH1CUJ4PdMbzc94L0xqfeZX2bvJ7z4g=,tag:D6PR3vU0ZEjKjAe9BIp/2Q==,type:str]
+    MATTER_HUB_IOT_CIDR_V4: ENC[AES256_GCM,data:3xkPrgWuEWVIj+HjGEnS,iv:PhaHEbk8SBHfedbNoTa3wpeaI3TvLzP0K8EfqDyA/hM=,tag:Q457cLrDhb0nvVeIKkBEOQ==,type:str]
+    HOME_ASSISTANT_IOT_CIDR_V4: ENC[AES256_GCM,data:rgEZsOemzO5l2HQ3uOPB,iv:R/YS06Ls9qHoh4rXtPV9cD53sI3tNRM18GP8KiaHTvI=,tag:xo0I6lYBIJNZVHYr4BMk+g==,type:str]
     #ENC[AES256_GCM,data:obsJRA==,iv:IPMrd9ZUCXpOYx7jb3FuN6DxP7ZhzjIaKFwyDWNH5vI=,tag:nH5ufgbAtbkFD0+RSAnhvA==,type:comment]
     VPN_SERVICE_PROVIDER: ENC[AES256_GCM,data:MuVW/eCJ,iv:/f7oaTIEAlMue2SNV/kFZ2ADB4/rU0yIp1Fe1wqkUWk=,tag:D2swvpjN/tHyoGdNSPOiUw==,type:str]
     VPN_SERVER_COUNTRIES: ENC[AES256_GCM,data:zYiw/y7uIaTesyI=,iv:xzCt3WNITnPZtYnFaUzIJKWdIxubLIY6Cy/TBH0RMOg=,tag:5hBIA2O/kV0YF1+pEUojuw==,type:str]
@@ -60,8 +61,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-04-02T01:15:36Z"
-    mac: ENC[AES256_GCM,data:00WJBgGACeoRW41ae4+geqXcQj67A29AdmSd6kPWQwHoP44yKP+8U35GDS5DAfjI4xuQ3eQi9kBZRQO/fx9JB2f2warWRSJtDcVwabc1etyqMu0++ihXTE9VGV0Fx7N3qhmmISisxK0QuwzHD78OIXc7+ZKtntIF3gb6WHblLE4=,iv:C8ey9yiXajuc2ZUqokM9ggBiIYjLsINAiC22WS12A2E=,tag:pilFmLyka9kwKj8kLIpBGA==,type:str]
+    lastmodified: "2025-04-05T14:54:45Z"
+    mac: ENC[AES256_GCM,data:hDA5BQC7is2QvGfAedbTzQPCOfRwjVMzg3Ivvuwyh7cs61WcqO0ppcvrf8n0CyS2yu8R/yohJ1T1mQeVLz67ixrfE2wBVq4evbQavxSBhZkIM6RaZOJcQ809Rn3Rh6fXkhREbGY9yd1nCXjIAcJ1IosNonPZhSzoU9fsFLYR2Xc=,iv:K7x7TwFJipEkROOSeNVv0EMjtkOj2cVLus9W/0GKCxE=,tag:Fq4/zTk61aAiT2uMuvrDew==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.9.4
