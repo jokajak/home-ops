@@ -57,8 +57,8 @@ sinks:
     compression: gzip
     healthcheck:
       enabled: false
-    query:
-      debug: "1"
+    # query:
+    #   debug: "1"
     request:
       headers:
         VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
@@ -75,8 +75,8 @@ sinks:
     healthcheck:
       enabled: false
     mode: bulk
-    query:
-      debug: "1"
+    # query:
+    #   debug: "1"
     request:
       headers:
         VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
