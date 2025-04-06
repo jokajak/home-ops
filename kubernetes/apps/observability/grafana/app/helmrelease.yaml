@@ -136,7 +136,7 @@ spec:
           - name: VL
             type: victoriametrics-logs-datasource
             access: proxy
-            url: http://victoria-logs-single-server.observability.svc.cluster.local:9428
+            url: http://victorialogs-victoria-logs-single-server.observability.svc.cluster.local.:9428/
     dashboards:
       default:
         external-dns:
