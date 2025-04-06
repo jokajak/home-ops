@@ -129,7 +129,7 @@ spec:
             type: prometheus
             uid: prometheus
             access: proxy
-            url: http://vmsingle-vm-victoria-metrics-k8s-stack.observability.svc.cluster.local.:9090
+            url: http://vmsingle-vm-victoria-metrics-k8s-stack.observability.svc.cluster.local.:8429
             jsonData:
               prometheusType: Prometheus
             isDefault: true
