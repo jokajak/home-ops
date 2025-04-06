@@ -24,11 +24,8 @@ sources:
     version: "2"
     address: 0.0.0.0:6010
 
-  vyos_source:
-    type: syslog
-    address: 0.0.0.0:6020
-    mode: tcp
-
+  internal_metrics:
+    type: internal_metrics
 #
 # Transforms
 #
@@ -42,6 +39,9 @@ transforms:
       .custom_app_name = .pod_labels."app.kubernetes.io/name" || .pod_labels.app || .pod_labels."k8s-app" || "unknown"
       # Drop pod_labels
       del(.pod_labels)
+      # extract json
+      .log = parse_json(.message) ?? .message
+      del(.message)
 
 #
 # Sinks
@@ -50,24 +50,51 @@ transforms:
 sinks:
   journald:
     inputs: ["journald_source"]
-    type: loki
-    endpoint: http://loki-gateway.observability.svc.cluster.local
-    encoding: { codec: json }
-    out_of_order_action: accept
-    remove_label_fields: true
-    remove_timestamp: true
+    type: elasticsearch
+    endpoints:
+      - http://vmsingle-vm-victoria-metrics-k8s-stack.observability.svc.cluster.local.:9090
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      debug: "1"
+    request:
+      headers:
+        VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+        VL-Time-Field: timestamp
     labels:
       hostname: "{{ host }}"
 
   kubernetes:
     inputs: ["kubernetes_remap"]
-    type: loki
-    endpoint: http://loki-gateway.observability.svc.cluster.local
-    encoding: { codec: json }
-    out_of_order_action: accept
-    remove_label_fields: true
-    remove_timestamp: true
+    type: elasticsearch
+    endpoints:
+      - http://vmsingle-vm-victoria-metrics-k8s-stack.observability.svc.cluster.local.:9090
+    api_version: v8
+    compression: gzip
+    healthcheck:
+      enabled: false
+    mode: bulk
+    query:
+      _msg_field: message
+      _time_field: timestamp
+      _stream_fields: host,container_name
+      debug: "1"
+    request:
+      headers:
+        VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
+        VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
+        VL-Time-Field: timestamp
     labels:
       app: "{{ custom_app_name }}"
       namespace: "{{ kubernetes.pod_namespace }}"
       node: "{{ kubernetes.pod_node_name }}"
+
+  exporter:
+    address: 0.0.0.0:9090
+    inputs:
+      - internal_metrics
+    type: prometheus_exporter
