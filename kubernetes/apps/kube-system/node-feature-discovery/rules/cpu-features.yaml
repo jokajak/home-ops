@@ -1,0 +1,14 @@
+apiVersion: nfd.k8s-sigs.io/v1alpha1
+kind: NodeFeatureRule
+metadata:
+  name: cpu-model
+spec:
+  rules:
+    - labelsTemplate: |
+        {{ range .cpu.model }}cpu-model.{{ .Name }}={{ .Value }}
+        {{ end }}
+      matchFeatures:
+        - feature: cpu.model
+          matchName:
+            op: Exists
+      name: nfd built-in cpu-model labels
