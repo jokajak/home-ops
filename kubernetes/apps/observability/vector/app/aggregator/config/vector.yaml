@@ -52,7 +52,7 @@ sinks:
     inputs: ["journald_source"]
     type: elasticsearch
     endpoints:
-      - http://victorialogs-victoria-logs-single-server.observability.svc.cluster.local.:9428
+      - http://victorialogs-victoria-logs-single-server.observability.svc.cluster.local.:9428/insert/elasticsearch
     api_version: v8
     compression: gzip
     healthcheck:
@@ -71,7 +71,7 @@ sinks:
     inputs: ["kubernetes_remap"]
     type: elasticsearch
     endpoints:
-      - http://victorialogs-victoria-logs-single-server.observability.svc.cluster.local.:9428
+      - http://victorialogs-victoria-logs-single-server.observability.svc.cluster.local.:9428/insert/elasticsearch
     api_version: v8
     compression: gzip
     healthcheck:
