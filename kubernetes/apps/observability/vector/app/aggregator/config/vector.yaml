@@ -65,8 +65,7 @@ sinks:
       headers:
         VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
         VL-Time-Field: timestamp
-    labels:
-      hostname: "{{ host }}"
+        VL-Extra-Fields: hostname=host
 
   kubernetes:
     inputs: ["kubernetes_remap"]
@@ -88,10 +87,7 @@ sinks:
         VL-Msg-Field: message,msg,_msg,log.msg,log.message,log
         VL-Stream-Fields: stream,kubernetes.pod_name,kubernetes.container_name,kubernetes.pod_namespace
         VL-Time-Field: timestamp
-    labels:
-      app: "{{ custom_app_name }}"
-      namespace: "{{ kubernetes.pod_namespace }}"
-      node: "{{ kubernetes.pod_node_name }}"
+        VL-Extra-Fields: app=custom_app_name,namespace=kubernetes.pod_namespace,node=kubernetes.pod_node_name
 
   exporter:
     address: 0.0.0.0:9090
