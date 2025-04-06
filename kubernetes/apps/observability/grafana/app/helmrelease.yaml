@@ -73,7 +73,7 @@ spec:
         check_for_plugin_updates: false
         reporting_enabled: false
     plugins:
-      - https://github.com/VictoriaMetrics/victorialogs-datasource/releases/download/v0.2.1/victorialogs-datasource-v0.2.1.zip;victorialogs-datasource
+      - victoriametrics-logs-datasource
     dashboardProviders:
       dashboardproviders.yaml:
         apiVersion: 1
@@ -133,13 +133,10 @@ spec:
             jsonData:
               prometheusType: Prometheus
             isDefault: true
-          - name: Loki
-            type: loki
-            uid: loki
+          - name: VL
+            type: victoriametrics-logs-datasource
             access: proxy
-            url: http://loki-gateway.observability.svc.cluster.local
-            jsonData:
-              maxLines: 250
+            url: http://victoria-logs-single-server.observability.svc.cluster.local:9428
     dashboards:
       default:
         external-dns:
