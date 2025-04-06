@@ -32,7 +32,6 @@ spec:
       config:
         core:
           labelSources: ["custom", "pci", "usb"]
-          sources: ["pci", "usb"]
         sources:
           usb:
             deviceClassWhitelist: ["02", "03", "0e", "ef", "fe", "ff"]

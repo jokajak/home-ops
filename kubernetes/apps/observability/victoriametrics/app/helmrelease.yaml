@@ -37,7 +37,8 @@ spec:
         # -- By default, operator converts prometheus-operator objects.
         disable_prometheus_converter: true
 
-    defaultDashboardsEnabled: true
+    defaultDashboards:
+      enabled: true
     dashboards:
       vmalert: true
       operator: true
