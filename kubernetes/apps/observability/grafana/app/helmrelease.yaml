@@ -241,6 +241,11 @@ spec:
           gnetId: 11312
           revision: 9
           datasource: Prometheus
+        victorialogs:
+          # renovate: depName="victoriaLogs"
+          gnetId: 22084 # https://grafana.com/grafana/dashboards/22084?tab=revisions
+          revision: 1
+          datasource: Prometheus
     sidecar:
       dashboards:
         enabled: true
