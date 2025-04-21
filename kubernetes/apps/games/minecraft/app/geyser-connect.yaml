@@ -31,7 +31,7 @@ spec:
           geyser-connect:
             image:
               repository: ghcr.io/jokajak/geyser-mc
-              tag: 2.3.0-2
+              tag: 2.7.0-2
             probes:
               liveness:
                 enabled: false
