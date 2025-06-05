@@ -6,6 +6,7 @@ metadata:
 data:
     TIMEZONE: ENC[AES256_GCM,data:fOulPO4l625UyXSqtNlVFw==,iv:ZM91fbm5/8yj4xh/+H4qt3aSecn/wjNidqlVcPxDWZU=,tag:iVQ133i99mrde+LKHUEOSw==,type:str]
     CLUSTER_CIDR: ENC[AES256_GCM,data:Wz2sfvvyPXRdB9BM,iv:YrAnOq1uPkWKTzOvO6rVZMn8gBEB0dlpwZzoCV/J1Nc=,tag:k2KtBars0DuyoWl2d0N1eQ==,type:str]
+    CLUSTER_DOMAIN: ENC[AES256_GCM,data:ZbtqlDuP62du,iv:PEm/r7ZlEUs4InW7vS3uW9e1NUYfhI3gh83Vfjm5k24=,tag:u8SpmFbp32w1/7ge2ntkzg==,type:str]
     #ENC[AES256_GCM,data:fmWOQ+XUxRsnAPj2TjHG4R+R1g==,iv:2FxAFxqfnPGLTvJ42rfsW9Dbqgza1oYdT0+hdRzVT2o=,tag:6sNX7VZ7EENS496Zh88sQQ==,type:comment]
     CLUSTER_CIDR_V6: ENC[AES256_GCM,data:NR4wnXYRBIs6CQeIsFjsVeUprU1ci72zSgQ=,iv:KAwCn6ZS4H85Ro9ueXOCkYXEkY+SjlUDomFk2AVTVz8=,tag:x6ydMLdT6pJwla5XSiOa+w==,type:str]
     NODE_CIDR: ENC[AES256_GCM,data:4gNOQPqBafS0n+HI+BwLrQ==,iv:tM9P6nsw8XLS4/tt7qj1p/de/05iaRpWWh+tssUEwpo=,tag:6FQL67XKyj4djz2zZL9c1w==,type:str]
@@ -17,6 +18,7 @@ data:
     INTERNAL_PROXY_CIDR_V4: ENC[AES256_GCM,data:j/6Fn7d0Z2MaGF+pfWc=,iv:mZ1342vWoshhgyPgFribQwYiQ26gM1rR5gujCh7OO1o=,tag:0bu6WxRQSLGWGJ1dGwcTbA==,type:str]
     EXTERNAL_PROXY_CIDR_V4: ENC[AES256_GCM,data:tCF7hmDb+HmWn1Y3zuw=,iv:7jTzbV5NPrH8nmDIQ8Rrnt+zoLow2+IftOf7yWCyVJY=,tag:S5TEk9OfKuZ7fvxZtzXSPA==,type:str]
     LB_UNIFI_CIDR_V4: ENC[AES256_GCM,data:80Q9CCzmLrJ+UbrKCEQ=,iv:kkl+S2k1clI9Rec6e7XMyA2kHyhtsRBFZithlmC+B5c=,tag:YvoVCzOBhr58fWRuxrgu9w==,type:str]
+    CLUSTER_LB_MINECRAFT_ROUTER_V4: ENC[AES256_GCM,data:+BiieKJ0jFSd5SwCf1M=,iv:mnp1jAwUcb/+ZcHk8bKn/6pPT43CDBTRF1to+bVdOhc=,tag:j1JMc87x11fF7wJLKWq4bQ==,type:str]
     LB_EMQX_CIDR_V4: ENC[AES256_GCM,data:irDsQFzPJMlB8nq4eds=,iv:trTp/3EDJoYKlceLrshGejMT8ZORK52C5ALNV0E4L0U=,tag:U8/EetK/oyTJWguijnBBxg==,type:str]
     LB_CIDR_MINECRAFT_V4: ENC[AES256_GCM,data:HCDYBxNJIcGKfFRCh80=,iv:58AuCOh2bP6uCCzm5H5SshgAWBU3V1giaSJYGmK/e9k=,tag:dhsHmLGmeXGOeOKqKGVekg==,type:str]
     LB_CIDR_GEYSERMC_V4: ENC[AES256_GCM,data:x8ZtunMawwYHMdIjD14=,iv:eDzLFWhvCgOzDctntIYPIizeVDV//Fej7a6r91J5K5U=,tag:cvBzd3H31DLUtHYaAEDU0g==,type:str]
@@ -61,8 +63,8 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-04-05T14:54:45Z"
-    mac: ENC[AES256_GCM,data:hDA5BQC7is2QvGfAedbTzQPCOfRwjVMzg3Ivvuwyh7cs61WcqO0ppcvrf8n0CyS2yu8R/yohJ1T1mQeVLz67ixrfE2wBVq4evbQavxSBhZkIM6RaZOJcQ809Rn3Rh6fXkhREbGY9yd1nCXjIAcJ1IosNonPZhSzoU9fsFLYR2Xc=,iv:K7x7TwFJipEkROOSeNVv0EMjtkOj2cVLus9W/0GKCxE=,tag:Fq4/zTk61aAiT2uMuvrDew==,type:str]
+    lastmodified: "2025-05-25T18:17:56Z"
+    mac: ENC[AES256_GCM,data:Xqyk5zqkM29BIqjGaweH0WEuSxR+XCf0/AOKr9P6Jgr/c4KfdWQwOwzyplRJuhXgTcN95hsZOm0kIw93bvRIAavFyH5JtfawuYg8JrVfcldQWWGH/R3cQ9K///WzuBjMQsFG0KsXH1sn4UhJeqZrJEZV6TLTUGmmL3tqaTjcYpU=,iv:jgmV6yA2z/X2AidbTe5FOWKMyQWeyY6DJFmJwDkrj/Y=,tag:IXtdihwmd13QSlddlDOZhA==,type:str]
     pgp: []
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.9.4

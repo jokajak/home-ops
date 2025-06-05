@@ -34,9 +34,16 @@ spec:
       main:
         type: statefulset
         pod:
+          affinity:
+            nodeAffinity:
+              # only schedule on nodes with the zwave label
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: zwave.feature.node.kubernetes.io/zwave
+                        operator: Exists
           nodeSelector:
             zwave.feature.node.kubernetes.io/zwave: "true"
-            kubernetes.io/hostname: "${ZWAVE_NODE:=zwave.internal}"
         containers:
           main:
             image:
