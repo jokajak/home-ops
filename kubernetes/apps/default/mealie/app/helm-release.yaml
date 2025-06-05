@@ -84,3 +84,8 @@ spec:
         globalMounts:
           - path: /app/data
             readOnly: false
+      nonexistent:
+        enabled: true
+        type: emptyDir
+        globalMounts:
+          - path: /nonexistent
