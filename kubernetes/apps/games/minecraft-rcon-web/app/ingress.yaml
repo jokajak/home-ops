@@ -1,0 +1,25 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minecraft-rcon
+  namespace: games
+  annotations:
+    hajimari.io/enable: "false"
+    external-dns.alpha.kubernetes.io/target: "internal.${SECRET_DOMAIN:=internal}"
+spec:
+  ingressClassName: internal
+  rules:
+    - host: &host "minecraft-rcon.${SECRET_DOMAIN:=internal}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minecraft-rcon
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - *host
