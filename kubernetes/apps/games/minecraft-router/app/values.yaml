@@ -4,7 +4,7 @@ services:
     type: LoadBalancer
     port: 19132
     annotations:
-      lbipam.cilium.io/ips: ${CLUSTER_LB_MINECRAFT_ROUTER_V4}
+      lbipam.cilium.io/ips: ${CLUSTER_LB_MINECRAFT_ROUTER_V4:-192.168.1.6}
 
 minecraftRouter:
   debug:
