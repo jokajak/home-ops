@@ -13,6 +13,14 @@ application local groups for authorization.
 
 The authentik configuration is stored as IaC using [terraform](../../../terraform/authentik/README.md)
 
+## frigate
+
+![image of frigate](https://i.imgur.com/hv7bh6m.png)
+
+Installs [frigate](https://github.com/blakeblackshear/frigate/): Realtime object detection on RTSP cameras with the Google Coral
+
+* [frigate.yaml](frigate/frigate.yaml)
+
 ## home-assistant
 
 [home-assistant](https://www.home-assistant.io/) provides home automation services.

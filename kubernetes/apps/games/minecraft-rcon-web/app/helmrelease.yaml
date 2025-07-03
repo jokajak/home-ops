@@ -56,7 +56,7 @@ spec:
             patch: |
               - op: add
                 path: /metadata/annotations/lbipam.cilium.io~1ips
-                value: ${CLUSTER_LB_MINECRAFT_RCON_V4}
+                value: ${CLUSTER_LB_MINECRAFT_RCON_V4:=192.168.1.9}
     - kustomize:
         patches:
           - target:
@@ -68,9 +68,9 @@ spec:
                 path: /spec/template/spec/containers/0/env/-
                 value:
                   name: RWA_WEBSOCKET_URL
-                  value: "ws://${CLUSTER_LB_MINECRAFT_RCON_V4}:4327"
+                  value: "ws://${CLUSTER_LB_MINECRAFT_RCON_V4:=192.168.1.9}:4327"
               - op: replace
                 path: /spec/template/spec/containers/0/env/-
                 value:
                   name: RWA_WEBSOCKET_URL_SSL
-                  value: "wss://${CLUSTER_LB_MINECRAFT_RCON_V4}:4327"
+                  value: "wss://${CLUSTER_LB_MINECRAFT_RCON_V4:=192.168.1.9}:4327"
