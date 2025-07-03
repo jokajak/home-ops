@@ -16,9 +16,9 @@ minecraftRouter:
     port: 19132
 
   mappings:
-    - externalHostname: "bedrock.${CLUSTER_DOMAIN}"
+    - externalHostname: "bedrock.${SECRET_DOMAIN:=internal}"
       host: "minecraft.games.svc.cluster.local"
       port: 19132
-    - externalHostname: "java.${CLUSTER_DOMAIN}"
+    - externalHostname: "java.${SECRET_DOMAIN:=internal}"
       host: "minecraft.games.svc.cluster.local"
       port: 25565

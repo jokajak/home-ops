@@ -11,7 +11,7 @@ data:
     endpoints:
       - name: unifi
         group: internal
-        url: https://unifi.${SECRET_CLUSTER_DOMAIN}/manage/account/login
+        url: https://unifi.${SECRET_DOMAIN:=internal}/manage/account/login
         interval: 1m
         client:
           insecure: true
