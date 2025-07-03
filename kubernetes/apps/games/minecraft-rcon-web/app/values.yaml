@@ -14,7 +14,7 @@ rconWeb:
   rconPasswordExistingSecret: minecraft-rcon
   rconPasswordKey: "rcon-password"
 extraEnv:
-  TZ: ${TZ}
+  TZ: ${TIMEZONE:=America/New_York}
 # Required: Cannot install jq as part of startup script.
 # securityContext: {}
 # readOnlyRootFilesystem: false
