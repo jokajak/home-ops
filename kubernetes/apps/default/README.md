@@ -19,7 +19,7 @@ The authentik configuration is stored as IaC using [terraform](../../../terrafor
 
 Installs [frigate](https://github.com/blakeblackshear/frigate/): Realtime object detection on RTSP cameras with the Google Coral
 
-* [frigate.yaml](frigate/frigate.yaml)
+* [frigate](frigate/app/helmrelease.yaml)
 
 ## home-assistant
 

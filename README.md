@@ -91,8 +91,8 @@ Hopefully some of this peeked your interests!  If you are marching forward, now 
 <details>
 <summary><i>Click <b>here</b> to read about using a RasPi4</i></summary>
 
-
 > [!NOTE]
+>
 > 1. It is recommended to have an 8GB RasPi model. Most important is to **boot from an external SSD/NVMe** rather than an SD card. This is supported natively, however if you have an early model you may need to [update the bootloader](https://www.tomshardware.com/how-to/boot-raspberry-pi-4-usb) first.
 > 2. Check the power requirements if using a PoE Hat and a SSD/NVMe dongle.
 
@@ -227,7 +227,7 @@ You have two different options for setting up your local workstation.
     git push
     ```
 
-5.  Continue on to ⚡ [**Stage 4**](#-stage-4-prepare-your-nodes-for-kubernetes)
+5. Continue on to ⚡ [**Stage 4**](#-stage-4-prepare-your-nodes-for-kubernetes)
 
 ### ⚡ Stage 4: Prepare your nodes for Kubernetes
 
@@ -389,11 +389,14 @@ The `external-dns` application created in the `networking` namespace will handle
 
 > [!TIP]
 > Below is how to configure a Pi-hole for split DNS. Other platforms should be similar.
+>
 > 1. Apply this file on the Pihole server while substituting the variables
+>
 > ```sh
 > # /etc/dnsmasq.d/99-k8s-gateway-forward.conf
 > server=/${bootstrap_cloudflare_domain}/${bootstrap_k8s_gateway_addr}
 > ```
+>
 > 2. Restart dnsmasq on the server.
 > 3. Query an internal-only subdomain from your workstation (any `internal` class ingresses): `dig @${home-dns-server-ip} echo-server-internal.${bootstrap_cloudflare_domain}`. It should resolve to `${bootstrap_internal_ingress_addr}`.
 
