@@ -23,7 +23,7 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    providerRegex: ^(foyer-dell-mff|foyer-udoo-x86|basement-dell-mff|basement-rpi4-chocolate|basement-rpi4-pecan|basement-rpi4-peach)$
+    providerRegex: ^(foyer-dell-mff|foyer-udoo-x86|basement-dell-mff|basement-rpi4-chocolate|basement-rpi4-pecan|basement-rpi4-peach|basement-dell-sff)$
     bypassDnsResolution: true
     metrics:
       enable: true

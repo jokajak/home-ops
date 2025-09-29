@@ -531,6 +531,22 @@ If this repo is too hot to handle or too cold to hold check out these following 
 
 </div>
 
+## Notes
+
+### Networking
+
+#### IOT Segments
+
+- A.B.C.10-14: Televisions
+- A.B.C.15-19: Rokus
+- A.B.C.20-29: Printers
+- A.B.C.30-39: Game systems
+- A.B.C.40-49: Cameras
+- A.B.C.50-99: Outlets/Switches
+- A.B.C.100-149: Lights
+- A.B.C.150-199: Sensors
+- A.B.C.200-249: Misc
+
 ## 🤝 Thanks
 
 Big shout out to all the contributors, sponsors and everyone else who has helped on this project.
