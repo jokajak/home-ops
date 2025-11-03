@@ -47,9 +47,6 @@ spec:
             image:
               repository: ghcr.io/immich-app/immich-server
               tag: v2.2.1
-            command: /bin/bash
-            args:
-              - ./start.sh
             resources:
               requests:
                 cpu: 100m
