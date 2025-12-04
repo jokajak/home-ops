@@ -27,6 +27,8 @@ wiki
 # talos
 kubernetes/talos/talconfig.json
 kubernetes/talos/cilium/values.yaml
+talos/talconfig.json
+talos/cilium/values.yaml
 
 # bitwarden
 **/.bitwarden/data.json

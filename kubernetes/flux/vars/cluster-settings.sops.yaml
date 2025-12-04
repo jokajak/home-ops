@@ -28,7 +28,7 @@ data:
     #ENC[AES256_GCM,data:EeMZz6R5zmlG3eBfGqbr,iv:KWgEeRh1zRFnRTU2Im+7lNluqlsZAxBaKXG/oHYDdAc=,tag:7FrWbI5RZR4EzVviCHm2ag==,type:comment]
     BITWARDEN_APP_ID: ENC[AES256_GCM,data:GVMHGdgeyHoHs1VJANFNSeR0sp78b3xKqsrDXhrE3PYdVqr6OClTFrESNEhOoRqEIw==,iv:iSm8K9FhHupPyOkLbs+aXuI91RwlXHvfWeujwJbeWOk=,tag:MLXwK3jBlP+4NYs/e+nrZg==,type:str]
     NFS_SUBDIR_PATH: ENC[AES256_GCM,data:aeYYqtdZPOMPRRoKmGKa6k99occFacR+kEa6qocHEOWQrkgmw+DmDhv3nP1H2+pUmKyBGZCHlYgihUELt3jlFhlWY3iM,iv:FgO48pc19BdiVz38nFrgUl1LIrY4vVrtPEgL90gwllE=,tag:byc+QtIcBR/6ppDuXqzOuw==,type:str]
-    PIHOLE_ADDR: ENC[AES256_GCM,data:SqZ7NgNn7LGoxYguiCU=,iv:t9R7fsM2e/Ns8E3CwUoGlPywh4Kryw/CTlqSJtEppwc=,tag:FvuDe/E75FDQxUMUrgE+9A==,type:str]
+    PIHOLE_ADDR: ENC[AES256_GCM,data:ZywNFkXzx5U7hqhH95N9,iv:TTvrDXS6TIdh3LZOq0mcPjN56my+eBmC0plPtTpJyqM=,tag:NLjbIDyaR/s9szqxoqROGg==,type:str]
     ZWAVE_NODE: ENC[AES256_GCM,data:oz69XEXG4cUf7jvK0aM=,iv:25Yucvyj7YAUx9/xL7JFHK2CvqHoO6PxkaZQMtV8gTs=,tag:x3d4hKTF4PkofZIuhMZLIg==,type:str]
     ROUTER_CIDR_V4: ENC[AES256_GCM,data:MRQfLr5czCksXUCT9g==,iv:3leOotkYCMd3VkfGPI4GcdBqyVyc1PoueiixGNOAp+s=,tag:NVgeqZI2ZV5n1QbaBHaxZA==,type:str]
     #ENC[AES256_GCM,data:omVHcwU3zr7g1L28gjG1nDqOttkIlK9iV2A=,iv:QT2WUMDRXtKzkoOEPmNtqM5UYxfw9xy6hM7/UN+MdBA=,tag:3Eyewohh2Rz+SJaHWX53Aw==,type:comment]
@@ -49,10 +49,6 @@ data:
     VPN_COUNTRY_CODE: ENC[AES256_GCM,data:bLk=,iv:jup7y2m4nkHyp/FncxqZr2NaqsnpLxbkFYyX0ugQu5k=,tag:XX2vNupYa7UDI9PRAx7wUg==,type:str]
     VPN_FORWARDED_PORT: ENC[AES256_GCM,data:WV2oolA=,iv:kzXN1ILTCya6jNoVtqiWT0TSuN+1koqqKOUGAAV9b/c=,tag:bAvrlcrruOMOQMhPVbCDoQ==,type:str]
 sops:
-    kms: []
-    gcp_kms: []
-    azure_kv: []
-    hc_vault: []
     age:
         - recipient: age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68
           enc: |
@@ -63,8 +59,7 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-05-25T18:17:56Z"
-    mac: ENC[AES256_GCM,data:Xqyk5zqkM29BIqjGaweH0WEuSxR+XCf0/AOKr9P6Jgr/c4KfdWQwOwzyplRJuhXgTcN95hsZOm0kIw93bvRIAavFyH5JtfawuYg8JrVfcldQWWGH/R3cQ9K///WzuBjMQsFG0KsXH1sn4UhJeqZrJEZV6TLTUGmmL3tqaTjcYpU=,iv:jgmV6yA2z/X2AidbTe5FOWKMyQWeyY6DJFmJwDkrj/Y=,tag:IXtdihwmd13QSlddlDOZhA==,type:str]
-    pgp: []
+    lastmodified: "2025-12-04T16:21:18Z"
+    mac: ENC[AES256_GCM,data:VwTZfq7RP04LJsyAfRLg1LyfAsXSFC/rtwZ1ER1Fmo38Y0W9zBEM9furkx+Q1QC7QE7iBei9kcTPnOURwIsjWCdOzD+fgpI6VNSXVUg36HGH6DtTvwRpXryi3SEUXSoMfBNZhFB3HPUzunuaGfuaCtjFnLSw8hlM2NTbyg4rtME=,iv:v80AM19g1j8W9jZLel4ux7WM7fCkly/l6D+I5F0xfHk=,tag:KD/CIXwcKAwClWHkdQQEag==,type:str]
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
-    version: 3.9.4
+    version: 3.10.2
