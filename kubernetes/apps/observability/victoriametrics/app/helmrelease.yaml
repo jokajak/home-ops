@@ -35,7 +35,7 @@ spec:
     victoria-metrics-operator:
       operator:
         # -- By default, operator converts prometheus-operator objects.
-        disable_prometheus_converter: true
+        disable_prometheus_converter: false
 
     defaultDashboards:
       enabled: true
