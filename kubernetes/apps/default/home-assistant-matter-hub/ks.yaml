@@ -5,6 +5,7 @@ metadata:
   name: cluster-apps-ha-matter-hub
   namespace: flux-system
 spec:
+  targetNamespace: default
   interval: 10m
   path: "./kubernetes/apps/default/home-assistant-matter-hub/app"
   prune: true

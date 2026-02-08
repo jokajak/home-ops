@@ -5,6 +5,7 @@ metadata:
   name: cluster-apps-mealie
   namespace: flux-system
 spec:
+  targetNamespace: default
   interval: 10m
   path: "./kubernetes/apps/default/mealie/app"
   prune: true

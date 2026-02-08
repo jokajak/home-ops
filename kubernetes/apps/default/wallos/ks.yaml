@@ -5,6 +5,7 @@ metadata:
   name: cluster-apps-wallos
   namespace: flux-system
 spec:
+  targetNamespace: default
   interval: 10m
   path: "./kubernetes/apps/default/wallos/app"
   prune: true
