@@ -43,12 +43,13 @@ spec:
               RESOURCE: both
               UNIQUE_FILENAMES: true
               METHOD: WATCH
+              LOG_LEVEL: DEBUG
             restartPolicy: Always
-            resources: &resources
+            resources:
               requests:
                 cpu: 10m
               limits:
-                memory: 256Mi
+                memory: 512Mi
         containers:
           app:
             image:
@@ -76,7 +77,11 @@ spec:
               allowPrivilegeEscalation: false
               readOnlyRootFilesystem: true
               capabilities: { drop: ["ALL"] }
-            resources: *resources
+            resources:
+              requests:
+                cpu: 10m
+              limits:
+                memory: 256Mi
         pod:
           enableServiceLinks: true
           dnsConfig:
