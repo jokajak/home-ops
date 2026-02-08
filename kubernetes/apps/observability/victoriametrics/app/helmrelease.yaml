@@ -59,6 +59,8 @@ spec:
     ## install vm operator crds
     crds:
       enabled: true
+      upgrade:
+        enabled: true
 
     ## install prometheus operator crds
     prometheus-operator-crds:
