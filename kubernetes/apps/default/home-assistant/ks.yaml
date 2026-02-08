@@ -13,6 +13,9 @@ spec:
     name: home-kubernetes
   wait: true
   postBuild:
+    substitute:
+      APP: home-assistant
+      GATUS_SUBDOMAIN: home
     substituteFrom:
       - kind: Secret
         name: cluster-secrets

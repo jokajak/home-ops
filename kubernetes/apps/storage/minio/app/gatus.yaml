@@ -1,0 +1,22 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "${APP:=minio}-gatus-ep"
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "${APP:=minio}"
+        group: internal
+        url: "https://${APP:=minio}.${SECRET_DOMAIN:=internal}"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"
+      - name: s3
+        group: internal
+        url: "https://s3.${SECRET_DOMAIN:=internal}"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"

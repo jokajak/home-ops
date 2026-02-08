@@ -2,20 +2,17 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-gatus-ep
-  namespace: observability
+  name: "${APP:=unknown}-gatus-ep"
   labels:
     gatus.io/enabled: "true"
 data:
   config.yaml: |
     endpoints:
-      - name: grafana
+      - name: "${APP:=app}"
         group: external
-        url: https://grafana.${SECRET_DOMAIN:=internal}/api/health
+        url: "https://${GATUS_SUBDOMAIN:=${APP:=app}}.${SECRET_DOMAIN:=external}"
         interval: 1m
         client:
           dns-resolver: tcp://1.1.1.1:53
         conditions:
-          - "[STATUS] == 200"
-        alerts:
-          - type: pushover
+          - "[STATUS] == ${GATUS_STATUS:=200}"

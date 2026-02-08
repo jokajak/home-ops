@@ -13,6 +13,9 @@ spec:
     name: home-kubernetes
   wait: true
   postBuild:
+    substitute:
+      APP: immich
+      GATUS_SUBDOMAIN: photos
     substituteFrom:
       - kind: Secret
         name: cluster-secrets

@@ -13,6 +13,8 @@ spec:
     name: home-kubernetes
   wait: true
   postBuild:
+    substitute:
+      APP: esphome
     substituteFrom:
       - kind: Secret
         name: cluster-secrets
