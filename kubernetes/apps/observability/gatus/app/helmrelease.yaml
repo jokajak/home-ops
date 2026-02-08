@@ -78,6 +78,7 @@ spec:
               capabilities: { drop: ["ALL"] }
             resources: *resources
         pod:
+          enableServiceLinks: true
           dnsConfig:
             options:
               - { name: ndots, value: "1" }
