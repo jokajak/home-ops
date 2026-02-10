@@ -138,10 +138,3 @@ spec:
         accessMode: ReadWriteOnce
         globalMounts:
           - path: /unifi
-
-    resources:
-      requests:
-        memory: 750Mi
-        cpu: 15m
-      limits:
-        memory: 1250Mi
