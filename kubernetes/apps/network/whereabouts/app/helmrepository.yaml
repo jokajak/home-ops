@@ -1,0 +1,10 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: k8snetworkplumbingwg
+  namespace: flux-system
+spec:
+  type: default
+  interval: 15m
+  url: https://k8snetworkplumbingwg.github.io/helm-charts
