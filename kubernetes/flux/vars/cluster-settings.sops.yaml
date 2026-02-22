@@ -28,7 +28,7 @@ data:
     #ENC[AES256_GCM,data:EeMZz6R5zmlG3eBfGqbr,iv:KWgEeRh1zRFnRTU2Im+7lNluqlsZAxBaKXG/oHYDdAc=,tag:7FrWbI5RZR4EzVviCHm2ag==,type:comment]
     BITWARDEN_APP_ID: ENC[AES256_GCM,data:GVMHGdgeyHoHs1VJANFNSeR0sp78b3xKqsrDXhrE3PYdVqr6OClTFrESNEhOoRqEIw==,iv:iSm8K9FhHupPyOkLbs+aXuI91RwlXHvfWeujwJbeWOk=,tag:MLXwK3jBlP+4NYs/e+nrZg==,type:str]
     NFS_SUBDIR_PATH: ENC[AES256_GCM,data:aeYYqtdZPOMPRRoKmGKa6k99occFacR+kEa6qocHEOWQrkgmw+DmDhv3nP1H2+pUmKyBGZCHlYgihUELt3jlFhlWY3iM,iv:FgO48pc19BdiVz38nFrgUl1LIrY4vVrtPEgL90gwllE=,tag:byc+QtIcBR/6ppDuXqzOuw==,type:str]
-    PIHOLE_ADDR: ENC[AES256_GCM,data:ZywNFkXzx5U7hqhH95N9,iv:TTvrDXS6TIdh3LZOq0mcPjN56my+eBmC0plPtTpJyqM=,tag:NLjbIDyaR/s9szqxoqROGg==,type:str]
+    PIHOLE_ADDR: ENC[AES256_GCM,data:c9P0t2EeCj21MBOBBxg=,iv:f5Mgg2RhVFOCXOVR49D1kEBaHa9v2/qwtYOzbwqoOis=,tag:OK7ynoB9/mhmoKY+WPN8Cg==,type:str]
     ZWAVE_NODE: ENC[AES256_GCM,data:oz69XEXG4cUf7jvK0aM=,iv:25Yucvyj7YAUx9/xL7JFHK2CvqHoO6PxkaZQMtV8gTs=,tag:x3d4hKTF4PkofZIuhMZLIg==,type:str]
     ROUTER_CIDR_V4: ENC[AES256_GCM,data:MRQfLr5czCksXUCT9g==,iv:3leOotkYCMd3VkfGPI4GcdBqyVyc1PoueiixGNOAp+s=,tag:NVgeqZI2ZV5n1QbaBHaxZA==,type:str]
     #ENC[AES256_GCM,data:omVHcwU3zr7g1L28gjG1nDqOttkIlK9iV2A=,iv:QT2WUMDRXtKzkoOEPmNtqM5UYxfw9xy6hM7/UN+MdBA=,tag:3Eyewohh2Rz+SJaHWX53Aw==,type:comment]
@@ -59,7 +59,7 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2025-12-04T16:21:18Z"
-    mac: ENC[AES256_GCM,data:VwTZfq7RP04LJsyAfRLg1LyfAsXSFC/rtwZ1ER1Fmo38Y0W9zBEM9furkx+Q1QC7QE7iBei9kcTPnOURwIsjWCdOzD+fgpI6VNSXVUg36HGH6DtTvwRpXryi3SEUXSoMfBNZhFB3HPUzunuaGfuaCtjFnLSw8hlM2NTbyg4rtME=,iv:v80AM19g1j8W9jZLel4ux7WM7fCkly/l6D+I5F0xfHk=,tag:KD/CIXwcKAwClWHkdQQEag==,type:str]
+    lastmodified: "2026-02-22T17:53:57Z"
+    mac: ENC[AES256_GCM,data:1FsHOWrQRQ5iN1xKKdYG2lAW1lE/K7KCpqzQdG8ScMNfB0puhh00KbYq09seIbetIXUkABw0QevrTmZWV7z/Qc1Rj2SH5C7d5K+We9PCeEBW5NjJ9LvBMFP86M0127xmDfZYSLkIeQoVwp2UG6Wv+/13Qtn+oGHl20GViGffrls=,iv:FsP3c2l/yzZd9mfkETmWWx60KmXRERILQ+UYimtIfmI=,tag:hnggqINXE7+IipBH0/RgsA==,type:str]
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
-    version: 3.10.2
+    version: 3.11.0
