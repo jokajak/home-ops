@@ -9,3 +9,12 @@ resources:
   - ./secret.sops.yaml
   - ./externalSecret.yaml
   - ../../../../templates/gatus/guarded
+configMapGenerator:
+  - name: grafana-dashboard-ntopng
+    files:
+      - dashboards/ntopng-wan-bandwidth.json
+    options:
+      labels:
+        grafana_dashboard: "true"
+      annotations:
+        grafana_folder: "ntopng"
