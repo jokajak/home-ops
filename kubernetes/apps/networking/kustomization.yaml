@@ -7,7 +7,6 @@ resources:
   # post-flux
   - ./echo-server/ks.yaml
   - ./external-dns/ks.yaml
-  - ./headscale/ks.yaml
   - ./k8s-gateway/ks.yaml
   - ./nginx/ks.yaml
   - ./vpn-gateway/ks.yaml
