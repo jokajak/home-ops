@@ -362,7 +362,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(vlan:traffic_bytes_rcvd{ifid=\"1\"}[5m])",
+          "expr": "rate(vlan:traffic_bytes_rcvd{ifid!=\"2\"}[5m])",
           "legendFormat": "VLAN {{vlan}}",
           "refId": "A"
         }
@@ -437,7 +437,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "rate(vlan:traffic_bytes_sent{ifid=\"1\"}[5m])",
+          "expr": "rate(vlan:traffic_bytes_sent{ifid!=\"2\"}[5m])",
           "legendFormat": "VLAN {{vlan}}",
           "refId": "A"
         }
@@ -491,7 +491,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(vlan:traffic_bytes_rcvd{ifid=\"1\"}[$__range])",
+          "expr": "increase(vlan:traffic_bytes_rcvd{ifid!=\"2\"}[$__range])",
           "legendFormat": "VLAN {{vlan}}",
           "instant": true,
           "refId": "A"
@@ -546,7 +546,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "increase(vlan:traffic_bytes_sent{ifid=\"1\"}[$__range])",
+          "expr": "increase(vlan:traffic_bytes_sent{ifid!=\"2\"}[$__range])",
           "legendFormat": "VLAN {{vlan}}",
           "instant": true,
           "refId": "A"
@@ -601,7 +601,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, increase(host:traffic_bytes_rcvd{ifid=\"1\", host=~\".*@$vlan\"}[$__range]))",
+          "expr": "topk(10, increase(host:traffic_bytes_rcvd{ifid!=\"2\", host=~\".*@$vlan\"}[$__range]))",
           "legendFormat": "{{host}}",
           "instant": true,
           "refId": "A"
@@ -656,7 +656,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, increase(host:traffic_bytes_sent{ifid=\"1\", host=~\".*@$vlan\"}[$__range]))",
+          "expr": "topk(10, increase(host:traffic_bytes_sent{ifid!=\"2\", host=~\".*@$vlan\"}[$__range]))",
           "legendFormat": "{{host}}",
           "instant": true,
           "refId": "A"
@@ -718,7 +718,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, increase(host:traffic_bytes_rcvd{ifid=\"1\"}[1h]))",
+          "expr": "topk(10, increase(host:traffic_bytes_rcvd{ifid!=\"2\"}[1h]))",
           "legendFormat": "{{host}}",
           "instant": true,
           "refId": "A"
@@ -773,7 +773,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "topk(10, increase(host:traffic_bytes_sent{ifid=\"1\"}[1h]))",
+          "expr": "topk(10, increase(host:traffic_bytes_sent{ifid!=\"2\"}[1h]))",
           "legendFormat": "{{host}}",
           "instant": true,
           "refId": "A"
@@ -869,7 +869,7 @@
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "rate(host:traffic_bytes_sent{ifid=\"1\", host=~\"$host\"}[5m])",
+              "expr": "rate(host:traffic_bytes_sent{ifid!=\"2\", host=~\"$host\"}[5m])",
               "legendFormat": "{{host}} - Sent",
               "refId": "A"
             },
@@ -878,7 +878,7 @@
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "rate(host:traffic_bytes_rcvd{ifid=\"1\", host=~\"$host\"}[5m])",
+              "expr": "rate(host:traffic_bytes_rcvd{ifid!=\"2\", host=~\"$host\"}[5m])",
               "legendFormat": "{{host}} - Received",
               "refId": "B"
             }
@@ -975,7 +975,7 @@
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "rate(vlan:traffic_bytes_sent{ifid=\"1\", vlan=~\"$vlan\"}[5m])",
+              "expr": "rate(vlan:traffic_bytes_sent{ifid!=\"2\", vlan=~\"$vlan\"}[5m])",
               "legendFormat": "VLAN {{vlan}} - Sent",
               "refId": "A"
             },
@@ -984,7 +984,7 @@
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "rate(vlan:traffic_bytes_rcvd{ifid=\"1\", vlan=~\"$vlan\"}[5m])",
+              "expr": "rate(vlan:traffic_bytes_rcvd{ifid!=\"2\", vlan=~\"$vlan\"}[5m])",
               "legendFormat": "VLAN {{vlan}} - Received",
               "refId": "B"
             }
@@ -1038,7 +1038,7 @@
                 "type": "prometheus",
                 "uid": "prometheus"
               },
-              "expr": "topk(10, increase(vlan:ndpi_bytes_rcvd{ifid=\"1\", vlan=~\"$vlan\"}[1h]))",
+              "expr": "topk(10, increase(vlan:ndpi_bytes_rcvd{ifid!=\"2\", vlan=~\"$vlan\"}[1h]))",
               "legendFormat": "{{protocol}}",
               "instant": true,
               "refId": "A"
@@ -1064,7 +1064,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(vlan:traffic_bytes_rcvd{ifid=\"1\"}, vlan)",
+        "definition": "label_values(vlan:traffic_bytes_rcvd{ifid!=\"2\"}, vlan)",
         "hide": 0,
         "includeAll": true,
         "label": "VLAN",
@@ -1073,7 +1073,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(vlan:traffic_bytes_rcvd{ifid=\"1\"}, vlan)"
+          "query": "label_values(vlan:traffic_bytes_rcvd{ifid!=\"2\"}, vlan)"
         },
         "refresh": 2,
         "regex": "",
@@ -1092,7 +1092,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(host:traffic_bytes_sent{ifid=\"1\"}, host)",
+        "definition": "label_values(host:traffic_bytes_sent{ifid!=\"2\"}, host)",
         "hide": 0,
         "includeAll": true,
         "label": "Host",
@@ -1101,7 +1101,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(host:traffic_bytes_sent{ifid=\"1\"}, host)"
+          "query": "label_values(host:traffic_bytes_sent{ifid!=\"2\"}, host)"
         },
         "refresh": 2,
         "regex": "",
