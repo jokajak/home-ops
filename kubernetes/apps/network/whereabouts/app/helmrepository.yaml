@@ -5,6 +5,6 @@ metadata:
   name: k8snetworkplumbingwg
   namespace: flux-system
 spec:
-  type: default
+  type: oci
   interval: 15m
-  url: https://k8snetworkplumbingwg.github.io/helm-charts
+  url: oci://ghcr.io/k8snetworkplumbingwg
