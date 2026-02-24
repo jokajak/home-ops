@@ -35,7 +35,7 @@ spec:
   values:
     image:
       repository: ghcr.io/k8snetworkplumbingwg/whereabouts
-      tag: "v0.8.0"
+      tag: "v0.9.3"
       pullPolicy: IfNotPresent
 
     resources:
