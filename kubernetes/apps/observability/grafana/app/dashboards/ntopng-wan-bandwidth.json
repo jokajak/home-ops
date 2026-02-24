@@ -444,8 +444,118 @@
       ]
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total bytes received per VLAN over the selected time range",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-greens"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "id": 17,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "title": "Total Received by VLAN",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(vlan:traffic_bytes_rcvd{ifid=\"1\"}[$__range])",
+          "legendFormat": "VLAN {{vlan}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Total bytes sent per VLAN over the selected time range",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-blues"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "id": 18,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "title": "Total Sent by VLAN",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "increase(vlan:traffic_bytes_sent{ifid=\"1\"}[$__range])",
+          "legendFormat": "VLAN {{vlan}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
       "id": 7,
       "title": "Top Talkers",
       "type": "row"
@@ -472,7 +582,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 25 },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 33 },
       "id": 8,
       "options": {
         "displayMode": "gradient",
@@ -527,7 +637,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 25 },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 33 },
       "id": 9,
       "options": {
         "displayMode": "gradient",
@@ -562,7 +672,7 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 35 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
       "id": 10,
       "title": "Host Detail",
       "type": "row",
@@ -614,20 +724,20 @@
             },
             "overrides": [
               {
-                "matcher": { "id": "byName", "options": "Sent" },
+                "matcher": { "id": "byRegexp", "options": "/.* - Sent/" },
                 "properties": [
                   { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }
                 ]
               },
               {
-                "matcher": { "id": "byName", "options": "Received" },
+                "matcher": { "id": "byRegexp", "options": "/.* - Received/" },
                 "properties": [
                   { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }
                 ]
               }
             ]
           },
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 36 },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 44 },
           "id": 11,
           "options": {
             "legend": {
@@ -650,7 +760,7 @@
                 "uid": "prometheus"
               },
               "expr": "rate(host:traffic_bytes_sent{ifid=\"1\", host=~\"$host\"}[5m])",
-              "legendFormat": "Sent",
+              "legendFormat": "{{host}} - Sent",
               "refId": "A"
             },
             {
@@ -659,7 +769,7 @@
                 "uid": "prometheus"
               },
               "expr": "rate(host:traffic_bytes_rcvd{ifid=\"1\", host=~\"$host\"}[5m])",
-              "legendFormat": "Received",
+              "legendFormat": "{{host}} - Received",
               "refId": "B"
             }
           ]
@@ -668,7 +778,7 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
       "id": 12,
       "title": "VLAN Detail",
       "type": "row",
@@ -720,20 +830,20 @@
             },
             "overrides": [
               {
-                "matcher": { "id": "byName", "options": "Sent" },
+                "matcher": { "id": "byRegexp", "options": "/.* - Sent/" },
                 "properties": [
                   { "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }
                 ]
               },
               {
-                "matcher": { "id": "byName", "options": "Received" },
+                "matcher": { "id": "byRegexp", "options": "/.* - Received/" },
                 "properties": [
                   { "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }
                 ]
               }
             ]
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 37 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 45 },
           "id": 13,
           "options": {
             "legend": {
@@ -756,7 +866,7 @@
                 "uid": "prometheus"
               },
               "expr": "rate(vlan:traffic_bytes_sent{ifid=\"1\", vlan=~\"$vlan\"}[5m])",
-              "legendFormat": "Sent",
+              "legendFormat": "VLAN {{vlan}} - Sent",
               "refId": "A"
             },
             {
@@ -765,7 +875,7 @@
                 "uid": "prometheus"
               },
               "expr": "rate(vlan:traffic_bytes_rcvd{ifid=\"1\", vlan=~\"$vlan\"}[5m])",
-              "legendFormat": "Received",
+              "legendFormat": "VLAN {{vlan}} - Received",
               "refId": "B"
             }
           ]
@@ -792,7 +902,7 @@
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 37 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 45 },
           "id": 14,
           "options": {
             "displayMode": "gradient",
