@@ -39,6 +39,20 @@ spec:
 
     defaultDashboards:
       enabled: true
+      dashboards:
+        # Disable dashboards that duplicate those in the Grafana HelmRelease
+        kubernetes-system-api-server:
+          enabled: false
+        kubernetes-system-coredns:
+          enabled: false
+        kubernetes-views-global:
+          enabled: false
+        kubernetes-views-namespaces:
+          enabled: false
+        kubernetes-views-nodes:
+          enabled: false
+        node-exporter-full:
+          enabled: false
     dashboards:
       vmalert: true
       operator: true
