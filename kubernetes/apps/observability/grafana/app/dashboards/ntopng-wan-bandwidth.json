@@ -554,8 +554,118 @@
       ]
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Top 10 hosts in the selected VLAN(s) by bytes received over the selected time range. Uses the @VLAN suffix in ntopng host labels.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-greens"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "id": 19,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "title": "Top Hosts in VLAN - Received",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(10, increase(host:traffic_bytes_rcvd{ifid=\"1\", host=~\".*@$vlan\"}[$__range]))",
+          "legendFormat": "{{host}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Top 10 hosts in the selected VLAN(s) by bytes sent over the selected time range. Uses the @VLAN suffix in ntopng host labels.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-blues"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "id": 20,
+      "options": {
+        "displayMode": "gradient",
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "title": "Top Hosts in VLAN - Sent",
+      "type": "bargauge",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(10, increase(host:traffic_bytes_sent{ifid=\"1\", host=~\".*@$vlan\"}[$__range]))",
+          "legendFormat": "{{host}}",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 40 },
       "id": 7,
       "title": "Top Talkers",
       "type": "row"
@@ -582,7 +692,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 33 },
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 41 },
       "id": 8,
       "options": {
         "displayMode": "gradient",
@@ -637,7 +747,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 33 },
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 41 },
       "id": 9,
       "options": {
         "displayMode": "gradient",
@@ -672,7 +782,7 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 43 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
       "id": 10,
       "title": "Host Detail",
       "type": "row",
@@ -737,7 +847,7 @@
               }
             ]
           },
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 44 },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 52 },
           "id": 11,
           "options": {
             "legend": {
@@ -778,7 +888,7 @@
     },
     {
       "collapsed": true,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 52 },
       "id": 12,
       "title": "VLAN Detail",
       "type": "row",
@@ -843,7 +953,7 @@
               }
             ]
           },
-          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 45 },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 53 },
           "id": 13,
           "options": {
             "legend": {
@@ -902,7 +1012,7 @@
             },
             "overrides": []
           },
-          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 45 },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 53 },
           "id": 14,
           "options": {
             "displayMode": "gradient",
