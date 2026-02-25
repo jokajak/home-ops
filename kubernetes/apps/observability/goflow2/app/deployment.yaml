@@ -22,12 +22,10 @@ spec:
             - "netflow://:2055"
             - -addr
             - ":8080"
-            - -loglevel
-            - debug
             - -transport
             - file
             - -transport.file
-            - /dev/stdout
+            - /dev/null
           ports:
             - name: netflow
               containerPort: 2055
