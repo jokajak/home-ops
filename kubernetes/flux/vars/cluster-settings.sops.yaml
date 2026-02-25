@@ -37,6 +37,7 @@ data:
     CONTROLLER_IP_3: ENC[AES256_GCM,data:koCNPV8oyIm3f9NnwNU=,iv:/PjRL+gHh0nGc5nPfOlplUmUo+3TFad2QvIwdt0U8uQ=,tag:6HRsUc68UIYzG/q36hQ5hA==,type:str]
     #ENC[AES256_GCM,data:g6tP7PtafP+mBqIS69U+Rw==,iv:yBfpvI0ECx4BB0OlYOfwN66uxud7YUAlitZCoLp3Rbo=,tag:Hf43i+ZhMRAQPmOaoaa/1Q==,type:comment]
     IOT_CIDR: ENC[AES256_GCM,data:6bi+558s6hdmPQi0/b0=,iv:r8FHGvWVQKIs/tef3X1fKkq2oLS2D9yx6NqFOxuMKP8=,tag:Q5ZRTX/yT9I8LlPiPrvYMA==,type:str]
+    IOT_POD_CIDR: ENC[AES256_GCM,data:ETPF7jWie8WDIB9H7Jc=,iv:A02Ex4JhmaNsPgXownC0dbAuMy/tTVVvgIS/VNXihM8=,tag:iSVA3QrfccJICq/PRnMUnQ==,type:str]
     IOT_GATEWAY: ENC[AES256_GCM,data:lGPyVaPz+qyvAWU=,iv:EwnpOsRyoMKaXMGCREQS4LfQVchFHZVXeyTYG1D4oOs=,tag:4H2ynoO6o3MwPYd1J89Tew==,type:str]
     LAN_CIDR: ENC[AES256_GCM,data:HRt8r9PBjhKCZrEm7E56Fw==,iv:5bCLUwBH94leR1N9z8W8M2Rp8ebtEJx6hfYY55g39BA=,tag:VZYtEdZbsqXgL13AFRt33g==,type:str]
     LAN_GATEWAY: ENC[AES256_GCM,data:8BSeAkEnxRUNJP65hA==,iv:jtXZBG+Dl7VXpq3/PTLcoRWHjBWkNBkNfyHdGBF3MrI=,tag:iLe69ewe73T63i8bOZdXUg==,type:str]
@@ -59,7 +60,7 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-02-22T17:53:57Z"
-    mac: ENC[AES256_GCM,data:1FsHOWrQRQ5iN1xKKdYG2lAW1lE/K7KCpqzQdG8ScMNfB0puhh00KbYq09seIbetIXUkABw0QevrTmZWV7z/Qc1Rj2SH5C7d5K+We9PCeEBW5NjJ9LvBMFP86M0127xmDfZYSLkIeQoVwp2UG6Wv+/13Qtn+oGHl20GViGffrls=,iv:FsP3c2l/yzZd9mfkETmWWx60KmXRERILQ+UYimtIfmI=,tag:hnggqINXE7+IipBH0/RgsA==,type:str]
+    lastmodified: "2026-02-25T15:18:37Z"
+    mac: ENC[AES256_GCM,data:e71McTMDyhJ9BCzNNhsmlnpEQhTRrjlXIdmW7yxO6KCeUW07M1VA3vi53nxy8RDtv2TFn7JYt6DwKZPrsOQgbBy0nCwVTFAyhGamyS5tYxmeNXUpd3pS4foxinP4hvTW+Zbtf3ReEgYA2jaa1v5NMnlo0aB0S1g8eWxPVRHBi7s=,iv:m+hiVd56pYE99Vqvqi8X3S49VqDgGHSmJa6qeGTvEbU=,tag:bjULkiT1E52rtsyt6GCu3A==,type:str]
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
-    version: 3.11.0
+    version: 3.12.1
