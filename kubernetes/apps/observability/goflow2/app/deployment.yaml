@@ -25,7 +25,7 @@ spec:
             - -transport
             - file
             - -transport.file
-            - /dev/null
+            - /dev/stdout
           ports:
             - name: netflow
               containerPort: 2055
