@@ -1,0 +1,32 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goflow2-netflow
+  namespace: observability
+spec:
+  type: LoadBalancer
+  ports:
+    - name: netflow
+      port: 2055
+      protocol: UDP
+      targetPort: 2055
+  selector:
+    app: goflow2
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: goflow2-metrics
+  namespace: observability
+  labels:
+    app: goflow2
+spec:
+  type: ClusterIP
+  ports:
+    - name: metrics
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: goflow2

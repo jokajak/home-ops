@@ -6,6 +6,7 @@ resources:
   # Pre Flux-Kustomizations
   - ./namespace.yaml
   # Flux-Kustomizations
+  - ./goflow2/ks.yaml
   - ./gatus/ks.yaml
   - ./grafana/ks.yaml
   - ./unpoller/ks.yaml

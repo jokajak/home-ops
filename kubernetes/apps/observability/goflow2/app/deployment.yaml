@@ -1,0 +1,51 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: goflow2
+  namespace: observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: goflow2
+  template:
+    metadata:
+      labels:
+        app: goflow2
+    spec:
+      containers:
+        - name: goflow2
+          image: netsampler/goflow2:v2.2.6
+          args:
+            - -listen
+            - "netflow://:2055"
+            - -addr
+            - ":8080"
+            - -transport
+            - file
+            - -transport.file
+            - /dev/null
+          ports:
+            - name: netflow
+              containerPort: 2055
+              protocol: UDP
+            - name: metrics
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /__health
+              port: 8080
+            initialDelaySeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /__health
+              port: 8080
+            initialDelaySeconds: 5
