@@ -44,6 +44,7 @@ spec:
               UNIQUE_FILENAMES: true
               METHOD: WATCH
               LOG_LEVEL: DEBUG
+              HEALTH_PORT: "8081"
             restartPolicy: Always
             resources:
               requests:
