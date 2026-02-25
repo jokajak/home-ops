@@ -10,14 +10,15 @@ spec:
       "plugins": [
         {
           "type": "macvlan",
-          "capabilities": { "ips": true },
           "master": "eth0.50",
           "mode": "bridge",
           "ipam": {
-            "type": "static",
+            "type": "whereabouts",
+            "range": "${IOT_POD_CIDR:=192.168.1.0/24}",
+            "gateway": "${IOT_GATEWAY:=192.168.1.1}",
             "routes": [
               {
-                "dst": "${LAN_CIDR:=192.168.1.1/24}",
+                "dst": "${LAN_CIDR:=192.168.1.0/24}",
                 "gw": "${IOT_GATEWAY:=192.168.1.1}"
               }
             ]
