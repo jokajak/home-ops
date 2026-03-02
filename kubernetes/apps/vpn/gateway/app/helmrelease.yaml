@@ -31,7 +31,7 @@ spec:
           setup-masquerade:
             image:
               repository: ghcr.io/qdm12/gluetun
-              tag: v3.41.0
+              tag: v3.41.1
             command:
               - /bin/sh
               - -c
@@ -50,7 +50,7 @@ spec:
               - setup-masquerade
             image:
               repository: ghcr.io/qdm12/gluetun
-              tag: v3.41.0
+              tag: v3.41.1
             envFrom:
               - secretRef:
                   name: vpn-gateway-credentials
@@ -73,7 +73,7 @@ spec:
           gluetun:
             image:
               repository: ghcr.io/qdm12/gluetun
-              tag: v3.41.0
+              tag: v3.41.1
             env:
               VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:=openvpn}
               VPN_TYPE: wireguard
