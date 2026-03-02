@@ -51,9 +51,6 @@ spec:
             image:
               repository: ghcr.io/qdm12/gluetun
               tag: v3.41.0
-            env:
-              VPN_INTERFACE: wg0
-              PORT_FORWARD_DESTINATION: "192.168.24.128"
             envFrom:
               - secretRef:
                   name: vpn-gateway-credentials
@@ -61,12 +58,12 @@ spec:
               - /bin/sh
               - -c
               - |
-                iptables -t nat -A PREROUTING -i "${VPN_INTERFACE}" -p tcp \
-                  --dport "${VPN_FORWARDED_PORT}" \
-                  -j DNAT --to-destination "${PORT_FORWARD_DESTINATION}:${VPN_FORWARDED_PORT}"
-                iptables -t nat -A PREROUTING -i "${VPN_INTERFACE}" -p udp \
-                  --dport "${VPN_FORWARDED_PORT}" \
-                  -j DNAT --to-destination "${PORT_FORWARD_DESTINATION}:${VPN_FORWARDED_PORT}"
+                iptables -t nat -A PREROUTING -i wg0 -p tcp \
+                  --dport $VPN_FORWARDED_PORT \
+                  -j DNAT --to-destination 192.168.24.128:$VPN_FORWARDED_PORT
+                iptables -t nat -A PREROUTING -i wg0 -p udp \
+                  --dport $VPN_FORWARDED_PORT \
+                  -j DNAT --to-destination 192.168.24.128:$VPN_FORWARDED_PORT
             securityContext:
               capabilities:
                 add:
