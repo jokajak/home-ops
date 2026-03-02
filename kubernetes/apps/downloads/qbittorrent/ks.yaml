@@ -19,9 +19,8 @@ spec:
     name: home-kubernetes
   wait: true
   dependsOn:
-    - name: generic-device-plugin
+    - name: vpn-gateway
     - name: cluster-apps-csi-driver-nfs
-    - name: cluster-apps-external-secrets-bitwarden
   postBuild:
     substitute:
       APP: *appname

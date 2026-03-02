@@ -1,0 +1,146 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vpn-gateway
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.5.1
+      interval: 30m
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+
+  values:
+    controllers:
+      vpn-gateway:
+        annotations:
+          secret.reloader.stakater.com/reload: vpn-gateway-credentials
+
+        pod:
+          annotations:
+            k8s.v1.cni.cncf.io/networks: network/gateway-network-vpn-gateway-pod@vpn-gw-veth0
+
+        initContainers:
+          # Add MASQUERADE rule so traffic from bridge clients exits via VPN interface
+          setup-masquerade:
+            image:
+              repository: ghcr.io/qdm12/gluetun
+              tag: v3.41.0
+            command:
+              - /bin/sh
+              - -c
+              - |
+                iptables -t nat -A POSTROUTING -o wg0 \
+                  --match addrtype ! --dst-type LOCAL,BROADCAST,ANYCAST,MULTICAST \
+                  -j MASQUERADE
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+
+          # DNAT inbound VPN-forwarded port to qbittorrent's fixed bridge IP
+          setup-dnat:
+            dependsOn:
+              - setup-masquerade
+            image:
+              repository: ghcr.io/qdm12/gluetun
+              tag: v3.41.0
+            env:
+              VPN_INTERFACE: wg0
+              PORT_FORWARD_DESTINATION: "192.168.24.128"
+            envFrom:
+              - secretRef:
+                  name: vpn-gateway-credentials
+            command:
+              - /bin/sh
+              - -c
+              - |
+                iptables -t nat -A PREROUTING -i "${VPN_INTERFACE}" -p tcp \
+                  --dport "${VPN_FORWARDED_PORT}" \
+                  -j DNAT --to-destination "${PORT_FORWARD_DESTINATION}:${VPN_FORWARDED_PORT}"
+                iptables -t nat -A PREROUTING -i "${VPN_INTERFACE}" -p udp \
+                  --dport "${VPN_FORWARDED_PORT}" \
+                  -j DNAT --to-destination "${PORT_FORWARD_DESTINATION}:${VPN_FORWARDED_PORT}"
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+
+        containers:
+          gluetun:
+            image:
+              repository: ghcr.io/qdm12/gluetun
+              tag: v3.41.0
+            env:
+              VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:=openvpn}
+              VPN_TYPE: wireguard
+              VPN_INTERFACE: wg0
+              WIREGUARD_MTU: "1420"
+              DOT: "off"
+              HTTPPROXY: "on"
+              SHADOWSOCKS: "on"
+              FIREWALL_ENABLED_DISABLING_IT_SHOOTS_YOU_IN_YOUR_FOOT: "off"
+              HEALTH_VPN_DURATION_INITIAL: 30s
+              HEALTH_SUCCESS_WAIT_DURATION: 30s
+              SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:=US}
+            envFrom:
+              - secretRef:
+                  name: vpn-gateway-credentials
+            lifecycle:
+              postStart:
+                exec:
+                  command:
+                    - /bin/sh
+                    - -c
+                    - ip rule del table 51820 || true
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command:
+                      - /gluetun-entrypoint
+                      - healthcheck
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 3
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  exec:
+                    command:
+                      - /gluetun-entrypoint
+                      - healthcheck
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 3
+            resources:
+              limits:
+                squat.ai/tun: "1"
+            securityContext:
+              capabilities:
+                add:
+                  - NET_ADMIN
+                  - DAC_OVERRIDE
+                  - MKNOD
+                  - CHOWN
+
+    service:
+      control:
+        controller: vpn-gateway
+        ports:
+          http:
+            port: 8000
+      proxy:
+        controller: vpn-gateway
+        ports:
+          http:
+            port: 8888

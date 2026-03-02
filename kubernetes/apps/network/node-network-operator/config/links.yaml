@@ -1,0 +1,35 @@
+---
+# Bridge interface — hosts the VPN subnet on each node
+apiVersion: network.soliddownant.github.io/v1alpha1
+kind: Link
+metadata:
+  name: vpn-gateway-bridge
+spec:
+  name: vpn-gw-bridge0
+  type: bridge
+  mtu: 1420
+---
+# Mark eth0 as unmanaged so the operator knows about the primary NIC
+# Nodes use net.ifnames=0 (Talos default), so primary interface is eth0
+apiVersion: network.soliddownant.github.io/v1alpha1
+kind: Link
+metadata:
+  name: vpn-gateway-vxlan-dev
+spec:
+  name: eth0
+  type: unmanaged
+---
+# VXLAN overlay — spans all nodes via multicast, bridges into vpn-gw-bridge0
+apiVersion: network.soliddownant.github.io/v1alpha1
+kind: Link
+metadata:
+  name: vpn-gateway-vxlan
+spec:
+  name: vpn-gw-vxlan0
+  type: vxlan
+  mtu: 1420
+  vxlan:
+    vnid: 1000
+    remote: 224.0.0.88
+    device: vpn-gateway-vxlan-dev
+    master: vpn-gateway-bridge

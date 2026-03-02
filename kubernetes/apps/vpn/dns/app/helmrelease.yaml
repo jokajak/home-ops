@@ -1,0 +1,60 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vpn-dns
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.5.1
+      interval: 30m
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+
+  values:
+    controllers:
+      vpn-dns:
+        annotations:
+          configmap.reloader.stakater.com/reload: vpn-dns-config
+
+        pod:
+          annotations:
+            k8s.v1.cni.cncf.io/networks: network/gateway-network-dns-pod@vpn-gw-veth0
+
+        containers:
+          dnsdist:
+            image:
+              repository: docker.io/powerdns/dnsdist-19
+              tag: 1.9.11
+            probes:
+              liveness:
+                enabled: true
+              readiness:
+                enabled: true
+
+    service:
+      app:
+        controller: vpn-dns
+        ports:
+          dns-tcp:
+            port: 53
+            protocol: TCP
+          dns-udp:
+            port: 53
+            protocol: UDP
+
+    persistence:
+      config:
+        type: configMap
+        name: vpn-dns-config
+        advancedMounts:
+          vpn-dns:
+            dnsdist:
+              - path: /etc/dnsdist/dnsdist.conf
+                subPath: dnsdist.conf
+                readOnly: true
