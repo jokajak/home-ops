@@ -33,9 +33,9 @@ spec:
               tag: 1.9.11
             probes:
               liveness:
-                enabled: true
+                enabled: false
               readiness:
-                enabled: true
+                enabled: false
 
     service:
       app:
