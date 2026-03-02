@@ -3,31 +3,10 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app node-network-operator-crds
-  namespace: flux-system
-spec:
-  targetNamespace: network
-  commonMetadata:
-    labels:
-      app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/node-network-operator/crds"
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: home-kubernetes
-  wait: true
-  interval: 10m
-  retryInterval: 1m
-  timeout: 5m
----
-# yaml-language-server: $schema=https://kubernetes-schemas.dmfrey.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
   name: &app node-network-operator
   namespace: flux-system
 spec:
-  targetNamespace: network
+  # No targetNamespace — install.yaml creates its own node-network-operator-system namespace
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
@@ -41,7 +20,6 @@ spec:
   retryInterval: 1m
   timeout: 5m
   dependsOn:
-    - name: node-network-operator-crds
     - name: cert-manager
   postBuild:
     substitute:

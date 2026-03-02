@@ -1,6 +1,0 @@
----
-# yaml-language-server: $schema=https://json.schemastore.org/kustomization
-apiVersion: kustomize.config.k8s.io/v1beta1
-kind: Kustomization
-resources:
-  - https://github.com/solidDoWant/node-network-operator/releases/download/v0.0.8/crds.yaml
