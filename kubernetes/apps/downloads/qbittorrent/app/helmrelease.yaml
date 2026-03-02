@@ -40,7 +40,7 @@ spec:
               - cluster.local
             options:
               - name: ndots
-                value: "5"
+                value: "1"
 
         containers:
           app:
