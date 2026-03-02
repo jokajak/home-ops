@@ -3,14 +3,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app multus
+  name: &app node-network-operator-crds
   namespace: flux-system
 spec:
   targetNamespace: network
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/multus/app"
+  path: "./kubernetes/apps/network/node-network-operator/crds"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -19,6 +19,30 @@ spec:
   interval: 10m
   retryInterval: 1m
   timeout: 5m
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.dmfrey.com/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: &app node-network-operator
+  namespace: flux-system
+spec:
+  targetNamespace: network
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: *app
+  path: "./kubernetes/apps/network/node-network-operator/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  dependsOn:
+    - name: node-network-operator-crds
+    - name: cert-manager
   postBuild:
     substitute:
       APP: *app
@@ -28,14 +52,14 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app multus-config
+  name: &app node-network-operator-config
   namespace: flux-system
 spec:
   targetNamespace: network
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/multus/config"
+  path: "./kubernetes/apps/network/node-network-operator/config"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -44,11 +68,9 @@ spec:
   interval: 10m
   retryInterval: 1m
   timeout: 5m
+  dependsOn:
+    - name: node-network-operator
   postBuild:
     substitute:
       APP: *app
     substituteFrom: []
-  dependsOn:
-    - name: multus
-    - name: whereabouts
-    - name: node-network-operator-config

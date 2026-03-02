@@ -9,3 +9,4 @@ resources:
   - ./multus/ks.yaml
   - ./whereabouts/ks.yaml
   - ./cilium/ks.yaml
+  - ./node-network-operator/ks.yaml

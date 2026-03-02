@@ -1,0 +1,115 @@
+---
+# Gateway pod attachment — fixed IP 192.168.24.254
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: gateway-network-vpn-gateway-pod
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "type": "bridge",
+      "bridge": "vpn-gw-bridge0",
+      "ipam": {
+        "type": "whereabouts",
+        "range": "192.168.24.0/24",
+        "range_start": "192.168.24.254",
+        "range_end": "192.168.24.254"
+      },
+      "mtu": 1420
+    }
+---
+# General client pod attachment — dynamic IP from 192.168.24.1–192.168.24.127
+# Routes all public internet ranges via the VPN gateway (192.168.24.254)
+# Excludes RFC-1918 10.0.0.0/8 so pod/service CIDRs stay on primary CNI
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: gateway-network-client-pods
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "type": "bridge",
+      "bridge": "vpn-gw-bridge0",
+      "ipam": {
+        "type": "whereabouts",
+        "range": "192.168.24.0/24",
+        "range_start": "192.168.24.1",
+        "range_end": "192.168.24.127",
+        "routes": [
+          {"dst": "0.0.0.0/5"},
+          {"dst": "8.0.0.0/7"},
+          {"dst": "11.0.0.0/8"},
+          {"dst": "12.0.0.0/6"},
+          {"dst": "16.0.0.0/4"},
+          {"dst": "32.0.0.0/3"},
+          {"dst": "64.0.0.0/2"},
+          {"dst": "128.0.0.0/1"}
+        ],
+        "gateway": "192.168.24.254"
+      },
+      "mtu": 1420
+    }
+---
+# qbittorrent attachment — fixed IP 192.168.24.128 (for DNAT from VPN gateway)
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: gateway-network-client-pod-qbittorrent
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "type": "bridge",
+      "bridge": "vpn-gw-bridge0",
+      "ipam": {
+        "type": "whereabouts",
+        "range": "192.168.24.0/24",
+        "range_start": "192.168.24.128",
+        "range_end": "192.168.24.128",
+        "routes": [
+          {"dst": "0.0.0.0/5"},
+          {"dst": "8.0.0.0/7"},
+          {"dst": "11.0.0.0/8"},
+          {"dst": "12.0.0.0/6"},
+          {"dst": "16.0.0.0/4"},
+          {"dst": "32.0.0.0/3"},
+          {"dst": "64.0.0.0/2"},
+          {"dst": "128.0.0.0/1"}
+        ],
+        "gateway": "192.168.24.254"
+      },
+      "mtu": 1420
+    }
+---
+# VPN-attached DNS pod — fixed IP 192.168.24.253
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: gateway-network-dns-pod
+spec:
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "type": "bridge",
+      "bridge": "vpn-gw-bridge0",
+      "ipam": {
+        "type": "whereabouts",
+        "range": "192.168.24.0/24",
+        "range_start": "192.168.24.253",
+        "range_end": "192.168.24.253",
+        "routes": [
+          {"dst": "0.0.0.0/5"},
+          {"dst": "8.0.0.0/7"},
+          {"dst": "11.0.0.0/8"},
+          {"dst": "12.0.0.0/6"},
+          {"dst": "16.0.0.0/4"},
+          {"dst": "32.0.0.0/3"},
+          {"dst": "64.0.0.0/2"},
+          {"dst": "128.0.0.0/1"}
+        ],
+        "gateway": "192.168.24.254"
+      },
+      "mtu": 1420
+    }

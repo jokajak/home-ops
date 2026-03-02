@@ -20,53 +20,27 @@ spec:
     controllers:
       qbittorrent:
         annotations:
-          configmap.reloader.stakater.com/reload: qbittorrent-dnsdist
           secret.reloader.stakater.com/reload: qbittorrent-secret
 
         pod:
+          annotations:
+            k8s.v1.cni.cncf.io/networks: network/gateway-network-client-pod-qbittorrent@vpn-gw-veth0
           securityContext:
             fsGroup: 2000
             fsGroupChangePolicy: "OnRootMismatch"
             supplementalGroups:
               - 65542 # gladius:external-services
-          terminationGracePeriodSeconds: 120
-
-        initContainers:
-          dnsdist:
-            image:
-              repository: docker.io/powerdns/dnsdist-19
-              tag: 1.9.11
-            restartPolicy: Always
-
-          gluetun:
-            dependsOn:
-              - dnsdist
-            image:
-              repository: ghcr.io/qdm12/gluetun
-              tag: v3.41.0
-            env:
-              DOT: "off"
-              DNS_ADDRESS: "127.0.0.2"
-              VPN_SERVICE_PROVIDER: ${VPN_SERVICE_PROVIDER:=openvpn}
-              VPN_TYPE: wireguard
-              VPN_INTERFACE: wg0
-              FIREWALL_INPUT_PORTS: 8080
-              FIREWALL_OUTBOUND_SUBNETS: ${CLUSTER_CIDR:=10.96.0.0/12},${SERVICE_CIDR:=10.244.0.0/16} # Allow access to k8s subnets
-              SERVER_COUNTRIES: ${VPN_SERVER_COUNTRIES:=US}
-              HTTPPROXY: on
-              SHADOWSOCKS: on
-            envFrom:
-              - secretRef:
-                  name: qbittorrent-secrets
-            resources:
-              limits:
-                squat.ai/tun: "1"
-            restartPolicy: Always
-            securityContext:
-              capabilities:
-                add:
-                  - NET_ADMIN
-              allowPrivilegeEscalation: false
+          dnsPolicy: None
+          dnsConfig:
+            nameservers:
+              - 192.168.24.253
+            searches:
+              - downloads.svc.cluster.local
+              - svc.cluster.local
+              - cluster.local
+            options:
+              - name: ndots
+                value: "5"
 
         containers:
           app:
@@ -108,7 +82,7 @@ spec:
               repository: ghcr.io/bjw-s-labs/gluetun-qb-port-sync
               tag: 0.0.4
             env:
-              GLUETUN_CONTROL_SERVER_HOST: localhost
+              GLUETUN_CONTROL_SERVER_HOST: vpn-gateway.vpn.svc.cluster.local
               GLUETUN_CONTROL_SERVER_PORT: 8000
               QBITTORRENT_HOST: localhost
               QBITTORRENT_WEBUI_PORT: *port
@@ -164,12 +138,3 @@ spec:
         globalMounts:
           - path: /downloads
             subPath: torrents
-      dnsdist:
-        type: configMap
-        name: qbittorrent-dnsdist
-        advancedMounts:
-          qbittorrent:
-            dnsdist:
-              - path: /etc/dnsdist/dnsdist.conf
-                subPath: dnsdist.conf
-                readOnly: true

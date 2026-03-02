@@ -1,0 +1,13 @@
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: node-network-operator-webhook
+spec:
+  secretName: node-network-operator-webhook-tls
+  issuerRef:
+    name: node-network-operator-issuer
+    kind: Issuer
+  dnsNames:
+    - node-network-operator-webhook.network.svc
+    - node-network-operator-webhook.network.svc.cluster.local

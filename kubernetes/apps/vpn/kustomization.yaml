@@ -4,3 +4,6 @@ kind: Kustomization
 resources:
   # preflux
   - ./namespace.yaml
+  # flux kustomizations
+  - ./gateway/ks.yaml
+  - ./dns/ks.yaml
