@@ -1,5 +1,7 @@
 ---
-# Bridge interface — hosts the VPN subnet on each node
+# Bridge interface — hosts the VPN subnet on the node running VPN pods.
+# All VPN pods (vpn-gateway, vpn-dns, qbittorrent) are pinned to the same node
+# via nodeSelector so this bridge is purely local — no VXLAN overlay needed.
 apiVersion: nodenetworkoperator.soliddowant.dev/v1alpha1
 kind: Link
 metadata:
@@ -8,29 +10,3 @@ spec:
   interfaceName: vpn-gw-bridge0
   bridge:
     mtu: 1420
----
-# Mark eth0 as unmanaged so the operator knows about the primary NIC
-# Nodes use net.ifnames=0 (Talos default), so primary interface is eth0
-apiVersion: nodenetworkoperator.soliddowant.dev/v1alpha1
-kind: Link
-metadata:
-  name: vpn-gateway-vxlan-dev
-spec:
-  interfaceName: eth0
-  unmanaged: {}
----
-# VXLAN overlay — spans all nodes via multicast, bridges into vpn-gw-bridge0
-apiVersion: nodenetworkoperator.soliddowant.dev/v1alpha1
-kind: Link
-metadata:
-  name: vpn-gateway-vxlan
-spec:
-  interfaceName: vpn-gw-vxlan0
-  vxlan:
-    vnid: 1000
-    remoteIPAddress: 224.0.0.88
-    mtu: 1420
-    device:
-      name: vpn-gateway-vxlan-dev
-    master:
-      name: vpn-gateway-bridge

@@ -25,6 +25,13 @@ spec:
         pod:
           annotations:
             k8s.v1.cni.cncf.io/networks: network/gateway-network-dns-pod@vpn-gw-veth0
+          affinity:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchLabels:
+                      app.kubernetes.io/name: vpn-gateway
+                  topologyKey: kubernetes.io/hostname
 
         containers:
           dnsdist:
