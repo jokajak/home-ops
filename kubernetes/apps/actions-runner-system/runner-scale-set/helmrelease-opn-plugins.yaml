@@ -32,3 +32,19 @@ spec:
           - name: runner
             image: ghcr.io/actions/actions-runner:latest
             command: ["/home/runner/run.sh"]
+            env:
+              - name: PKG_SIGNING_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: opn-plugins-signing-key
+                    key: private_key
+              - name: GITHUB_APP_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: github-app-secret
+                    key: github_app_id
+              - name: GITHUB_APP_PRIVATE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: github-app-secret
+                    key: github_app_private_key
