@@ -5,5 +5,6 @@ metadata:
   name: actions-runner-controller
   namespace: flux-system
 spec:
+  type: oci
   interval: 1h
-  url: https://actions-github.github.io/actions-runner-controller
+  url: oci://ghcr.io/actions/actions-runner-controller-charts
