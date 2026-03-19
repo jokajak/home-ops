@@ -26,6 +26,9 @@ spec:
     minRunners: 0
     maxRunners: 5
     runnerGroup: "Default"
+    controllerServiceAccount:
+      namespace: actions-runner-system
+      name: actions-runner-controller-gha-rs-controller
     template:
       spec:
         containers:
