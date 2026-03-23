@@ -32,7 +32,7 @@ spec:
                 path: /metadata/labels/actions.github.com~1scale-set-version
                 value: "0.14.0"
   values:
-    githubConfigUrl: "https://github.com/jokajak/opn-plugins-source"
+    githubConfigUrl: "https://github.com/jokajak/OPN-Plugins-Source"
     githubConfigSecret: github-app-secret
     minRunners: 0
     maxRunners: 5
