@@ -37,7 +37,7 @@ spec:
           dnsdist:
             image:
               repository: docker.io/powerdns/dnsdist-19
-              tag: 1.9.11
+              tag: 1.9.12
             probes:
               liveness:
                 enabled: false
