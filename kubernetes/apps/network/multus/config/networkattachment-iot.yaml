@@ -14,7 +14,7 @@ spec:
           "mode": "bridge",
           "ipam": {
             "type": "whereabouts",
-            "range": "${IOT_POD_CIDR:=192.168.1.0/24}",
+            "range": "${IOT_CIDR:=192.168.1.0/24}",
             "gateway": "${IOT_GATEWAY:=192.168.1.1}",
             "routes": [
               {
