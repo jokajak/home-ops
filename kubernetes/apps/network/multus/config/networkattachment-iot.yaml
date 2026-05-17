@@ -16,6 +16,9 @@ spec:
             "type": "whereabouts",
             "range": "${IOT_CIDR:=192.168.1.0/24}",
             "gateway": "${IOT_GATEWAY:=192.168.1.1}",
+            "exclude": [
+              "${IOT_GATEWAY:=192.168.1.1}/32"
+            ],
             "routes": [
               {
                 "dst": "${LAN_CIDR:=192.168.1.0/24}",
