@@ -9,7 +9,6 @@ on:
 
 env:
   KUBERNETES_DIR: ./kubernetes
-  HOMEBREW_NO_SANDBOX_LINUX: 1
 
 jobs:
   kubeconform:
@@ -21,6 +20,9 @@ jobs:
 
       - name: Setup Homebrew
         uses: Homebrew/actions/setup-homebrew@master
+
+      - name: Install bubblewrap
+        run: sudo apt-get install -y bubblewrap
 
       - name: Setup Workflow Tools
         run: brew install fluxcd/tap/flux kubeconform kustomize
