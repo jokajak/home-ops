@@ -44,6 +44,27 @@ Concretely:
 If a task seems to require a secret value I can't see, that's expected — surface what's needed
 and hand that step back to the owner rather than trying to work around the encryption.
 
+## ⚠️ Network details stay out of the repo
+
+The owner does **not** want real network topology committed to this repo. Treat IPs, CIDRs,
+subnets, gateway/router addresses, NFS server addresses, MAC addresses, VLAN IDs, and similar as
+sensitive — same posture as secrets.
+
+- **Never hardcode** a real address in a manifest, doc, or commit. Reference a Flux substitution
+  variable instead — `${SECRET_NFS_SERVER}`, `${LB_CIDR_V4}`, `${ROUTER_CIDR_V4}`,
+  `${IOT_CIDR}`, etc. The real values live in `cluster-secrets` (SOPS), which the owner injects.
+- In `docs/` and plan files, refer to hosts by name (`auth.${SECRET_DOMAIN}`) or by role
+  ("the VPN gateway pod"), not by address. Use placeholders (`A.B.C.D`, `<nas-ip>`) if an example
+  is unavoidable.
+- When adding config that needs an address, add a new `${SECRET_*}`/`${*_CIDR_*}` substitution
+  variable (wired through `cluster-secrets`) rather than a literal, and tell the owner which
+  variable to populate.
+
+> Note: parts of the existing repo (inherited from the cluster-template and the VPN/downloads
+> stack) still contain literal `192.168.x.x` addresses — some as `${VAR:=default}` fallbacks,
+> some hardcoded (e.g. the `192.168.24.0/24` VPN bridge subnet). New work must not add to this,
+> and scrubbing the existing literals is a tracked cleanup task.
+
 ## Execution environment constraints
 
 - This runs in an **ephemeral remote container with a fresh clone** — there is **no kubeconfig
