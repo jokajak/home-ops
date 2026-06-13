@@ -60,10 +60,14 @@ sensitive — same posture as secrets.
   variable (wired through `cluster-secrets`) rather than a literal, and tell the owner which
   variable to populate.
 
-> Note: parts of the existing repo (inherited from the cluster-template and the VPN/downloads
-> stack) still contain literal `192.168.x.x` addresses — some as `${VAR:=default}` fallbacks,
-> some hardcoded (e.g. the `192.168.24.0/24` VPN bridge subnet). New work must not add to this,
-> and scrubbing the existing literals is a tracked cleanup task.
+> **What counts as sensitive here:** the owner's *real* network — LAN/router/NFS/gateway
+> addresses, VLANs — which is already injected via `cluster-secrets` (the `${VAR:=192.168.1.x}`
+> literals scattered through the repo are generic cluster-template fallbacks, not the real
+> values).
+>
+> **Explicitly OK:** the `192.168.24.0/24` VPN subnet and its fixed pod IPs (in
+> `kubernetes/apps/{network,vpn,downloads}` and the VPN plan doc) are an **internal overlay**,
+> not real LAN topology — they may stay hardcoded. Don't waste effort variabilizing them.
 
 ## Execution environment constraints
 
