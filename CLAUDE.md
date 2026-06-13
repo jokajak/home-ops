@@ -5,14 +5,30 @@ Guidance for Claude (and other AI agents) working in this repository.
 ## What this repo is
 
 A GitOps home-ops repo (fork of [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template))
-that declaratively manages a single Kubernetes cluster:
+that declaratively manages a single Kubernetes cluster.
+
+**Guiding principle — everything as code.** The whole system is meant to be reproducible from
+this Git repository: no click-ops, no manual `kubectl apply`, no console-configured infra. State
+lives in version control and is reconciled by machines, via two complementary engines:
+
+- **GitOps (Flux)** for everything *inside* the cluster — a push to the tracked branch is the only
+  thing that changes cluster state.
+- **OpenTofu** (the `tofu` CLI, the open-source Terraform fork) for everything *outside* the
+  cluster — Authentik objects, Bitwarden items, MinIO buckets. The `terraform/` directory holds
+  this IaC; `.tf`/`.hcl` is OpenTofu code regardless of the directory name. Prefer `tofu` over
+  `terraform` in new tooling/docs.
+
+When something can't yet be expressed as code, treat that as a gap to close, and call it out
+rather than papering over it with a manual step.
+
+The pieces:
 
 - **OS / cluster**: Talos Linux, bootstrapped via the `talos` taskfiles.
 - **GitOps engine**: Flux — everything under `kubernetes/` is reconciled from Git. A push to
   the tracked branch is what changes the cluster; `kubectl apply` is not part of the workflow.
 - **App pattern**: most apps use the bjw-s `app-template` Helm chart, laid out as
   `kubernetes/apps/<namespace>/<app>/{ks.yaml, app/{helmrelease.yaml, kustomization.yaml, ...}}`.
-- **Out-of-cluster config**: `terraform/` manages things that live outside Kubernetes
+- **Out-of-cluster config**: OpenTofu code in `terraform/` manages things that live outside Kubernetes
   (Authentik objects, Bitwarden items, MinIO buckets) with SOPS-encrypted state inputs.
 - **Storage**: a Synology NAS (RAID 1) is the durable data tier, exposed to the cluster over
   NFS (e.g. Immich data lives on `nfs://<nas>/volume1/immich`). openebs-hostpath is used for
@@ -36,7 +52,7 @@ Concretely:
   `key: "immich credentials"`, `property: pg_password`) — the values themselves live in
   Bitwarden, which I have no access to.
 - **What this means for my work**: I edit the *declarations* — HelmReleases, Kustomizations,
-  ExternalSecret/SOPS *references*, Terraform resources. When a new secret is needed I add the
+  ExternalSecret/SOPS *references*, OpenTofu resources. When a new secret is needed I add the
   `ExternalSecret`/SOPS reference and tell the owner exactly which **Bitwarden item + property**
   (or which SOPS key) they must create and populate. I do **not** invent, guess, paste, or
   commit real secret values, and I assume any value I can't see is being supplied by the owner.
@@ -81,6 +97,27 @@ sensitive — same posture as secrets.
   over claiming runtime verification.
 - Outbound network access depends on the environment's network policy; don't assume arbitrary
   egress.
+
+## Commands
+
+Tasks are driven by [go-task](https://taskfile.dev); run `task -l` to list everything. The
+includes are namespaced (`task k8s:…`, `task flux:…`, `task talos:…`, `task sops:…`). The
+cluster-touching tasks (`flux:*`, `talos:*`, anything needing `KUBECONFIG`) **won't work in this
+container** — no kubeconfig, no cluster. The ones below are the locally useful, read-only/validation
+ones that mirror CI.
+
+- **Validate manifests (kubeconform)** — `task k8s:kubeconform` (wraps `scripts/kubeconform.sh`,
+  same as `.github/workflows/kubeconform.yaml`). Run this after editing any HelmRelease/Kustomization.
+- **Flux diff (what would change on the cluster)** — CI uses the `ghcr.io/allenporter/flux-local`
+  image to `diff helmrelease` and `diff kustomization` (see `.github/workflows/flux-diff.yaml`); run
+  `flux-local` locally the same way to preview a change before pushing.
+- **Lint** — `yamllint .` (config in `.yamllint.yaml`) and `pre-commit run --all-files`
+  (`.pre-commit-config.yaml`: trailing whitespace, EOF, merge-conflict, JSON checks).
+- **Encrypt a SOPS file** — `task sops:encrypt file=<path>` (in-place). Decryption requires the age
+  key, which is not present here — see the secrets section.
+- **Render the cluster-template** — `task configure` regenerates `kubernetes/` and `ansible/` from
+  `config.yaml` via makejinja; only relevant when changing template inputs, and it **overwrites**
+  generated files.
 
 ## Conventions
 
