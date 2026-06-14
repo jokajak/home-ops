@@ -6,12 +6,16 @@
 ## Owner prerequisites (see docs/plans/2026-06-14-authentik-google-sso.md):
 ##   - Google Cloud OAuth client (Web application) with authorized redirect URI:
 ##       https://auth.${var.domain}/source/oauth/callback/google/
-##   - Bitwarden login item (username = client_id, password = client_secret),
-##     referenced by var.google_oauth_credentials_id.
+##   - Bitwarden login item named "authentik-google-creds" (username = client_id,
+##     password = client_secret), mirroring the existing "authentik-github-creds".
 ## -----------------------------------------------------------------------------
 
+# Looked up by name (scoped to the configured org + collection) rather than by a
+# hardcoded item id, matching the authentik-<provider>-creds convention.
 data "bitwarden_item_login" "google_oidc_creds" {
-  id = var.google_oauth_credentials_id
+  search                 = "authentik-google-creds"
+  filter_organization_id = var.organization_id
+  filter_collection_id   = var.collection_id
 }
 
 ## Standard built-in source flows shipped with Authentik. Using these (rather than

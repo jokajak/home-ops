@@ -71,19 +71,19 @@ So the bulk of the actual new work is **Goal 2**.
   - Authorized redirect URI: `https://auth.<your-domain>/source/oauth/callback/google/`
   - (Configure OAuth consent screen first if not done; "External" user type, add self as
     test user — enough for personal use.)
-- [ ] **Store the Google client_id + client_secret in Bitwarden** as a login item, e.g.
-  name `authentik-google-oauth-source` (username = client_id, password = client_secret),
-  in the same org/collection the terraform uses.
-- [ ] **Note the Bitwarden item id** and add it to the terraform var
-  `google_oauth_credentials_id` (in the owner's local tfvars, alongside
-  `github_oauth_credentials_id`).
+- [ ] **Store the Google client_id + client_secret in Bitwarden** as a login item named
+  **`authentik-google-creds`** (username = client_id, password = client_secret), in the
+  same org/collection the terraform uses — mirroring the existing `authentik-github-creds`
+  item. Terraform looks this up by name (`search`), so no item-id var is needed.
 
 ## Implementation plan (Terraform — `terraform/authentik/`)
 
-- [x] **Add variable** `google_oauth_credentials_id` to `variables.tf`.
+- [x] **No new variable** — the Google creds are resolved straight from Bitwarden by name
+  (`search = "authentik-google-creds"`, scoped via the existing `organization_id` /
+  `collection_id` vars), so there's nothing to wire into tfvars.
 - [x] **Add Google source** — new file `source_google.tf`:
-  - `data "bitwarden_item_login" "google_oidc_creds"` keyed on
-    `var.google_oauth_credentials_id`.
+  - `data "bitwarden_item_login" "google_oidc_creds"` looked up by
+    `search = "authentik-google-creds"` + org/collection filters.
   - `resource "authentik_source_oauth" "google"` — `provider_type = "google"`,
     `slug = "google"`, `consumer_key`/`consumer_secret` from the Bitwarden item,
     `authentication_flow = data.authentik_flow.default-source-authentication.id` (the
@@ -139,9 +139,13 @@ So the bulk of the actual new work is **Goal 2**.
 - **2026-06-14** — Surveyed repo. Found Grafana SSO already implemented on both Authentik
   (terraform) and Grafana (helm) sides; confirmed Google source is the real gap. Wrote
   this plan.
-- **2026-06-14** — Implemented Goal 2 in Terraform: added `google_oauth_credentials_id`
-  var, `source_google.tf` (Google source + inbuilt source data + source-auth flow data),
-  and bound `[inbuilt, google]` as the identification stage `sources`. Fixed pre-existing
-  `parent`→`parents` breakage in 4 group resources (blocked all applies). `tofu validate`
-  passes. **Remaining: owner prerequisites (Google client + Bitwarden item + tfvar), then
-  `tofu plan`/`apply`, then verify both goals on the live cluster.**
+- **2026-06-14** — Implemented Goal 2 in Terraform: `source_google.tf` (Google source +
+  inbuilt source data + source-auth flow data), bound `[inbuilt, google]` as the
+  identification stage `sources`. Fixed pre-existing `parent`→`parents` breakage in 4 group
+  resources (blocked all applies). `tofu validate` passes.
+- **2026-06-14** — Switched the Google creds from an item-id variable to a Bitwarden
+  name lookup (`search = "authentik-google-creds"` + org/collection filters), mirroring the
+  existing `authentik-github-creds`; removed `google_oauth_credentials_id`. Rebased onto
+  `origin/main` and pushed. **Remaining: owner creates the `authentik-google-creds`
+  Bitwarden item, confirms the Google client redirect URI, then `tofu plan`/`apply` and
+  verifies both goals on the live cluster.**

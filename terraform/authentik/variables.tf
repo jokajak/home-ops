@@ -8,11 +8,6 @@ variable "github_oauth_credentials_id" {
   description = "ID containing the github oauth credentials"
 }
 
-variable "google_oauth_credentials_id" {
-  type        = string
-  description = "Bitwarden item ID containing the Google OAuth client credentials (username = client_id, password = client_secret)"
-}
-
 variable "organization_id" {
   type        = string
   description = "Bitwarden organization in which to store items"
