@@ -3,9 +3,6 @@ web:
   port: ${CUSTOM_WEB_PORT:=8080}
 metrics: true
 debug: false
-storage:
-  type: sqlite
-  path: /data/data.db
 ui:
   title: Status | Gatus
   header: Status
