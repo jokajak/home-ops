@@ -87,14 +87,15 @@ sensitive — same posture as secrets.
 
 ## Execution environment constraints
 
-- This runs in an **ephemeral remote container with a fresh clone** — there is **no kubeconfig
-  and no cluster access**. I cannot run `kubectl`, `flux`, or `talosctl` against the live
-  cluster, and I should not assume I can observe runtime state. Changes take effect only after
-  the owner reconciles Flux from the pushed branch.
+- **Cluster access varies by session.** Before assuming `kubectl`, `flux`, or `talosctl` are
+  unavailable, probe with a quick `kubectl get nodes 2>&1` or `flux version 2>&1`. In interactive
+  desktop sessions (Claude Code on the owner's Mac) these tools are typically available and have a
+  valid kubeconfig. In CI / remote ephemeral containers they are not. Always check first rather
+  than telling the owner to run commands themselves.
 - Validation I *can* do locally: schema/lint checks the way CI does them — `kubeconform`
   (see `.github/workflows/kubeconform.yaml`), `flux-local` diffs
   (`.github/workflows/flux-diff.yaml`), `yamllint`, and the `pre-commit` hooks. Prefer these
-  over claiming runtime verification.
+  over claiming runtime verification when cluster access is unavailable.
 - Outbound network access depends on the environment's network policy; don't assume arbitrary
   egress.
 

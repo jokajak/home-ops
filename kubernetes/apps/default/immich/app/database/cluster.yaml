@@ -61,9 +61,10 @@ spec:
           key: minio_s3_secret_access_key
   managed:
     roles:
-      - name: app
+      - name: immich
         ensure: present
         login: true
+        superuser: true
         passwordSecret:
           name: immich-pg-secret
   bootstrap:
