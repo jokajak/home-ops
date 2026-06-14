@@ -137,3 +137,12 @@ spec:
           - path: /config/config.yaml
             subPath: config.yaml
             readOnly: true
+      # SQLite history store. Local (openebs-hostpath) for safe file locking —
+      # SQLite over NFS risks corruption. Note: this pins gatus to one node.
+      data:
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: openebs-hostpath
+        globalMounts:
+          - path: /data

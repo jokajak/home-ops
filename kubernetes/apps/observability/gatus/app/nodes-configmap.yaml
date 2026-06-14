@@ -1,0 +1,52 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-nodes-ep
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: basement-dell-sff
+        group: nodes
+        url: tcp://192.168.116.42:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: basement-lenovo-m910q
+        group: nodes
+        url: tcp://192.168.116.48:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: basement-rpi4-chocolate
+        group: nodes
+        url: tcp://192.168.116.43:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: basement-rpi4-peach
+        group: nodes
+        url: tcp://192.168.116.45:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: foyer-dell-3040
+        group: nodes
+        url: tcp://192.168.116.46:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: foyer-dell-mff
+        group: nodes
+        url: tcp://192.168.116.40:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
+      - name: foyer-hp-800g3
+        group: nodes
+        url: tcp://192.168.116.47:10250
+        interval: 1m
+        conditions:
+          - "[CONNECTED] == true"
