@@ -120,6 +120,19 @@ Two outcomes:
 - Restrict enrollment further (email-domain policy) vs. link-only for the single admin
   account? `email_link` + invitation-gated enrollment is already safe for a personal instance.
 
+## Gotcha — Bitwarden provider auth (resolved)
+
+After a long gap, `tofu plan` failed every Bitwarden read with `Vault is locked`,
+even though `bw login --apikey` + `bw unlock` worked **by hand** with the same SOPS
+creds (BW_PASSWORD/CLIENTID/CLIENTSECRET/EMAIL all confirmed current). Root cause: the
+`maxlaverse/bitwarden` provider (bumped 0.17.2→0.17.6) shelling out to the official `bw`
+CLI couldn't reuse the session from its own unlock — a CLI⇄provider version mismatch.
+Also note: a manually-set `BW_SESSION` conflicts with `master_password` (`session_key`
+is a separate, mutually-exclusive auth path), and the provider only self-unlocks from a
+**logged-out** CLI state. **Fix:** switched the provider to the embedded client
+(`client_implementation = "embedded"` in `provider.tf`) — talks to the Bitwarden API
+directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when running.
+
 ## Session Log
 
 - **2026-06-14** — Surveyed repo. Found Grafana SSO already implemented on both Authentik
@@ -134,5 +147,8 @@ Two outcomes:
   (`authentik-github-creds`); bound `[inbuilt, github]` on the identification stage; deleted
   `source_google.tf` and the dead google/`default-authorization-flow`/`github_oauth_credentials_id`
   scaffolding. Renamed this doc google-sso → social-sso. `tofu validate` passes.
-  **Remaining: confirm the GitHub OAuth callback URL + `authentik-github-creds` item, then
-  `tofu plan`/`apply` and verify both goals on the live cluster.**
+- **2026-06-14** — Debugged a `Vault is locked` wall on every `tofu plan` (see Gotcha
+  above). Isolated it to the `bw` CLI session not being reused by the provider; switched
+  `provider.tf` to the embedded client (`client_implementation = "embedded"`).
+  `tofu validate` passes. **Remaining: owner re-runs `tofu plan` (no `BW_SESSION` set) to
+  confirm auth works and review the diff, then `apply` and verify both goals.**
