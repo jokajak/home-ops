@@ -8,18 +8,15 @@ metadata:
 spec:
   instances: 3
   postgresql:
-    # Both libraries are required during the pgvecto.rs -> VectorChord migration
-    # (Immich >= v1.133 / v2.5.x). Drop "vectors.so" once migration completes.
+    # pgvecto.rs -> VectorChord migration complete; only vchord is needed now.
     shared_preload_libraries:
       - "vchord.so"
-      - "vectors.so"
     parameters:
       max_connections: "300"
       shared_buffers: 512MB
-  # Transitional image carrying BOTH pgvecto.rs and VectorChord so Immich can
-  # migrate existing vector data. After migration, switch to a vchord-only image:
-  # ghcr.io/tensorchord/cloudnative-vectorchord:16-0.3.0
-  imageName: ghcr.io/corentingiraud/cnpg-pgvector-vectorchord:16-migration
+  # VectorChord-only image (pgvecto.rs removed post-migration). Pinned to pg 16.9
+  # to match the running server version (16-0.3.0 could resolve to 16.8 = downgrade).
+  imageName: ghcr.io/tensorchord/cloudnative-vectorchord:16.9-0.3.0
   affinity:
     nodeSelector:
       # use all the same arch
@@ -78,4 +75,4 @@ spec:
       database: immich
       owner: immich
       postInitApplicationSQL:
-        - CREATE EXTENSION IF NOT EXISTS "vectors";
+        - CREATE EXTENSION IF NOT EXISTS vchord CASCADE;
