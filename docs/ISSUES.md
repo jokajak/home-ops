@@ -6,54 +6,30 @@
 
 | # | Issue | Area | Severity | Status |
 |---|-------|------|----------|--------|
-| 1 | Authentik intentionally disabled (ks commented out) | security | Med | Decision |
-| 2 | Gatus not persisting to Postgres (in-memory) | observability | Med | Open |
-| 3 | Shared `postgres` cluster has no real consumers | database | Med | Decision |
-| 4 | Backup alerting may use removed CNPG metric names | observability | Med | Verify |
-| 5 | Immich automatic DB backups lapsed since Feb 8 | immich | Med | Verify |
-| 6 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
-| 7 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
+| 1 | Gatus metrics ingestion into VictoriaMetrics unconfirmed | observability | Med | Verify |
+| 2 | Backup alerting may use removed CNPG metric names | observability | Med | Verify |
+| 3 | Immich automatic DB backups lapsed since Feb 8 | immich | Med | Verify |
+| 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
+| 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
 
 ---
 
-## 1. Authentik disabled (Flux Kustomization commented out) — Med (decision)
+## 1. Gatus metrics ingestion into VictoriaMetrics unconfirmed — Med (verify)
 
-Authentik is **intentionally disabled**: `kubernetes/apps/security/authentik/ks.yaml` has its
-entire Flux `Kustomization` spec commented out (lines 3-18). `security/kustomization.yaml`
-still references `./authentik/ks.yaml`, but that file yields no resources, so no `authentik`
-Kustomization/HelmRelease/pods are ever created.
+Gatus runs on in-memory storage (SQLite-on-PVC was attempted and reverted — see Resolved), so
+VictoriaMetrics is intended to be the source of truth for uptime history/alerting. Gatus's
+`/metrics` endpoint serves data and a `vmservicescrape/gatus` exists and reports `operational`,
+**but a VM query for gatus series returned empty during verification** — so ingestion is not
+confirmed.
 
-- **Findings:** the app manifests (`helmrelease.yaml`, `externalsecret.yaml`,
-  `helmrepository.yaml`) exist but are never applied while the ks is commented. The
-  `ExternalSecret` references `postgres-rw` + an `authentik` database that doesn't exist.
-- **Next steps:** Decide — (a) re-enable (uncomment `authentik/ks.yaml`) to bring up SSO,
-  which also needs an `authentik` database in the postgres cluster + the Bitwarden item, or
-  (b) remove the dead authentik manifests and references to avoid confusion.
+- **Findings:** the vmservicescrape selector (`app.kubernetes.io/{instance,name,service}=gatus`)
+  matches the gatus Service labels and port `http`; gatus `/metrics` returns `gatus_results_*`.
+  VM query `count(gatus_results_total)` came back empty (could be timing, a label/job mismatch,
+  or vmagent not scraping the vmservicescrape).
+- **Next steps:** check vmagent targets for gatus, confirm the scrape is active, query VM for
+  `gatus_results_total`, then build Grafana dashboards + VMAlert rules for uptime alerting.
 
-## 2. Gatus not persisting to Postgres — Med
-
-Gatus is running (2/2) but uses the default **in-memory** store, so monitoring history is
-lost on restart.
-
-- **Findings:** the `gatus` database does **not** exist in the `postgres` cluster (only the
-  default empty `app` DB is present); the HelmRelease has no `storage.type: postgres`
-  config. The `INIT_POSTGRES_*` env in `app/externalsecret.yaml` is configured but
-  ineffective (no storage wired; the DB was never created).
-- **Next steps:** Decide — (a) wire Gatus storage to Postgres (set `storage.type`/DSN and
-  ensure the init-db creates the `gatus` DB), or (b) drop the unused `INIT_POSTGRES_*`
-  config and accept in-memory. Also clean up the stale `gatus-679ccc994-*` pod
-  (0/2 Completed, ~67d old).
-
-## 3. Shared `postgres` cluster has no real consumers — Med (decision)
-
-The `database/postgres` CNPG cluster holds only the empty default `app` database. With
-Authentik absent (#1) and Gatus not using it (#2), nothing currently depends on it.
-
-- **Next steps:** Decide to **keep** (it's the intended home for Authentik/Gatus once #1/#2
-  are fixed) or **decommission**. It was migrated to the Barman Cloud Plugin regardless, so
-  it remains backed up either way.
-
-## 4. Backup alerting may reference removed CNPG metric names — Med (verify)
+## 2. Backup alerting may reference removed CNPG metric names — Med (verify)
 
 After the Barman Cloud Plugin migration, backup/recoverability status is reported via
 `barman_cloud_cloudnative_pg_io_*` metrics; the in-core `cnpg_collector_*` metrics (and the
@@ -63,7 +39,7 @@ in-core cluster `firstRecoverabilityPoint`/`lastSuccessfulBackup` fields) no lon
   dashboards/alerts use the new metric names, so backup-failure alerting isn't silently
   blind. Update where needed.
 
-## 5. Immich automatic DB backups lapsed since Feb 8 — Med (verify)
+## 3. Immich automatic DB backups lapsed since Feb 8 — Med (verify)
 
 Immich's own daily `pg_dumpall` backups to NFS (`/usr/src/app/upload/backups/`) stopped
 2026-02-08 (when Immich broke). Now that Immich is healthy again, confirm they resume on
@@ -72,13 +48,13 @@ the next scheduled run; if not, fix the Immich backup settings.
 - **Note:** CNPG plugin backups to MinIO are the primary DR; these NFS dumps are a secondary
   safety net.
 
-## 6. Repo-root `kubeconfig` client cert expired — Low
+## 4. Repo-root `kubeconfig` client cert expired — Low
 
 `./kubeconfig` has a client cert that expired 2026-03-30 (`Unauthorized`); `~/.kube/config`
 works. Regenerate the repo kubeconfig (talos task) or standardize on `~/.kube/config`, and
 beware a stale `KUBECONFIG` env pointing at the repo file.
 
-## 7. Immich asset metadata gap Feb 8 → Jun 14 — Low
+## 5. Immich asset metadata gap Feb 8 → Jun 14 — Low
 
 The restored Immich DB is from the Feb 8 dump; any assets added 2026-02-08 → 2026-06-14
 aren't in the metadata. Image **files** are safe on NFS. If any were added in that window, a
@@ -94,6 +70,14 @@ library re-scan/re-import can recover them. (Likely none — Immich was broken f
   `postgres`); deprecated in-tree `barmanObjectStore` removed.
 - **MinIO cleanup**: deleted orphaned backup prefixes `immich-v1/v2/v3` and
   `postgres-db`/`postgres16-v1`/`postgres16-v2` (~5 GB reclaimed).
+- **Authentik re-enabled**: uncommented its Flux Kustomization and fixed a `namespace: default`
+  override that was deploying it into `default`; now running in `security` (server + worker
+  Ready), `authentik` DB auto-created by init-db, secrets from Terraform-managed Bitwarden.
+- **Gatus storage decided = in-memory**: SQLite-on-PVC was attempted but reverted — the rollout
+  couldn't converge within Flux's helm timeout (Recreate + `WaitForFirstConsumer` PVC + Stakater
+  reloader churn), which wedged the release in `pending-upgrade`; cleared the stuck revision and
+  reverted to memory. (VM ingestion of its metrics is the open item #1.)
+- **Postgres cluster kept**: Authentik now consumes it, so the decommission question is closed.
 
 See `docs/plans/2026-06-14-cnpg-barman-cloud-plugin-migration.md` and the immich restore
 handoff for details.
