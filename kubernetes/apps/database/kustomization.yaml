@@ -7,4 +7,5 @@ resources:
   - ./namespace.yaml
   # Flux-Kustomizations
   - ./cloudnative-pg/ks.yaml
+  - ./cnpg-barman-plugin/ks.yaml
   - ./dragonfly/ks.yaml

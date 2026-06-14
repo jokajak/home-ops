@@ -1,0 +1,10 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: cnpg-charts
+  namespace: database
+spec:
+  type: oci
+  interval: 30m
+  url: oci://ghcr.io/cloudnative-pg/charts
