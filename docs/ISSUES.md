@@ -6,7 +6,7 @@
 
 | # | Issue | Area | Severity | Status |
 |---|-------|------|----------|--------|
-| 1 | Authentik declared in Git but not deployed | security | High | Open |
+| 1 | Authentik intentionally disabled (ks commented out) | security | Med | Decision |
 | 2 | Gatus not persisting to Postgres (in-memory) | observability | Med | Open |
 | 3 | Shared `postgres` cluster has no real consumers | database | Med | Decision |
 | 4 | Backup alerting may use removed CNPG metric names | observability | Med | Verify |
@@ -16,20 +16,19 @@
 
 ---
 
-## 1. Authentik declared but not deployed — High
+## 1. Authentik disabled (Flux Kustomization commented out) — Med (decision)
 
-`kubernetes/apps/security/kustomization.yaml` references `./authentik/ks.yaml`, and
-the app manifests exist (`kubernetes/apps/security/authentik/`), but the cluster has
-**no `authentik` Flux Kustomization, no HelmRelease, and no pods**.
+Authentik is **intentionally disabled**: `kubernetes/apps/security/authentik/ks.yaml` has its
+entire Flux `Kustomization` spec commented out (lines 3-18). `security/kustomization.yaml`
+still references `./authentik/ks.yaml`, but that file yields no resources, so no `authentik`
+Kustomization/HelmRelease/pods are ever created.
 
-- **Findings:** `kubectl get ks -A | grep authentik` → nothing; `kubectl get pods -n security`
-  → no authentik. So Flux is not reconciling it (parent error, unmet `dependsOn`, or the
-  ks isn't being picked up).
-- **Impact:** No SSO/identity provider running. Its `ExternalSecret` expects `postgres-rw`
-  and an `authentik` database that does not exist.
-- **Next steps:** Inspect `kubernetes/apps/security/authentik/ks.yaml` + the security parent;
-  `flux get ks -A`, `flux get hr -A` for errors. Decide: fix & deploy, or remove the
-  declaration if Authentik is intentionally retired.
+- **Findings:** the app manifests (`helmrelease.yaml`, `externalsecret.yaml`,
+  `helmrepository.yaml`) exist but are never applied while the ks is commented. The
+  `ExternalSecret` references `postgres-rw` + an `authentik` database that doesn't exist.
+- **Next steps:** Decide — (a) re-enable (uncomment `authentik/ks.yaml`) to bring up SSO,
+  which also needs an `authentik` database in the postgres cluster + the Bitwarden item, or
+  (b) remove the dead authentik manifests and references to avoid confusion.
 
 ## 2. Gatus not persisting to Postgres — Med
 
