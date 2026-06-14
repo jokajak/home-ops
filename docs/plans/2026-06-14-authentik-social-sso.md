@@ -1,6 +1,6 @@
 # Authentik SSO for Grafana + social login (GitHub)
 
-> Status: **IN PROGRESS** · Started 2026-06-14 · Owner: Josh · Author: Luma (Claude)
+> Status: **APPLIED — verifying** · Started 2026-06-14 · Owner: Josh · Author: Luma (Claude)
 >
 > Multi-session effort. This doc is the source of truth for progress — update the
 > checkboxes and the Session Log as work proceeds.
@@ -112,12 +112,9 @@ in `directory.tf`). Re-locked for darwin/linux amd64+arm64. `tofu validate` pass
 
 ## Apply & verify (owner)
 
-- [ ] `cd terraform/authentik && tofu init && tofu plan` — **review adversarially given the
-  long gap since the last apply.** Look for any `forces replacement` / `# ... destroyed` on
-  the Grafana oauth2 provider, the applications, or the auth flows/stages; in-place `~`
-  updates (incl. the `parents` group change) are fine. Paste the plan for a second pair of
-  eyes before applying.
-- [ ] `tofu apply`.
+- [x] `tofu plan` reads cleanly with the pinned provider; `tofu apply` **succeeded**
+  (2026-06-14). The plan was a first full apply (~61 creates, 3 headscale destroys) — state
+  was fresh, no duplicate-slug collisions.
 - [ ] Browse `https://auth.<domain>/` → confirm a **"Login with GitHub"** button appears.
 - [ ] Log in with GitHub → confirm it lands on the **existing** Authentik account
   (email-linked), not a new user. (GitHub email must match the Authentik account's email;
@@ -169,5 +166,8 @@ directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when runni
   reads with `no value given for required property autocomplete` — a provider/server skew
   (provider `2026.5.0` vs server chart `2024.12.0`). Pinned the provider to `2024.12.0`,
   reverted the groups to scalar `parent`, re-locked for darwin/linux. `tofu validate`
-  passes. **Remaining: owner re-runs `tofu plan` (should now read cleanly), reviews the
-  diff, then `apply` and verifies both goals.**
+  passes.
+- **2026-06-14** — `tofu apply` **succeeded** (first full apply: ~61 creates, 3 headscale
+  destroys). GitHub source, `[inbuilt, github]` login binding, and all flows/stages/apps/
+  groups now live in Authentik. **Remaining: live verification — GitHub login button +
+  email-link to existing account, and Grafana SSO end-to-end.**
