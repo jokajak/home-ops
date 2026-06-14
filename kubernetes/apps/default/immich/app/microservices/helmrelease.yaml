@@ -63,12 +63,12 @@ spec:
               DB_PASSWORD:
                 valueFrom:
                   secretKeyRef:
-                    name: immich-database-superuser
+                    name: immich-pg-secret
                     key: password
               DB_USERNAME:
                 valueFrom:
                   secretKeyRef:
-                    name: immich-database-superuser
+                    name: immich-pg-secret
                     key: username
               DB_PORT:
                 valueFrom:

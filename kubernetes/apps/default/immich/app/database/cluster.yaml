@@ -59,7 +59,16 @@ spec:
         secretAccessKey:
           name: minio-immich-pgsql
           key: minio_s3_secret_access_key
+  managed:
+    roles:
+      - name: app
+        ensure: present
+        login: true
+        passwordSecret:
+          name: immich-pg-secret
   bootstrap:
     initdb:
       database: app
       owner: app
+      postInitApplicationSQL:
+        - CREATE EXTENSION IF NOT EXISTS "vectors";
