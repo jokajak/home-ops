@@ -41,17 +41,3 @@ flux:
       enabled: false
   sops_age_public_key: $BOOTSTRAP_AGE_PUBLIC_KEY
 
-cloudflare:
-  enabled: true
-  domain: fake
-  token: take
-  acme:
-    email: fake@example.com
-    production: false
-  tunnel:
-    account_id: fake
-    id: fake
-    secret: fake
-    ingress_vip: 10.10.10.252
-  ingress_vip: 10.10.10.251
-  gateway_vip: 10.10.10.253
