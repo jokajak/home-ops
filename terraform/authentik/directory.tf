@@ -19,5 +19,5 @@ resource "authentik_group" "infrastructure" {
 resource "authentik_group" "media" {
   name         = "Media"
   is_superuser = false
-  parents      = [resource.authentik_group.users.id]
+  parent       = resource.authentik_group.users.id
 }

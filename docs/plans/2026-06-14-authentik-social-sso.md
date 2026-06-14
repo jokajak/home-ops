@@ -87,14 +87,28 @@ Two outcomes:
   `default-authorization-flow` data source and `github_oauth_credentials_id` variable.
 - [x] `tofu fmt` (clean) + `tofu validate` → **Success**.
 
-### Side fix (pre-existing breakage, required for apply)
+### Root fix — provider/server version skew (the real blocker)
 
-- [x] The pinned provider `goauthentik/authentik 2026.5.0` (bumped 2026-06-13) renamed
-  `authentik_group.parent` → `parents` (now a **list**). Four existing resources still used
-  the old scalar `parent`, which made `tofu validate`/`plan`/`apply` fail repo-wide —
-  independent of this feature but blocking any apply. Fixed all four to
-  `parents = [ ... ]`: `grafana_editors`, `grafana_viewers`, `monitoring`
-  (`application_grafana.tf`) and `media` (`directory.tf`).
+Renovate had bumped the **`goauthentik/authentik` provider to `2026.5.0`**, but the running
+**Authentik server is `2024.12.x`** (Helm chart `2024.12.0` in
+`kubernetes/apps/security/authentik`). An ~18-month-newer provider speaks a newer API
+schema than the server, which surfaced as two distinct failures:
+
+- `tofu validate` errored on `authentik_group.parent` (the 2026 provider renamed it to a
+  list `parents`).
+- Once auth worked, every authentik **data-source read** failed with
+  `HTTP Error 'no value given for required property autocomplete'` (the 2024.12 server's
+  API responses lack fields the 2026 provider's client marks as required).
+
+Initially (wrongly) patched the first symptom by switching the four groups to
+`parents = [...]`. **Correct fix:** pin the provider back to the server line —
+`version = "2024.12.0"` in `versions.tf` — and revert the groups to scalar `parent`
+(`grafana_editors`, `grafana_viewers`, `monitoring` in `application_grafana.tf`; `media`
+in `directory.tf`). Re-locked for darwin/linux amd64+arm64. `tofu validate` passes.
+
+> Keep the provider in lockstep with the Authentik chart; do not let renovate bump it
+> ahead of the server. (Upgrading the *server* 2024.12 → 2026.x is a separate, riskier
+> effort — many releases of migrations on a live SSO — and is out of scope here.)
 
 ## Apply & verify (owner)
 
@@ -150,5 +164,10 @@ directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when runni
 - **2026-06-14** — Debugged a `Vault is locked` wall on every `tofu plan` (see Gotcha
   above). Isolated it to the `bw` CLI session not being reused by the provider; switched
   `provider.tf` to the embedded client (`client_implementation = "embedded"`).
-  `tofu validate` passes. **Remaining: owner re-runs `tofu plan` (no `BW_SESSION` set) to
-  confirm auth works and review the diff, then `apply` and verify both goals.**
+  `tofu validate` passes.
+- **2026-06-14** — Embedded client got auth working; `tofu plan` then failed all authentik
+  reads with `no value given for required property autocomplete` — a provider/server skew
+  (provider `2026.5.0` vs server chart `2024.12.0`). Pinned the provider to `2024.12.0`,
+  reverted the groups to scalar `parent`, re-locked for darwin/linux. `tofu validate`
+  passes. **Remaining: owner re-runs `tofu plan` (should now read cleanly), reviews the
+  diff, then `apply` and verifies both goals.**

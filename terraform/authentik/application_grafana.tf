@@ -65,20 +65,20 @@ resource "authentik_group" "grafana_editors" {
   name = "Grafana Editors"
   # is_superuser refers to authentik authorizations
   is_superuser = false
-  parents      = [resource.authentik_group.grafana_admin.id]
+  parent       = resource.authentik_group.grafana_admin.id
 }
 
 resource "authentik_group" "grafana_viewers" {
   name = "Grafana Viewers"
   # is_superuser refers to authentik authorizations
   is_superuser = false
-  parents      = [resource.authentik_group.grafana_admin.id]
+  parent       = resource.authentik_group.grafana_admin.id
 }
 
 resource "authentik_group" "monitoring" {
   name         = "Monitoring"
   is_superuser = false
-  parents      = [resource.authentik_group.grafana_viewers.id]
+  parent       = resource.authentik_group.grafana_viewers.id
 }
 
 resource "authentik_policy_binding" "grafana_admins" {
