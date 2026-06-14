@@ -28,6 +28,13 @@ resource "authentik_stage_identification" "authentication-identification" {
   password_stage            = authentik_stage_password.authentication-password.id
   passwordless_flow         = authentik_flow.passwordless_authentication.uuid
   recovery_flow             = authentik_flow.recovery.uuid
+
+  # Which sources render on the login screen. Built-in keeps username/password;
+  # google adds the "Login with Google" button.
+  sources = [
+    data.authentik_source.inbuilt.uuid,
+    authentik_source_oauth.google.uuid,
+  ]
 }
 
 resource "authentik_stage_password" "authentication-password" {

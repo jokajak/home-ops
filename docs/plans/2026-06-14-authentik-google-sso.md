@@ -80,26 +80,38 @@ So the bulk of the actual new work is **Goal 2**.
 
 ## Implementation plan (Terraform — `terraform/authentik/`)
 
-- [ ] **Add variable** `google_oauth_credentials_id` to `variables.tf`.
-- [ ] **Add Google source** in `main.tf` (or a new `source_google.tf`):
+- [x] **Add variable** `google_oauth_credentials_id` to `variables.tf`.
+- [x] **Add Google source** — new file `source_google.tf`:
   - `data "bitwarden_item_login" "google_oidc_creds"` keyed on
     `var.google_oauth_credentials_id`.
   - `resource "authentik_source_oauth" "google"` — `provider_type = "google"`,
     `slug = "google"`, `consumer_key`/`consumer_secret` from the Bitwarden item,
-    `authentication_flow = data.authentik_flow.default-authorization-flow.id`,
-    `enrollment_flow = authentik_flow.enrollment-invitation.uuid`,
-    `user_matching_mode = "email_link"`.
-- [ ] **Bind source to the login screen**: set `sources` on
-  `authentik_stage_identification.authentication-identification` (`stages.tf`) to include
-  the built-in source **and** `authentik_source_oauth.google.uuid`.
-  (Confirm whether the existing `github` source also needs adding here — it currently is
-  not listed, so the github button likely doesn't render either. Decide whether to keep
-  github.)
-- [ ] **Finalize username mapping**: replace the placeholder
-  `authentik_policy_expression.google_username` (`return False`) with a real mapping per
-  <https://goauthentik.io/integrations/sources/google/#username-mapping>, or drop it if
-  `email_link` matching makes it unnecessary.
-- [ ] `tofu fmt` + `tofu validate` (owner; I can eyeball syntax only).
+    `authentication_flow = data.authentik_flow.default-source-authentication.id` (the
+    standard built-in source-auth flow — not the provider-authorization flow the `github`
+    source reuses), `enrollment_flow = authentik_flow.enrollment-invitation.uuid`
+    (invitation-gated, so no open enrollment), `user_matching_mode = "email_link"`.
+  - `data "authentik_source" "inbuilt"` (`managed = "goauthentik.io/sources/inbuilt"`).
+- [x] **Bind source to the login screen**: set `sources` on
+  `authentik_stage_identification.authentication-identification` (`stages.tf`) to
+  `[inbuilt.uuid, google.uuid]` (built-in keeps username/password; google adds the button).
+  - Decision: **did not** add the existing `github` source to `sources` — it's wired oddly
+    (`provider_type=github` with a GitHub-Actions OIDC JWKS URL) and out of scope. Left
+    untouched; revisit separately.
+- [ ] **Finalize username mapping**: the placeholder
+  `authentik_policy_expression.google_username` (`return False`) is unused/unbound and left
+  as-is — `email_link` matching makes a username mapping unnecessary for the
+  link-to-existing-account goal. Drop or finish it in a later pass if desired.
+- [x] `tofu fmt` (clean) + `tofu validate` → **Success** (via `tofu init -backend=false`;
+  the k8s backend needs cluster access so a real `plan` is still an owner step).
+
+### Side fix (pre-existing breakage, required for apply)
+
+- [x] The pinned provider `goauthentik/authentik 2026.5.0` (bumped 2026-06-13) renamed
+  `authentik_group.parent` → `parents` (now a **list**). Four existing resources still used
+  the old scalar `parent`, which made `tofu validate`/`plan`/`apply` fail repo-wide —
+  independent of this feature but blocking any apply. Fixed all four to
+  `parents = [ ... ]`: `grafana_editors`, `grafana_viewers`, `monitoring`
+  (`application_grafana.tf`) and `media` (`directory.tf`).
 
 ## Apply & verify (owner)
 
@@ -126,4 +138,10 @@ So the bulk of the actual new work is **Goal 2**.
 
 - **2026-06-14** — Surveyed repo. Found Grafana SSO already implemented on both Authentik
   (terraform) and Grafana (helm) sides; confirmed Google source is the real gap. Wrote
-  this plan. No code changes yet.
+  this plan.
+- **2026-06-14** — Implemented Goal 2 in Terraform: added `google_oauth_credentials_id`
+  var, `source_google.tf` (Google source + inbuilt source data + source-auth flow data),
+  and bound `[inbuilt, google]` as the identification stage `sources`. Fixed pre-existing
+  `parent`→`parents` breakage in 4 group resources (blocked all applies). `tofu validate`
+  passes. **Remaining: owner prerequisites (Google client + Bitwarden item + tfvar), then
+  `tofu plan`/`apply`, then verify both goals on the live cluster.**
