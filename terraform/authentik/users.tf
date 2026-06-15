@@ -39,7 +39,11 @@ locals {
 }
 
 resource "authentik_user" "this" {
-  for_each = local.users
+  # SOPS-decrypted data is marked sensitive, but for_each keys can't be sensitive (they
+  # become resource addresses). Unwrap it: these are usernames/emails, not secrets — the
+  # git protection is the encrypted file, and this data only lands in local plan/state
+  # (the k8s backend), never git. (No password here; users log in via GitHub.)
+  for_each = nonsensitive(local.users)
 
   username = each.value.username
   name     = each.value.name
