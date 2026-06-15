@@ -1,0 +1,18 @@
+# Template for users.sops.yaml — copy, fill in, then encrypt:
+#   cp users.sops.yaml.example users.sops.yaml
+#   # edit users.sops.yaml with real values
+#   task sops:encrypt file=terraform/authentik/users.sops.yaml
+#
+# Native YAML, keyed by Authentik username. After SOPS encryption the VALUES (name,
+# email, group names) are encrypted in git; the KEYS (usernames) stay readable. Each user:
+#   - name:   display name
+#   - email:  MUST equal the user's GitHub primary email (email_link links the GitHub
+#             login to this account)
+#   - groups: optional list of group NAMES (see group_ids_by_name in users.tf);
+#             defaults to ["users"]. None of these users are superusers.
+users:
+  alice:
+    name: Alice Example
+    email: alice@example.com
+    groups:
+      - users

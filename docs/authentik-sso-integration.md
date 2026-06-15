@@ -13,8 +13,12 @@
   superuser. Member of the `admins` group.
 - **`admins` group** (`is_superuser = false`) — the "app admin" group. Apps key their admin
   role on this group's **name**; it must also be **policy-bound** to each app for access.
-- **Human users** (`users.tf` + `users` variable) — real people, non-superuser, created from
-  tfvars; log in via the GitHub source (`email_link` on their GitHub primary email).
+- **Human users** (`users.tf` + `users.sops.yaml`) — real people, non-superuser, defined in a
+  **SOPS-encrypted** YAML file committed to git, read via `yamldecode(data.sops_file…​.raw)`.
+  Encryption hides the values (emails, names); usernames are the map keys and stay readable
+  (use a list with the username as an encrypted field if you need those hidden too). They log
+  in via the GitHub source (`email_link` on their GitHub primary email). Edit with
+  `sops terraform/authentik/users.sops.yaml`; bootstrap from `users.sops.yaml.example`.
 - **`users` group** — baseline membership; granted access to most apps.
 
 ### Provider/server version lockstep (don't skip)
