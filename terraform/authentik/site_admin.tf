@@ -26,6 +26,11 @@ resource "bitwarden_item_login" "site_admin" {
   username = random_string.site_admin_username.result
   password = random_password.site_admin_password.result
 
+  uri {
+    match = "host"
+    value = "https://auth.${var.domain}"
+  }
+
   field {
     name    = "terraform"
     boolean = true

@@ -174,6 +174,14 @@ is a separate, mutually-exclusive auth path), and the provider only self-unlocks
 (`client_implementation = "embedded"` in `provider.tf`) — talks to the Bitwarden API
 directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when running.
 
+## Gotcha — github source `oidc_jwks_url` perpetual diff (resolved)
+
+After removing the bogus `oidc_jwks_url` (the GitHub-Actions CI-token JWKS URL),
+`tofu plan` kept showing `oidc_jwks_url -> null` on every run even after applying —
+Authentik retains a server-side value on a `provider_type=github` source that the API
+won't clear. Silenced with `lifecycle { ignore_changes = [oidc_jwks_url] }` on
+`authentik_source_oauth.github`.
+
 ## Session Log
 
 - **2026-06-14** — Surveyed repo. Found Grafana SSO already implemented on both Authentik

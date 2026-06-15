@@ -48,6 +48,13 @@ resource "authentik_source_oauth" "github" {
   # Link a GitHub login to the existing Authentik user with the same email
   # instead of provisioning a brand-new user.
   user_matching_mode = "email_link"
+
+  # Authentik retains a server-side oidc_jwks_url on the github source that can't be
+  # cleared via the API (and is meaningless for provider_type=github user login), so it
+  # reappears on every plan. Ignore it to avoid a perpetual no-op diff.
+  lifecycle {
+    ignore_changes = [oidc_jwks_url]
+  }
 }
 
 data "authentik_property_mapping_provider_scope" "oauth2" {
