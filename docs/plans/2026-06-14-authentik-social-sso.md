@@ -205,6 +205,12 @@ directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when runni
   `email_link` matched nothing and fell through to invitation-gated enrollment. Per owner:
   account must be **separate from akadmin and non-superuser**, created from an input
   variable. Added `users.tf` (a `users` map var → `authentik_user` via `for_each`, internal
-  type, no superuser, groups-by-name). `tofu validate` passes. **Remaining: owner sets
-  `users` in tfvars (email = GitHub primary email), `tofu apply`, then GitHub login links to
-  the new user; then Grafana SSO end-to-end.**
+  type, no superuser, groups-by-name). `tofu validate` passes.
+- **2026-06-14** — Added a **site admin** (`site_admin.tf`): random username + password
+  stored in Bitwarden (`authentik-site-admin`), member of a new non-superuser `admins`
+  group, bound to **Grafana only** for now (akadmin stays the sole Authentik admin). Wrote
+  `docs/authentik-sso-integration.md` — a reusable per-app SSO runbook (access vs role,
+  per-app admin mechanism, checklist) so future apps don't get wired ad hoc. `tofu validate`
+  passes. **Remaining: `tofu apply` (creates the BW item + user + group + grafana binding),
+  then verify site-admin → Grafana Admin; plus the personal-user `users` tfvars + GitHub
+  link from the prior step.**
