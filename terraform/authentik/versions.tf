@@ -9,14 +9,14 @@ terraform {
       source  = "maxlaverse/bitwarden"
       version = "0.17.6"
     }
-    # Pin to the Authentik SERVER line (Helm chart 2024.12.0 in
-    # kubernetes/apps/security/authentik). A newer provider (renovate bumped this to
-    # 2026.5.0) speaks a newer API schema than the 2024.12 server and fails reads with
-    # "no value given for required property autocomplete". Keep this in lockstep with the
-    # server; do not let renovate bump it ahead of the chart.
+    # Keep in lockstep with the Authentik SERVER line (Helm chart in
+    # kubernetes/apps/security/authentik, currently 2026.5.3). A provider that is newer than
+    # the server fails reads with "no value given for required property autocomplete"; an
+    # older one rejects newer API shapes (e.g. authentik_group `parents`). Do not let
+    # renovate bump this ahead of the chart.
     authentik = {
       source  = "goauthentik/authentik"
-      version = "2024.12.0"
+      version = "2026.5.0"
     }
   }
 }

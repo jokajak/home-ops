@@ -19,7 +19,7 @@ resource "authentik_group" "infrastructure" {
 resource "authentik_group" "media" {
   name         = "Media"
   is_superuser = false
-  parent       = resource.authentik_group.users.id
+  parents      = [resource.authentik_group.users.id]
 }
 
 ## "readers" maps to Grafana's Viewer role (see grafana role_attribute_path:
