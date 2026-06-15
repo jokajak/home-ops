@@ -155,10 +155,11 @@ in `directory.tf`). Re-locked for darwin/linux amd64+arm64. `tofu validate` pass
 
 ## Deferred / open
 
-- **Google source** — re-add when a Google OIDC client exists. The deleted `source_google.tf`
-  is recoverable from git history (commits on 2026-06-14); same pattern, `provider_type =
+- **➡️ NEXT UP — Google source.** Add Google authentication (a second social-login source
+  alongside GitHub) once a Google OIDC client exists. The deleted `source_google.tf` is
+  recoverable from git history (commits on 2026-06-14); same pattern, `provider_type =
   "google"`, Bitwarden item `authentik-google-creds`, redirect
-  `/source/oauth/callback/google/`.
+  `/source/oauth/callback/google/`, and add it to the identification stage `sources`.
 - Restrict enrollment further (email-domain policy) vs. link-only for the single admin
   account? `email_link` + invitation-gated enrollment is already safe for a personal instance.
 
