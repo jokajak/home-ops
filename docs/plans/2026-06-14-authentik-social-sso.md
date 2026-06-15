@@ -115,6 +115,36 @@ in `directory.tf`). Re-locked for darwin/linux amd64+arm64. `tofu validate` pass
 - [x] `tofu plan` reads cleanly with the pinned provider; `tofu apply` **succeeded**
   (2026-06-14). The plan was a first full apply (~61 creates, 3 headscale destroys) — state
   was fresh, no duplicate-slug collisions.
+- [x] **Login screen** (`https://auth.<domain>/`): username/password + **"Login with
+  GitHub"** button render, and the GitHub OAuth callback works (steps 1–2 verified).
+- [ ] **Operator user must exist for GitHub login to land somewhere.** The instance had
+  **no users** except the bootstrap `akadmin`, so GitHub login (with `email_link`) found no
+  user to match and fell through to the invitation-gated enrollment → "no invitation"
+  (the guardrail working). Resolution: create a non-superuser user via the new `users`
+  variable whose `email` = your GitHub primary email; after apply, GitHub login links to it.
+
+## Users (declarative, `users.tf` + `users` variable)
+
+- [x] Added `users.tf`: a `users` map variable drives `authentik_user.this` (`for_each`),
+  `type = "internal"`, **never superuser**, with group membership by NAME via the
+  `group_ids_by_name` local. Identities live in tfvars (out of git); `email` must equal the
+  user's GitHub primary email for `email_link`. `tofu validate` passes.
+- [ ] Owner sets `users` in `terraform.tfvars`, e.g.:
+  ```hcl
+  users = {
+    <your-username> = {
+      name   = "Your Name"
+      email  = "you@example.com"   # MUST match your GitHub primary email
+      groups = ["users"]            # add others by name as needed; not superuser
+    }
+  }
+  ```
+  then `tofu apply`, then log in via GitHub.
+
+> Note (separate, not addressed here): Grafana's `role_attribute_path` checks for groups
+> named `admins`/`people`, which don't exist in this terraform — so Grafana won't
+> auto-assign Admin/Viewer roles yet. Out of scope for the "separate non-admin user" ask;
+> revisit if you want group→role mapping in Grafana.
 - [ ] Browse `https://auth.<domain>/` → confirm a **"Login with GitHub"** button appears.
 - [ ] Log in with GitHub → confirm it lands on the **existing** Authentik account
   (email-linked), not a new user. (GitHub email must match the Authentik account's email;
@@ -169,5 +199,12 @@ directly, no `bw` CLI, same SOPS creds. No `BW_SESSION` should be set when runni
   passes.
 - **2026-06-14** — `tofu apply` **succeeded** (first full apply: ~61 creates, 3 headscale
   destroys). GitHub source, `[inbuilt, github]` login binding, and all flows/stages/apps/
-  groups now live in Authentik. **Remaining: live verification — GitHub login button +
-  email-link to existing account, and Grafana SSO end-to-end.**
+  groups now live in Authentik.
+- **2026-06-14** — Verified login screen + GitHub button + callback (steps 1–2). GitHub
+  login then hit "no invitation": the instance had **no users** but `akadmin`, so
+  `email_link` matched nothing and fell through to invitation-gated enrollment. Per owner:
+  account must be **separate from akadmin and non-superuser**, created from an input
+  variable. Added `users.tf` (a `users` map var → `authentik_user` via `for_each`, internal
+  type, no superuser, groups-by-name). `tofu validate` passes. **Remaining: owner sets
+  `users` in tfvars (email = GitHub primary email), `tofu apply`, then GitHub login links to
+  the new user; then Grafana SSO end-to-end.**
