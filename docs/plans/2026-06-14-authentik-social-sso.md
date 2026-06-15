@@ -1,6 +1,7 @@
 # Authentik SSO for Grafana + social login (GitHub)
 
-> Status: **APPLIED — verifying** · Started 2026-06-14 · Owner: Josh · Author: Luma (Claude)
+> Status: **WORKING** — GitHub → Authentik → Grafana login verified end-to-end ·
+> Started 2026-06-14 · Owner: Josh · Author: Luma (Claude)
 >
 > Multi-session effort. This doc is the source of truth for progress — update the
 > checkboxes and the Session Log as work proceeds.
@@ -219,6 +220,13 @@ won't clear. Silenced with `lifecycle { ignore_changes = [oidc_jwks_url] }` on
   group, bound to **Grafana only** for now (akadmin stays the sole Authentik admin). Wrote
   `docs/authentik-sso-integration.md` — a reusable per-app SSO runbook (access vs role,
   per-app admin mechanism, checklist) so future apps don't get wired ad hoc. `tofu validate`
-  passes. **Remaining: `tofu apply` (creates the BW item + user + group + grafana binding),
-  then verify site-admin → Grafana Admin; plus the personal-user `users` tfvars + GitHub
-  link from the prior step.**
+  passes.
+- **2026-06-14** — Moved user definitions from a tfvars variable into a committed
+  **SOPS-encrypted `users.sops.yaml`** (a list, username as an encrypted field; read via
+  `yamldecode(data.sops_file.users.raw)["users"]`, re-keyed for `for_each`, wrapped in
+  `nonsensitive()` so it can key `for_each`). Added a `readers` group → **Grafana Viewer**
+  (role_attribute_path, renamed from `people`) bound to the Grafana app.
+- **2026-06-14** — ✅ **Verified end-to-end:** logged in via GitHub → linked to the personal
+  user → reached Grafana. Core goals (Grafana SSO + GitHub login to Authentik) **working**.
+  **Remaining/optional: confirm the Grafana role is as intended (readers→Viewer / admins→
+  Admin); verify the site-admin account; Google source still deferred.**
