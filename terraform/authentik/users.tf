@@ -4,10 +4,9 @@
 ## Each logs in via the GitHub source: email_link matches the user's email to the
 ## GitHub identity (so each user's `email` must equal their GitHub primary email).
 ##
-## Definitions live in `users.sops.yaml` (encrypted, safe to commit). The repo's SOPS
-## rule encrypts all VALUES (emails, names) but leaves the map KEYS (usernames) readable
-## in git. If you also want usernames hidden, make `users` a list and move the username
-## into an encrypted field instead of using it as the map key.
+## Definitions live in `users.sops.yaml` (encrypted, safe to commit) as a LIST of users
+## with `username` as a field, so the repo's SOPS rule encrypts every value — usernames
+## included — and nothing about the users is readable in git.
 ##
 ## Bootstrap from users.sops.yaml.example, then:
 ##   task sops:encrypt file=terraform/authentik/users.sops.yaml
@@ -27,20 +26,22 @@ locals {
     "infrastructure"  = authentik_group.infrastructure.id
     "media"           = authentik_group.media.id
     "admins"          = authentik_group.admins.id
+    "people"          = authentik_group.people.id
     "Monitoring"      = authentik_group.monitoring.id
     "Grafana Admins"  = authentik_group.grafana_admin.id
     "Grafana Editors" = authentik_group.grafana_editors.id
     "Grafana Viewers" = authentik_group.grafana_viewers.id
   }
 
-  # .raw is the decrypted file (may also carry a `sops` metadata key); index `users`.
-  users = yamldecode(data.sops_file.users.raw)["users"]
+  # .raw is the decrypted file (may also carry a `sops` metadata key); `users` is a list.
+  # Re-key it by username for for_each.
+  users = { for u in yamldecode(data.sops_file.users.raw)["users"] : u.username => u }
 }
 
 resource "authentik_user" "this" {
   for_each = local.users
 
-  username = each.key
+  username = each.value.username
   name     = each.value.name
   email    = each.value.email
   type     = "internal"

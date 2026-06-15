@@ -3,16 +3,19 @@
 #   # edit users.sops.yaml with real values
 #   task sops:encrypt file=terraform/authentik/users.sops.yaml
 #
-# Native YAML, keyed by Authentik username. After SOPS encryption the VALUES (name,
-# email, group names) are encrypted in git; the KEYS (usernames) stay readable. Each user:
-#   - name:   display name
-#   - email:  MUST equal the user's GitHub primary email (email_link links the GitHub
-#             login to this account)
-#   - groups: optional list of group NAMES (see group_ids_by_name in users.tf);
-#             defaults to ["users"]. None of these users are superusers.
+# A LIST of users (username is a field, not a map key), so after SOPS encryption EVERY
+# value — usernames, names, emails — is opaque in git. Each user:
+#   - username: Authentik username
+#   - name:     display name
+#   - email:    MUST equal the user's GitHub primary email (email_link links the GitHub
+#               login to this account)
+#   - groups:   optional list of group NAMES (see group_ids_by_name in users.tf);
+#               defaults to ["users"]. None of these users are superusers.
+#               Use "people" to grant Grafana read (Viewer) access.
 users:
-  alice:
+  - username: alice
     name: Alice Example
     email: alice@example.com
     groups:
       - users
+      - people

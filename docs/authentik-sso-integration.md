@@ -13,12 +13,14 @@
   superuser. Member of the `admins` group.
 - **`admins` group** (`is_superuser = false`) — the "app admin" group. Apps key their admin
   role on this group's **name**; it must also be **policy-bound** to each app for access.
-- **Human users** (`users.tf` + `users.sops.yaml`) — real people, non-superuser, defined in a
-  **SOPS-encrypted** YAML file committed to git, read via `yamldecode(data.sops_file…​.raw)`.
-  Encryption hides the values (emails, names); usernames are the map keys and stay readable
-  (use a list with the username as an encrypted field if you need those hidden too). They log
-  in via the GitHub source (`email_link` on their GitHub primary email). Edit with
+- **Human users** (`users.tf` + `users.sops.yaml`) — real people, non-superuser, defined as a
+  **list** in a **SOPS-encrypted** YAML file committed to git, read via
+  `yamldecode(data.sops_file…​.raw)["users"]`. Username is a field (not a map key), so every
+  value — usernames, names, emails — is encrypted/opaque in git. They log in via the GitHub
+  source (`email_link` on their GitHub primary email). Edit with
   `sops terraform/authentik/users.sops.yaml`; bootstrap from `users.sops.yaml.example`.
+- **`people` group** — maps to **Grafana Viewer** (read) via the role_attribute_path; bound to
+  the Grafana app for access. Add `people` to a user's `groups` to grant Grafana read.
 - **`users` group** — baseline membership; granted access to most apps.
 
 ### Provider/server version lockstep (don't skip)
@@ -85,7 +87,7 @@ Mirror `application_grafana.tf`:
 
 | App | Access | Admin-role source | Maps `admins` group? |
 |-----|--------|-------------------|----------------------|
-| **Grafana** | policy bindings (incl. `admins`) | Helm `grafana.ini` `auth.generic_oauth.role_attribute_path` on the `groups` claim | **Yes** — `contains(groups[*], 'admins') && 'Admin'`. ⚠️ also references `people` for Viewer, which is not a defined group. |
+| **Grafana** | policy bindings (incl. `admins`, `people`) | Helm `grafana.ini` `auth.generic_oauth.role_attribute_path` on the `groups` claim | **Yes** — `admins` → Admin, `people` → Viewer. Both groups now exist and are bound to the app. |
 | **Immich** | policy binding (`users`) | **Internal to Immich** — admin is the first user / set in Immich; Immich does **not** map admin from OIDC group claims | No (cannot, today) |
 
 > When onboarding a new app, add a row here: how it grants access, how it decides admin, and
