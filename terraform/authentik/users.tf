@@ -26,7 +26,7 @@ locals {
     "infrastructure"  = authentik_group.infrastructure.id
     "media"           = authentik_group.media.id
     "admins"          = authentik_group.admins.id
-    "people"          = authentik_group.people.id
+    "readers"         = authentik_group.readers.id
     "Monitoring"      = authentik_group.monitoring.id
     "Grafana Admins"  = authentik_group.grafana_admin.id
     "Grafana Editors" = authentik_group.grafana_editors.id

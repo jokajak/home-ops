@@ -22,10 +22,10 @@ resource "authentik_group" "media" {
   parent       = resource.authentik_group.users.id
 }
 
-## "people" maps to Grafana's Viewer role (see grafana role_attribute_path:
-## contains(groups[*], 'people') && 'Viewer'). Members also need an access binding to
-## each app they should reach (e.g. authentik_policy_binding.people_grafana).
-resource "authentik_group" "people" {
-  name         = "people"
+## "readers" maps to Grafana's Viewer role (see grafana role_attribute_path:
+## contains(groups[*], 'readers') && 'Viewer'). Members also need an access binding to
+## each app they should reach (e.g. authentik_policy_binding.readers_grafana).
+resource "authentik_group" "readers" {
+  name         = "readers"
   is_superuser = false
 }

@@ -99,10 +99,10 @@ resource "authentik_policy_binding" "grafana_viewers" {
   order  = 20
 }
 
-## Grant the "people" group access to Grafana; its Viewer role then comes from the
-## role_attribute_path matching the "people" group name.
-resource "authentik_policy_binding" "people_grafana" {
+## Grant the "readers" group access to Grafana; its Viewer role then comes from the
+## role_attribute_path matching the "readers" group name.
+resource "authentik_policy_binding" "readers_grafana" {
   target = authentik_application.grafana_application.uuid
-  group  = authentik_group.people.id
+  group  = authentik_group.readers.id
   order  = 25
 }

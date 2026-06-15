@@ -39,7 +39,7 @@ spec:
       GF_DATE_FORMATS_USE_BROWSER_LOCALE: true
       GF_FEATURE_TOGGLES_ENABLE: publicDashboards
       GF_SECURITY_COOKIE_SAMESITE: grafana
-      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'people') && 'Viewer'"
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'readers') && 'Viewer'"
     envFromSecrets:
       - name: grafana-secrets
     grafana.ini:
@@ -55,7 +55,7 @@ spec:
         token_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/token/"
         api_url: "https://auth.${SECRET_DOMAIN:=internal}/application/o/userinfo/"
         # Optionally map user groups to Grafana roles
-        role_attribute_path: contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'people') && 'Viewer'
+        role_attribute_path: contains(groups[*], 'admins') && 'Admin' || contains(groups[*], 'readers') && 'Viewer'
         icon: signin
         empty_scopes: false
         login_attribute_path: preferred_username

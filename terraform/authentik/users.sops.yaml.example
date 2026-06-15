@@ -11,11 +11,11 @@
 #               login to this account)
 #   - groups:   optional list of group NAMES (see group_ids_by_name in users.tf);
 #               defaults to ["users"]. None of these users are superusers.
-#               Use "people" to grant Grafana read (Viewer) access.
+#               Use "readers" to grant Grafana read (Viewer) access.
 users:
   - username: alice
     name: Alice Example
     email: alice@example.com
     groups:
       - users
-      - people
+      - readers
