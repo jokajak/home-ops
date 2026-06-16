@@ -30,10 +30,11 @@ resource "authentik_stage_identification" "authentication-identification" {
   recovery_flow             = authentik_flow.recovery.uuid
 
   # Which sources render on the login screen. Built-in keeps username/password;
-  # github adds the "Login with GitHub" button.
+  # github/google add the "Login with GitHub"/"Login with Google" buttons.
   sources = [
     data.authentik_source.inbuilt.uuid,
     authentik_source_oauth.github.uuid,
+    authentik_source_oauth.google.uuid,
   ]
 }
 
