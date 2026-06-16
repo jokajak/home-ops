@@ -38,4 +38,16 @@ resource "authentik_source_oauth" "google" {
   # Link a Google login to the existing Authentik user with the same email
   # instead of provisioning a brand-new user.
   user_matching_mode = "email_link"
+
+  # For provider_type=google Authentik derives the OIDC endpoint URLs server-side
+  # (authorize/token/jwks/userinfo). They aren't set in config, so the provider
+  # plans to null them on every run; ignore them to avoid a perpetual no-op diff.
+  lifecycle {
+    ignore_changes = [
+      access_token_url,
+      authorization_url,
+      oidc_jwks_url,
+      profile_url,
+    ]
+  }
 }
