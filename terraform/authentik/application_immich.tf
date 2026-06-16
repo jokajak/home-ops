@@ -30,18 +30,21 @@ resource "authentik_provider_oauth2" "immich_oauth" {
   allowed_redirect_uris = [
     # for logging in with OAuth from the Web Client
     {
-      matching_mode = "strict",
-      url           = "https://immich.${var.domain}/auth/login"
+      matching_mode     = "strict",
+      redirect_uri_type = "authorization",
+      url               = "https://immich.${var.domain}/auth/login"
     },
     # for manually linking OAuth in the Web Client
     {
-      matching_mode = "strict",
-      url           = "https://immich.${var.domain}/user-settings"
+      matching_mode     = "strict",
+      redirect_uri_type = "authorization",
+      url               = "https://immich.${var.domain}/user-settings"
     },
     # for logging in with OAuth from the mobile app
     {
-      matching_mode = "strict",
-      url           = "app.immich://oauth-callback"
+      matching_mode     = "strict",
+      redirect_uri_type = "authorization",
+      url               = "app.immich://oauth-callback"
     }
   ]
 
