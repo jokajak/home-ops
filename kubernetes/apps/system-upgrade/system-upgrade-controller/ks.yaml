@@ -47,8 +47,10 @@ spec:
   postBuild:
     substitute:
       # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-      # Stepping the cluster forward one minor at a time (running: Talos 1.11.2 / k8s 1.34.1).
-      # Do NOT jump straight to latest — k8s control-plane upgrades can't skip a minor.
-      TALOS_VERSION: v1.12.8
+      # Talos OS upgrades may skip minors, so go straight to latest. One node was already
+      # on 1.13.4; keeping the fleet consistent here avoids a control-plane downgrade and a
+      # talosctl-vs-node compatibility failure in the kubernetes Plan's upgrade-k8s job.
+      TALOS_VERSION: v1.13.4
       # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+      # k8s control-plane CANNOT skip a minor — step from running 1.34.1 to 1.35.x only.
       KUBERNETES_VERSION: v1.35.6
