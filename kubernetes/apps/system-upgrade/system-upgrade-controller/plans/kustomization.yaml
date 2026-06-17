@@ -4,8 +4,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./kubernetes.yaml
-  # TEMPORARILY PAUSED: the Talos OS roll on the flaky rpi4/HP nodes keeps rebooting
-  # nodes out from under the kubernetes Plan's upgrade-k8s pre-pull, blocking the kubelet
-  # roll (chocolate stuck on 1.32.3). Kubelet upgrades are independent of the Talos OS
-  # version, so let the k8s Plan finish first, then re-enable this to resume the OS roll.
-  # - ./talos.yaml
+  - ./talos.yaml
