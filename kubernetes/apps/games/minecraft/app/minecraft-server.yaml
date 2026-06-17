@@ -35,7 +35,10 @@ spec:
     # ref: https://hub.docker.com/r/itzg/minecraft-server/
     image:
       repository: itzg/minecraft-server
-      tag: latest
+      # Pin off ':latest' — it was un-reproducible and the cached layer carried a stale
+      # mc-image-helper that couldn't parse PaperMC's current channel enum (STABLE/ALPHA).
+      # java21 is required for Minecraft 1.21.x.
+      tag: "java21"
 
     ## Configure resource requests and limits
     ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -62,7 +65,9 @@ spec:
       # This must be overridden, since we can't accept this for the user.
       eula: "TRUE"
       # One of: LATEST, SNAPSHOT, or a specific version (ie: "1.7.9").
-      version: "LATEST"
+      # Pinned to a specific STABLE release: "LATEST" was resolving to pre-release Paper
+      # builds published in the ALPHA channel, which broke the jar download (crashloop).
+      version: "1.21.11"
       # This can be one of "VANILLA", "FORGE", "SPIGOT", "BUKKIT", "PAPER", "FTBA", "SPONGEVANILLA", "CURSEFORGE"
       type: "PAPER"
       # One of: peaceful, easy, normal, and hard
