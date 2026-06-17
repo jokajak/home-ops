@@ -105,6 +105,10 @@ spec:
         className: internal
         annotations:
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          # Stream large uploads straight to immich-server instead of buffering
+          # the whole body to a temp file at the ingress (avoids OOM during
+          # concurrent multi-MB HTTP/2 uploads from the mobile app).
+          nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
         hosts:
           - host: &host photos.${SECRET_DOMAIN:=internal}
             paths:

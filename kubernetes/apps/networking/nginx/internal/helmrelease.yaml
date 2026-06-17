@@ -43,7 +43,7 @@ spec:
               values:
                 - internal
       config:
-        client-body-buffer-size: 100M
+        client-body-buffer-size: 1M
         client-body-timeout: 120
         client-header-timeout: 120
         enable-brotli: "true"
@@ -79,6 +79,6 @@ spec:
           cpu: 10m
           memory: 250Mi
         limits:
-          memory: 500Mi
+          memory: 1Gi
     defaultBackend:
       enabled: false
