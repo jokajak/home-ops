@@ -38,7 +38,7 @@ spec:
           main:
             image:
               repository: jellyfin/jellyfin
-              tag: 10.11.8
+              tag: 10.11.11
             resources:
               requests:
                 cpu: 15m
