@@ -35,9 +35,13 @@ After the Barman Cloud Plugin migration, backup/recoverability status is reporte
 `barman_cloud_cloudnative_pg_io_*` metrics; the in-core `cnpg_collector_*` metrics (and the
 in-core cluster `firstRecoverabilityPoint`/`lastSuccessfulBackup` fields) no longer update.
 
-- **Next steps:** Verify the postgres `cluster/prometheusrule.yaml` and any Grafana
-  dashboards/alerts use the new metric names, so backup-failure alerting isn't silently
-  blind. Update where needed.
+- **Done:** added `CNPGBackupFailed` / `CNPGBackupTooOld` alerts to the postgres
+  `cluster/prometheusrule.yaml` using the new `barman_cloud_cloudnative_pg_io_*` timestamp
+  metrics, so backup-failure alerting is no longer blind.
+- **Next steps (cluster-side):** confirm the exact exported metric names against the running
+  Barman plugin (`barman_cloud_cloudnative_pg_io_last_available_backup_timestamp` /
+  `*_last_failed_backup_timestamp`) and that the alerts evaluate non-empty in vmalert; update any
+  Grafana dashboards still referencing the old `cnpg_collector_*` names.
 
 ## 3. Immich automatic DB backups lapsed since Feb 8 — Med (verify)
 

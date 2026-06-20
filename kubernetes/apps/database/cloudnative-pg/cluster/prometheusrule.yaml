@@ -66,3 +66,25 @@ spec:
           for: 1m
           labels:
             severity: warning
+        # Backup recoverability — post Barman Cloud Plugin migration the in-core
+        # cnpg_collector_* backup fields stopped updating; recoverability is now
+        # reported via barman_cloud_cloudnative_pg_io_* timestamp gauges.
+        - alert: CNPGBackupFailed
+          annotations:
+            description: The most recent backup for {{ $labels.cluster }} failed (last failed backup is newer than the last available backup).
+            summary: CloudNativePG backup failed
+          expr: |-
+            barman_cloud_cloudnative_pg_io_last_failed_backup_timestamp
+              > barman_cloud_cloudnative_pg_io_last_available_backup_timestamp
+          for: 5m
+          labels:
+            severity: critical
+        - alert: CNPGBackupTooOld
+          annotations:
+            description: No successful backup for {{ $labels.cluster }} in over 28 hours.
+            summary: CloudNativePG backup is stale
+          expr: |-
+            time() - barman_cloud_cloudnative_pg_io_last_available_backup_timestamp > 60 * 60 * 28
+          for: 15m
+          labels:
+            severity: critical
