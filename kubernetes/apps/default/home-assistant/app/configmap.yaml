@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-recorder
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # Mounted at /config/packages/recorder.yaml; picked up via
+  # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
+  # db_url is resolved at runtime from the RECORDER_DB_URL env var (CNPG secret),
+  # so no credential is stored here.
+  recorder.yaml: |
+    recorder:
+      db_url: !env_var RECORDER_DB_URL
+      purge_keep_days: 30
+      commit_interval: 5

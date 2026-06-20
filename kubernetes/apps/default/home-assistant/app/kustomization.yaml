@@ -4,4 +4,7 @@ kind: Kustomization
 resources:
   - ./helm-release.yaml
   - ./pvc.yaml
+  - ./configmap.yaml
+  - ./externalsecret.yaml
+  - ./database
   - ../../../../templates/gatus/guarded
