@@ -1,0 +1,30 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.dmfrey.com/batch/cronjob_v1.json
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: whereabouts-ip-reconciler
+  namespace: kube-system
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: whereabouts-whereabouts-chart
+          restartPolicy: OnFailure
+          containers:
+            - name: ip-reconciler
+              image: ghcr.io/k8snetworkplumbingwg/whereabouts:v0.9.4
+              command:
+                - /ip-reconciler
+                - -log-level=verbose
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 50Mi
+                limits:
+                  memory: 128Mi
