@@ -63,6 +63,19 @@ spec:
         storage:
           storageClassName: nfs-csi
 
+    # vmalert evaluates the (converted) VMRules and notifies the in-stack
+    # Alertmanager; the chart auto-wires the notifier when both are enabled.
+    vmalert:
+      enabled: true
+
+    # In-cluster Alertmanager. Routing/receivers come from the
+    # alertmanager-secret managed by externalsecret.yaml (webhook URL lives in
+    # Bitwarden), referenced here via spec.configSecret so no URL is committed.
+    alertmanager:
+      enabled: true
+      spec:
+        configSecret: alertmanager-secret
+
     #################################################
     ###              dependencies               #####
     #################################################
