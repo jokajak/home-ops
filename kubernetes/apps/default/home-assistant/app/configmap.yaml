@@ -20,10 +20,9 @@ data:
       purge_keep_days: 30
       # Exclude-only: record every domain except the noisy entities below.
       # Add specific noisy entities/globs here rather than maintaining an
-      # include allowlist.
+      # include allowlist. weather/sensor.weather_* are intentionally kept
+      # so climate/sensor data can be correlated against weather.
       exclude:
         entities:
           - sensor.last_boot
           - sensor.date
-        entity_globs:
-          - sensor.weather_*
