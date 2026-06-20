@@ -76,8 +76,9 @@ databases. **Do not centralize per-app CNPG into `database`.** (Phase 0 document
 ## Target state
 
 - No two namespaces differ only by a trailing `-ing`. Proposed: keep `networking` (the
-  app-facing one, heavily referenced) and rename `network` → **`cni`** (or `network-system`),
-  since it has fewer external references and clearer intent.
+  app-facing one, heavily referenced) and rename `network` → **`network-system`** — it has
+  fewer external references, and the `-system` suffix matches the other infra namespaces
+  (`kube-system`, `openebs-system`, `external-secrets`, `actions-runner-system`).
 - `default` holds at most a couple of genuinely-uncategorized apps. Themed namespaces:
   - **`home-automation`**: home-assistant, home-assistant-matter-hub, esphome, zwave-js-ui
   - **`media`**: immich, jellyfin, calibre
@@ -94,13 +95,13 @@ databases. **Do not centralize per-app CNPG into `database`.** (Phase 0 document
 - [x] `network/README.md` + `networking/README.md`: note both are real runtime namespaces
       and link to this plan for the rename
 
-### Phase 1 — `network` → `cni` rename (gated migration)
+### Phase 1 — `network` → `network-system` rename (gated migration)
 
 - [ ] Pre-flight: `flux-local` diff to enumerate exactly what gets pruned/created
-- [ ] New `cni/` folder + `cni` namespace; flip `targetNamespace: network` → `cni` on
-      multus / whereabouts / node-network-operator-config / multus-config
+- [ ] New `network-system/` folder + `network-system` namespace; flip `targetNamespace: network`
+      → `network-system` on multus / whereabouts / node-network-operator-config / multus-config
 - [ ] Update `multus/app/rbac.yaml` (`namespace: network`) and `whereabouts` HR namespace
-- [ ] Wire `cni` into `apps/kustomization.yaml`; update parent + cross-links
+- [ ] Wire `network-system` into `apps/kustomization.yaml`; update parent + cross-links
 - [ ] Verify CNI stays up (multus NADs resolve, whereabouts IPAM intact) before pruning `network`
 - [ ] Update READMEs (`apps/README.md` table, both network READMEs)
 
@@ -134,3 +135,5 @@ the old namespace until the new one is verified healthy.
   council, then verified the council's "zero-risk rename" claim against the manifests and
   **rejected it** (`network`/`networking` are both real runtime namespaces). Executed Phase 0
   doc clarifications. Phases 1–3 not started.
+- **2026-06-20** — Phase 1 target name decided: `network` → **`network-system`** (matches the
+  other `-system` infra namespaces), not `cni`.
