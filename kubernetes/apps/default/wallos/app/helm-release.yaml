@@ -74,5 +74,5 @@ spec:
         storageClass: nfs-csi
         retain: true
         globalMounts:
-          - path: /var/www/config/db
+          - path: /var/www/wallos/db
             readOnly: false
