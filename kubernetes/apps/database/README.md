@@ -1,6 +1,15 @@
 # database
 
-Database services consumed by applications throughout the cluster.
+Shared database *infrastructure* — operators and a shared instance — consumed by
+applications throughout the cluster.
+
+> **Shared infra vs. per-app databases.** This namespace holds the CloudNativePG operator,
+> the Barman Cloud backup plugin, dragonfly, and a shared `postgres` cluster. A given app's
+> *own* Postgres lives **with that app**, not here — e.g. `immich-database` and
+> `home-assistant` each carry a CNPG `Cluster` in [`default`](../default/README.md). That is
+> intentional: it keeps each app's data and blast-radius local and avoids coupling unrelated
+> databases. New per-app databases should follow the same pattern (co-locate with the app),
+> not be centralized here.
 
 | App | Description | Manifest |
 | --- | --- | --- |

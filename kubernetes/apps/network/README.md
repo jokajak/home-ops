@@ -3,6 +3,11 @@
 Low-level cluster networking: the CNI and the plumbing for additional pod interfaces.
 (Application-facing ingress/DNS lives in [`networking`](../networking/README.md).)
 
+> **`network` vs `networking` are both real runtime namespaces**, not just folders — multus,
+> whereabouts, and node-network-operator deploy *into* `network` (cilium targets `kube-system`).
+> The near-identical names are an ergonomic wart; a rename is a tracked migration (it flaps CNI
+> plumbing), not a quick edit — see [`docs/plans`](../../../docs/plans/2026-06-20-namespace-reorganization.md).
+
 | App | Description | Manifest |
 | --- | --- | --- |
 | [cilium](https://cilium.io/) | eBPF-based CNI providing pod networking, load balancing, and network policy. | [ks.yaml](./cilium/ks.yaml) |

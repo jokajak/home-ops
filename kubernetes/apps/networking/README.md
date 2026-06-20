@@ -3,6 +3,11 @@
 Application-facing networking: ingress controllers and DNS. (The CNI and low-level pod
 networking live in [`network`](../network/README.md).)
 
+> **`networking` vs `network` are both real runtime namespaces.** This one runs ingress-nginx,
+> external-dns, and k8s-gateway, with SOPS secrets and certificates pinned to `namespace:
+> networking`. Resolving the name collision is a tracked migration — see
+> [`docs/plans`](../../../docs/plans/2026-06-20-namespace-reorganization.md).
+
 | App | Description | Manifest |
 | --- | --- | --- |
 | [echo-server](https://github.com/mendhak/docker-http-https-echo) | Simple HTTP echo service for testing ingress and routing. | [ks.yaml](./echo-server/ks.yaml) |

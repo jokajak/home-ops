@@ -2,6 +2,12 @@
 
 User-facing applications and home services deployed to the `default` namespace.
 
+> **This namespace holds persistent data, not just app deployments.** `immich` and
+> `home-assistant` each run their own CNPG Postgres `Cluster` here, and most apps own NFS or
+> local-disk PVCs (`zwave-js-ui` is even node-pinned to a USB Z-Wave stick via `hostPath`).
+> Moving any of these to another namespace is a **data migration**, not a refactor — see the
+> reorganization plan in [`docs/plans`](../../../docs/plans/2026-06-20-namespace-reorganization.md).
+
 | App | Description | Manifest |
 | --- | --- | --- |
 | [calibre](https://calibre-ebook.com/) | E-book library management and conversion. | [ks.yaml](./calibre/ks.yaml) |
