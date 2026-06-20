@@ -1,48 +1,16 @@
-# default namespace applications
+# default
 
-This directory contains all of the applications deployed to the `default`
-namespace.
+User-facing applications and home services deployed to the `default` namespace.
 
-## authentik
-
-[authentik](https://goauthentik.io/) is used to provide authorization and SSO capabilities for services. The intention
-is to use external credentials like google accounts or github accounts for authentication and authentik local or
-application local groups for authorization.
-
-* [authentik.yaml](./authentik/ks.yaml)
-
-The authentik configuration is stored as IaC using [terraform](../../../terraform/authentik/README.md)
-
-## frigate
-
-![image of frigate](https://i.imgur.com/hv7bh6m.png)
-
-Installs [frigate](https://github.com/blakeblackshear/frigate/): Realtime object detection on RTSP cameras with the Google Coral
-
-* [frigate](frigate/app/helmrelease.yaml)
-
-## home-assistant
-
-[home-assistant](https://www.home-assistant.io/) provides home automation services.
-
-* [homeassistant.yaml](./home-assistant/ks.yaml)
-
-## immich
-
-[immich](https://github.com/immich-app/immich) is used to backup photos.
-
-* [immich.yaml](./immich/ks.yaml)
-
-## unifi
-
-[ubiquiti unifi controller](https://github.com/jacobalberty/unifi-docker) for
-wireless access points and home networking
-
-* [unifi.yaml](./unifi/ks.yaml)
-
-## zwave-js-ui
-
-[zwave-js-ui](https://zwave-js.github.io/zwave-js-ui/#/) is used to manage the zwave devices. zwave is a wireless
-protocol used for IoT.
-
-* [zwavejs.yaml](./zwave-js-ui/ks.yaml)
+| App | Description | Manifest |
+| --- | --- | --- |
+| [calibre](https://calibre-ebook.com/) | E-book library management and conversion. | [ks.yaml](./calibre/ks.yaml) |
+| [esphome](https://esphome.io/) | Builds and manages firmware for ESP-based IoT devices. | [ks.yaml](./esphome/ks.yaml) |
+| [home-assistant](https://www.home-assistant.io/) | Home automation hub. | [ks.yaml](./home-assistant/ks.yaml) |
+| [home-assistant-matter-hub](https://github.com/t0bst4r/home-assistant-matter-hub) | Bridges Home Assistant entities to the Matter smart-home protocol. | [ks.yaml](./home-assistant-matter-hub/ks.yaml) |
+| [immich](https://immich.app/) | Self-hosted photo and video backup (server, microservices, and machine-learning components). | [ks.yaml](./immich/ks.yaml) |
+| [jellyfin](https://jellyfin.org/) | Media server for movies, shows, and music. | [ks.yaml](./jellyfin/ks.yaml) |
+| [mealie](https://mealie.io/) | Recipe manager and meal planner. | [ks.yaml](./mealie/ks.yaml) |
+| [unifi](https://github.com/jacobalberty/unifi-docker) | Ubiquiti UniFi controller for wireless access points and home networking. | [ks.yaml](./unifi/ks.yaml) |
+| [wallos](https://github.com/ellite/Wallos) | Subscription and recurring-payment tracker. | [ks.yaml](./wallos/ks.yaml) |
+| [zwave-js-ui](https://zwave-js.github.io/zwave-js-ui/) | Manages Z-Wave IoT devices over the Z-Wave wireless protocol. | [ks.yaml](./zwave-js-ui/ks.yaml) |
