@@ -15,5 +15,20 @@ data:
   recorder.yaml: |
     recorder:
       db_url: !env_var RECORDER_DB_URL
+      # 30-day retention (HA default is 10). auto_purge, auto_repack and
+      # commit_interval are left at their sensible HA defaults.
       purge_keep_days: 30
-      commit_interval: 5
+      # NOTE: include.domains is an allowlist — ONLY these domains are
+      # recorded; everything else (light, climate, binary_sensor, lock,
+      # cover, person, ...) is dropped. Restored from the prior config.
+      include:
+        domains:
+          - sensor
+          - switch
+          - media_player
+      exclude:
+        entities:
+          - sensor.last_boot
+          - sensor.date
+        entity_globs:
+          - sensor.weather_*
