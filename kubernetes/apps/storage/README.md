@@ -1,14 +1,11 @@
 # storage
 
-This namespace is used for providing storage related services.
+Storage-related services for the cluster.
 
-## minio
+| App | Description | Manifest |
+| --- | --- | --- |
+| [minio](https://min.io/) | S3-compatible object storage. | [ks.yaml](./minio/ks.yaml) |
 
-[minio](https://github.com/minio/minio) provides s3 like storage.
-
-S3 storage is used by restic with volsync to provide backup and restore capability for volumes that are stored on local
-disks instead of the NAS.
-
-Some services are IO sensitive and therefore benefit from being stored on a local disk instead of on an NFS share.
-
-* [minio.yaml](./minio/ks.yaml)
+MinIO backs restic/volsync backups for volumes kept on local disk (rather than the NAS)
+and stores CNPG Postgres backups. Some services are IO-sensitive and benefit from local
+disk instead of an NFS share, so object storage gives them a backup/restore path.

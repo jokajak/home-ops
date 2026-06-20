@@ -1,24 +1,12 @@
 # kube-system
 
-This directory contains the applications running in the kube-system namespace.
+Core cluster components that run in the `kube-system` namespace. They are packaged as
+apps here so their configuration can be managed in Git.
 
-## coredns
-
-[coredns](https://coredns.io/) provides dns for the cluster. It's included as an app so that the configuration can be
-modified
-
-* [coredns](./coredns/ks.yaml)
-
-## descheduler
-
-[descheduler](https://github.com/kubernetes-sigs/descheduler) will evict pods to force the cluster to rebalance.
-
-* [descheduler](./descheduler/ks.yaml)
-
-## node-feature-discovery
-
-[node-feature-discovery](https://github.com/kubernetes-sigs/node-feature-discovery) provides annotations for nodes to
-support node selection for deployments. It is mostly used for tagging nodes with custom devices attached like a
-HomeAssistant SkyConnect
-
-* [node-feature-discover](./node-feature-discovery/ks.yaml)
+| App | Description | Manifest |
+| --- | --- | --- |
+| [coredns](https://coredns.io/) | In-cluster DNS; managed as an app so the config can be customized. | [ks.yaml](./coredns/ks.yaml) |
+| [csi-driver-nfs](https://github.com/kubernetes-csi/csi-driver-nfs) | CSI driver that mounts NFS shares (the NAS) as PersistentVolumes. | [ks.yaml](./csi-driver-nfs/ks.yaml) |
+| [kubelet-csr-approver](https://github.com/postfinance/kubelet-csr-approver) | Automatically approves kubelet serving-certificate CSRs. | [ks.yaml](./kubelet-csr-approver/ks.yaml) |
+| [metrics-server](https://github.com/kubernetes-sigs/metrics-server) | Resource metrics API for `kubectl top` and the Horizontal Pod Autoscaler. | [ks.yaml](./metrics-server/ks.yaml) |
+| [node-feature-discovery](https://github.com/kubernetes-sigs/node-feature-discovery) | Labels nodes with hardware features for scheduling (e.g. nodes with a Home Assistant SkyConnect). | [ks.yaml](./node-feature-discovery/ks.yaml) |
