@@ -25,7 +25,7 @@ spec:
       # that the `talos` Plan is mid-reboot (pre-pull "connection refused" collisions).
       - key: feature.node.kubernetes.io/system-os_release.VERSION_ID
         operator: In
-        values: ["${TALOS_VERSION}"]
+        values: ["${TALOS_VERSION:=v1.13.4}"]
   tolerations:
     - key: CriticalAddonsOnly
       operator: Exists
@@ -33,7 +33,7 @@ spec:
       operator: Exists
       effect: NoSchedule
   prepare: &prepare
-    image: ghcr.io/siderolabs/talosctl:${TALOS_VERSION:=v1.9.1}
+    image: ghcr.io/siderolabs/talosctl:${TALOS_VERSION:=v1.13.4}
     envs:
       - name: NODE_IP
         valueFrom:
