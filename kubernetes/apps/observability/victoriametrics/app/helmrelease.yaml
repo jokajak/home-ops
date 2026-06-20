@@ -68,13 +68,22 @@ spec:
     vmalert:
       enabled: true
 
-    # In-cluster Alertmanager. Routing/receivers come from the
-    # alertmanager-secret managed by externalsecret.yaml (webhook URL lives in
-    # Bitwarden), referenced here via spec.configSecret so no URL is committed.
+    # In-cluster Alertmanager. No external alerting sink exists yet, so alerts
+    # route to a null receiver — they're still visible/queryable in the
+    # Alertmanager and vmalert UIs. To push notifications later, add a receiver
+    # (e.g. webhook/slack/discord) + matching route; keep any URL/token out of
+    # git via an ExternalSecret-backed secret referenced from spec.configSecret.
     alertmanager:
       enabled: true
-      spec:
-        configSecret: alertmanager-secret
+      config:
+        route:
+          receiver: "blackhole"
+          group_by: ["alertname", "namespace"]
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
+        receivers:
+          - name: "blackhole"
 
     #################################################
     ###              dependencies               #####
