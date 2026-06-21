@@ -29,8 +29,13 @@ spec:
         enabled: true
         size: 1Gi
         storageClass: openebs-hostpath
-      # Single-node raft — no external storage dependency.
-      # After first deploy: bao operator init, then bao operator unseal.
+      extraSecretEnvironmentVars:
+        - envName: OPENBAO_UNSEAL_KEY
+          secretName: openbao-unseal
+          secretKey: unseal_key
+      # Single-node raft with static auto-unseal (OpenBao 2.4+).
+      # The AES-256 key comes from the openbao-unseal Secret (ESO → Bitwarden).
+      # After first deploy run `bao operator init` once to produce recovery keys.
       config: |
         ui = true
         listener "tcp" {
@@ -41,6 +46,10 @@ spec:
         storage "raft" {
           path = "/openbao/data"
           node_id = "node1"
+        }
+        seal "static" {
+          current_key_id = "v1"
+          current_key    = "env://OPENBAO_UNSEAL_KEY"
         }
         service_registration "kubernetes" {}
       ingress:

@@ -302,3 +302,33 @@ resource "bitwarden_item_login" "volsync_restic" {
     text = "true"
   }
 }
+
+################################################################################
+# openbao credentials
+################################################################################
+# 32 random bytes used as the AES-256-GCM-96 static auto-unseal key.
+# Stored base64-encoded so ESO can sync it verbatim into a Kubernetes Secret,
+# which OpenBao reads via env://OPENBAO_UNSEAL_KEY on startup.
+# WARNING: losing this value makes the raft data unrecoverable without the
+# recovery keys produced during `bao operator init`.
+resource "random_bytes" "openbao_unseal_key" {
+  length = 32
+}
+
+resource "bitwarden_item_login" "openbao" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "openbao credentials"
+  username = "openbao"
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "unseal_key"
+    hidden = random_bytes.openbao_unseal_key.base64
+  }
+}
