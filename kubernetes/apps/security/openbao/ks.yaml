@@ -17,3 +17,14 @@ spec:
   timeout: 5m
   dependsOn:
     - name: cluster-apps-external-secrets
+  components:
+    - ../../../../components/volsync
+  postBuild:
+    substitute:
+      APP: openbao
+      VOLSYNC_CLAIM: data-openbao-0
+      VOLSYNC_PUID: "100"
+      VOLSYNC_PGID: "1000"
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets

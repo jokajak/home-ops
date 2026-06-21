@@ -5,7 +5,7 @@ Authentication, authorization, and secrets management for cluster services.
 | App | Description | Manifest |
 | --- | --- | --- |
 | [authentik](https://goauthentik.io/) | Identity provider / SSO. Federates external accounts (Google, GitHub) for authentication and uses Authentik or app-local groups for authorization. | [ks.yaml](./authentik/ks.yaml) |
-| [openbao](https://openbao.org/) | Open-source secrets manager (Vault fork, MPL-2.0). Runs single-node with integrated raft storage. Used to mint short-lived Kubernetes service-account tokens via its Kubernetes secrets engine — no long-lived credential stored anywhere. | [ks.yaml](./openbao/ks.yaml) |
+| [openbao](https://openbao.org/) | Open-source secrets manager (Vault fork, MPL-2.0). Runs single-node with integrated raft storage. Used to mint short-lived Kubernetes service-account tokens via its Kubernetes secrets engine — no long-lived credential stored anywhere. Raft data backed up hourly to MinIO via VolSync (restic). | [ks.yaml](./openbao/ks.yaml) |
 
 Authentik's objects (providers, applications, flows) are managed as IaC with OpenTofu —
 see [`terraform/authentik`](../../../terraform/authentik/README.md).
