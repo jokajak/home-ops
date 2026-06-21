@@ -13,10 +13,15 @@ spec:
     kind: GitRepository
     name: home-kubernetes
   wait: true
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: wallos
       GATUS_SUBDOMAIN: subs
+      VOLSYNC_CLAIM: wallos-config
+      VOLSYNC_PUID: "0"
+      VOLSYNC_PGID: "0"
     substituteFrom:
       - kind: ConfigMap
         name: cluster-settings

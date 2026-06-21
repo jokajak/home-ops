@@ -13,8 +13,13 @@ spec:
   interval: 30m
   prune: true
   wait: true
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: jellyfin
+      VOLSYNC_CLAIM: jellyfin-config
+      VOLSYNC_PUID: "568"
+      VOLSYNC_PGID: "568"
   dependsOn:
     - name: cluster-apps-csi-driver-nfs

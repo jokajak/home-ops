@@ -13,10 +13,14 @@ spec:
     kind: GitRepository
     name: home-kubernetes
   wait: true
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: home-assistant
       GATUS_SUBDOMAIN: home
+      VOLSYNC_PUID: "568"
+      VOLSYNC_PGID: "568"
     substituteFrom:
       - kind: Secret
         name: cluster-secrets

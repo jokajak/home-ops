@@ -17,7 +17,12 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: zwave-js-ui
       GATUS_SUBDOMAIN: zwave
+      VOLSYNC_CLAIM: zwave-js-ui-config
+      VOLSYNC_PUID: "0"
+      VOLSYNC_PGID: "0"

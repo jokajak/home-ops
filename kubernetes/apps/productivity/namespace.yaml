@@ -5,3 +5,6 @@ metadata:
   name: productivity
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
+  annotations:
+    # allow VolSync movers to run as root (wallos stores root-owned data)
+    volsync.backube/privileged-movers: "true"

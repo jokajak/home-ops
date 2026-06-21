@@ -19,6 +19,12 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 3m
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: unifi
+      VOLSYNC_CLAIM: unifi-config
+      VOLSYNC_CAPACITY: 20Gi
+      VOLSYNC_PUID: "0"
+      VOLSYNC_PGID: "0"

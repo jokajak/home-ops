@@ -13,10 +13,14 @@ spec:
     kind: GitRepository
     name: home-kubernetes
   wait: true
+  components:
+    - ../../../../components/volsync
   postBuild:
     substitute:
       APP: mealie
       GATUS_SUBDOMAIN: recipes
+      VOLSYNC_PUID: "65534"
+      VOLSYNC_PGID: "65534"
     substituteFrom:
       - kind: ConfigMap
         name: cluster-settings
