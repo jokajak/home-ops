@@ -1,6 +1,7 @@
 # Kubernetes namespace reorganization
 
-> Status: **IN PROGRESS** — Phase 0 (docs) done · 2026-06-20 · Owner: Josh · Author: Luma (Claude)
+> Status: **IN PROGRESS** — Phase 0 done; Phase 1 staged in git, awaiting owner reconcile ·
+> 2026-06-20 · Owner: Josh · Author: Luma (Claude)
 >
 > Multi-session effort. This doc is the source of truth for progress — update the
 > phase checkboxes and the **Session Log** at the bottom as work proceeds. Each phase
@@ -95,14 +96,33 @@ databases. **Do not centralize per-app CNPG into `database`.** (Phase 0 document
 - [x] `network/README.md` + `networking/README.md`: note both are real runtime namespaces
       and link to this plan for the rename
 
-### Phase 1 — `network` → `network-system` rename (gated migration)
+### Phase 1 — `network` → `network-system` rename (gated migration) — staged in git, awaiting reconcile
 
-- [ ] Pre-flight: `flux-local` diff to enumerate exactly what gets pruned/created
-- [ ] New `network-system/` folder + `network-system` namespace; flip `targetNamespace: network`
-      → `network-system` on multus / whereabouts / node-network-operator-config / multus-config
-- [ ] Update `multus/app/rbac.yaml` (`namespace: network`) and `whereabouts` HR namespace
-- [ ] Wire `network-system` into `apps/kustomization.yaml`; update parent + cross-links
-- [ ] Verify CNI stays up (multus NADs resolve, whereabouts IPAM intact) before pruning `network`
+> **Discovered coupling (bigger than first scoped):** the rename is not confined to the
+> `network` folder. Multus `NetworkAttachmentDefinition`s are namespace-scoped, and **five
+> workloads in three other namespaces reference them by the `network` namespace** — so they
+> were changed in the same commit:
+> - `vpn/gateway`, `vpn/dns`, `downloads/qbittorrent` — `k8s.v1.cni.cncf.io/networks: network/<nad>@…`
+> - `default/home-assistant`, `default/home-assistant-matter-hub` — `"namespace": "network"` (iot-vlan)
+>
+> Also inside the folder: every Flux `path:` (`./kubernetes/apps/network/…`), all four
+> `targetNamespace: network`, the `multus/app/rbac.yaml` ServiceAccount subject, the whereabouts
+> HR `sourceRef.namespace` (its HelmRepository lands in the target ns via the targetNamespace
+> override), and Multus's own `"multusNamespace"` config value. cilium is untouched (targets `kube-system`).
+
+- [x] Pre-flight: `flux-local build` + `kustomize build` confirm renamed paths resolve
+- [x] `git mv network → network-system`; namespace object renamed; flip all `targetNamespace`,
+      `path:`, rbac subject, whereabouts sourceRef, `multusNamespace`
+- [x] Update the 5 cross-namespace NAD references (vpn ×2, downloads ×1, default ×2)
+- [x] Update READMEs (`apps/README.md` row, `networking` cross-link, `network-system` title/note)
+- [x] Validate: kubeconform 0 invalid/0 errors on all touched kustomizations; grep shows 0 stale refs
+- [ ] **Owner: reconcile Flux** (flaps CNI control-plane: multus/whereabouts DaemonSets recreate in
+      the new ns; brief window where *new* pods needing a Multus iface may fail — existing pods keep
+      their interface). Pick a low-activity window.
+- [ ] **Owner: post-reconcile verify** — qbittorrent VPN egress, HA reaches the IoT VLAN, multus
+      NADs present in `network-system`, whereabouts IPAM intact (reservations live in `kube-system`).
+- [ ] **Owner: manual cleanup** — the old `network` namespace has `prune: disabled`, so Flux will
+      NOT delete it; once empty, `kubectl delete namespace network`.
 - [ ] Update READMEs (`apps/README.md` table, both network READMEs)
 
 ### Phase 2 — Evict stateless/low-state apps from `default`
@@ -137,3 +157,9 @@ the old namespace until the new one is verified healthy.
   doc clarifications. Phases 1–3 not started.
 - **2026-06-20** — Phase 1 target name decided: `network` → **`network-system`** (matches the
   other `-system` infra namespaces), not `cni`.
+- **2026-06-20** — Phase 1 **staged in git** (not yet reconciled). `git mv` (24 files, history
+  preserved) + 5 cross-namespace NAD reference updates + 3 READMEs. Discovered the NAD coupling
+  into `vpn`/`downloads`/`default` during pre-flight — wider than the original scope. Validated
+  with flux-local build, kustomize build, and kubeconform (0 invalid/0 errors); grep confirms 0
+  stale `network` refs. **Remaining = owner-side cluster ops:** reconcile in a low-activity
+  window, verify qbittorrent/HA/CNI, then `kubectl delete ns network` once empty.

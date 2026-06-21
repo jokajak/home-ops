@@ -24,7 +24,7 @@ spec:
 
         pod:
           annotations:
-            k8s.v1.cni.cncf.io/networks: network/gateway-network-dns-pod@vpn-gw-veth0
+            k8s.v1.cni.cncf.io/networks: network-system/gateway-network-dns-pod@vpn-gw-veth0
           affinity:
             podAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:

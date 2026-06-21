@@ -9,7 +9,7 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: ./kubernetes/apps/network/cilium/app
+  path: ./kubernetes/apps/network-system/cilium/app
   prune: false # never should be deleted
   sourceRef:
     kind: GitRepository

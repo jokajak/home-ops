@@ -1,12 +1,14 @@
-# network
+# network-system
 
 Low-level cluster networking: the CNI and the plumbing for additional pod interfaces.
 (Application-facing ingress/DNS lives in [`networking`](../networking/README.md).)
 
-> **`network` vs `networking` are both real runtime namespaces**, not just folders — multus,
-> whereabouts, and node-network-operator deploy *into* `network` (cilium targets `kube-system`).
-> The near-identical names are an ergonomic wart; a rename is a tracked migration (it flaps CNI
-> plumbing), not a quick edit — see [`docs/plans`](../../../docs/plans/2026-06-20-namespace-reorganization.md).
+> Renamed from `network` → `network-system` (matches `kube-system`, `openebs-system`, …) to
+> end the near-identical `network`/`networking` collision. multus, whereabouts, and
+> node-network-operator run **in this namespace**; cilium targets `kube-system`. Pods that
+> attach a Multus interface reference the NADs as `network-system/<nad>` (see `vpn`,
+> `downloads`, and `default/home-assistant`). See the migration plan in
+> [`docs/plans`](../../../docs/plans/2026-06-20-namespace-reorganization.md).
 
 | App | Description | Manifest |
 | --- | --- | --- |

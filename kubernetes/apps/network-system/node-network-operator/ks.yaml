@@ -10,7 +10,7 @@ spec:
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/node-network-operator/app"
+  path: "./kubernetes/apps/network-system/node-network-operator/app"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -33,11 +33,11 @@ metadata:
   name: &app node-network-operator-config
   namespace: flux-system
 spec:
-  targetNamespace: network
+  targetNamespace: network-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/node-network-operator/config"
+  path: "./kubernetes/apps/network-system/node-network-operator/config"
   prune: true
   sourceRef:
     kind: GitRepository

@@ -24,7 +24,7 @@ spec:
 
         pod:
           annotations:
-            k8s.v1.cni.cncf.io/networks: network/gateway-network-vpn-gateway-pod@vpn-gw-veth0
+            k8s.v1.cni.cncf.io/networks: network-system/gateway-network-vpn-gateway-pod@vpn-gw-veth0
 
         initContainers:
           # Add MASQUERADE rule so traffic from bridge clients exits via VPN interface

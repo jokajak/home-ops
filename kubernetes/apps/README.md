@@ -25,7 +25,7 @@ the tree from there. See each namespace's own `README.md` for the apps it contai
 | [flux-system](./flux-system/README.md) | Cluster-side Flux extensions (webhooks). |
 | [games](./games/README.md) | Game servers. |
 | [kube-system](./kube-system/README.md) | Core cluster components (DNS, CSI, metrics). |
-| [network](./network/README.md) | CNI and low-level pod networking. |
+| [network-system](./network-system/README.md) | CNI and low-level pod networking. |
 | [networking](./networking/README.md) | Ingress controllers and DNS. |
 | [observability](./observability/README.md) | Metrics, logs, dashboards, monitoring. |
 | [openebs-system](./openebs-system/README.md) | Local node-disk persistent storage. |

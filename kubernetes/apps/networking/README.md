@@ -1,7 +1,7 @@
 # networking
 
 Application-facing networking: ingress controllers and DNS. (The CNI and low-level pod
-networking live in [`network`](../network/README.md).)
+networking live in [`network`](../network-system/README.md).)
 
 > **`networking` vs `network` are both real runtime namespaces.** This one runs ingress-nginx,
 > external-dns, and k8s-gateway, with SOPS secrets and certificates pinned to `namespace:

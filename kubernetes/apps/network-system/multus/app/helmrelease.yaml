@@ -47,7 +47,7 @@ spec:
               "confDir": "/host/etc/cni/net.d",
               "multusAutoconfigDir": "/host/etc/cni/net.d",
               "multusConfigFile": "auto",
-              "multusNamespace": "network",
+              "multusNamespace": "network-system",
               "socketDir": "/host/run/multus/",
               "namespaceIsolation": false
             }

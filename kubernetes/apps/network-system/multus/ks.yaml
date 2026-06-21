@@ -6,11 +6,11 @@ metadata:
   name: &app multus
   namespace: flux-system
 spec:
-  targetNamespace: network
+  targetNamespace: network-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/multus/app"
+  path: "./kubernetes/apps/network-system/multus/app"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -31,11 +31,11 @@ metadata:
   name: &app multus-config
   namespace: flux-system
 spec:
-  targetNamespace: network
+  targetNamespace: network-system
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  path: "./kubernetes/apps/network/multus/config"
+  path: "./kubernetes/apps/network-system/multus/config"
   prune: true
   sourceRef:
     kind: GitRepository
