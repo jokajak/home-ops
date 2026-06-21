@@ -6,4 +6,7 @@ metadata:
   namespace: external-secrets
 spec:
   interval: 2h
-  url: https://small-hack.github.io/bitwarden-eso-provider
+  # Chart moved: small-hack -> open-engineering, now published via the Codeberg
+  # (Forgejo) Helm package registry. The old small-hack GitHub Pages repo 404s,
+  # which is why Renovate silently stopped proposing updates (dead datasource).
+  url: https://codeberg.org/api/packages/open-engineering/helm
