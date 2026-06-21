@@ -1,0 +1,83 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: open-webui
+spec:
+  interval: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 15m
+  install:
+    remediation:
+      retries: 5
+  upgrade:
+    remediation:
+      retries: 5
+  values:
+    controllers:
+      open-webui:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          main:
+            image:
+              repository: ghcr.io/open-webui/open-webui
+              tag: v0.9.6
+            env:
+              # OAuth / Authentik SSO
+              ENABLE_OAUTH_SIGNUP: "true"
+              ENABLE_OAUTH_PERSISTENT_CONFIG: "false"
+              OAUTH_MERGE_ACCOUNTS_BY_EMAIL: "true"
+              OAUTH_PROVIDER_NAME: Login
+              OPENID_PROVIDER_URL: "https://auth.${SECRET_DOMAIN:=example.com}/application/o/open-webui/.well-known/openid-configuration"
+              OAUTH_SCOPES: "openid email profile"
+              OPENID_REDIRECT_URI: "https://chat.${SECRET_DOMAIN:=example.com}/oauth/oidc/callback"
+              # WebSocket support (shared Dragonfly Redis)
+              ENABLE_WEBSOCKET_SUPPORT: "true"
+              WEBSOCKET_MANAGER: redis
+              WEBSOCKET_REDIS_URL: "redis://dragonfly.database.svc.cluster.local.:6379"
+            envFrom:
+              - secretRef:
+                  name: open-webui-secret
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+    service:
+      main:
+        controller: open-webui
+        ports:
+          http:
+            port: 8080
+    ingress:
+      main:
+        enabled: true
+        className: internal
+        hosts:
+          - host: &host "chat.${SECRET_DOMAIN:=example.com}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: main
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert-tls
+    persistence:
+      data:
+        enabled: true
+        existingClaim: open-webui-data
+        globalMounts:
+          - path: /app/backend/data
