@@ -40,7 +40,7 @@ The pieces:
 
 ## Cluster read-only access for Claude
 
-A `claude-readonly` ClusterRole and `claude` ServiceAccount (namespace: `security`) are defined
+A `npe.llm-readonly` ClusterRole and `claude` ServiceAccount (namespace: `security`) are defined
 in `kubernetes/apps/security/openbao/app/rbac.yaml` and reconciled by Flux. They cover all
 meaningful cluster resources — Flux, Helm, cert-manager, ESO, CNPG, Cilium, VolSync, Dragonfly,
 Prometheus Operator — with `get`/`list`/`watch` only. Secrets are intentionally excluded.
@@ -150,11 +150,8 @@ ones that mirror CI.
   `${LB_CIDR_V4}`, etc. Reference those rather than hardcoding domains/IPs.
 - Secret plumbing is **always** via `ExternalSecret` (Bitwarden) or `*.sops.yaml`, never plaintext
   in a manifest. Match the style of the nearest existing `externalsecret.yaml`.
-  - Use `ClusterSecretStore: bitwarden-login` for the Bitwarden item's built-in `username`/`password`.
-  - Use `ClusterSecretStore: bitwarden-fields` for custom hidden fields (e.g. `property: unseal_key`).
-  - New Bitwarden items belong in `terraform/bitwarden/main.tf` — use `random_bytes` (not
-    `random_password`) for cryptographic keys, `random_password` for human-readable credentials.
-    Add an output to `outputs.tf` and run `tofu apply` before deploying the consuming app.
+  - New Bitwarden items are managed in `terraform/bitwarden/main.tf`; run `tofu apply` there
+    before deploying the app that consumes them.
 - Larger multi-step efforts are written up first as dated design docs in `docs/plans/`
   (see the VPN-gateway and Cilium Gateway API plans for the expected format). Follow that
   convention for non-trivial changes.

@@ -10,7 +10,7 @@ metadata:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: claude-readonly
+  name: npe.llm-readonly
 rules:
   # Core
   - apiGroups: [""]
@@ -180,11 +180,11 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: claude-readonly
+  name: npe.llm-readonly
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: claude-readonly
+  name: npe.llm-readonly
 subjects:
   - kind: ServiceAccount
     name: claude

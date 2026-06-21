@@ -61,5 +61,5 @@ bao write kubernetes/creds/claude
 | Recovery keys (5 shares) | Bitwarden — store manually after `bao operator init` |
 | Root token | Bitwarden — store manually after `bao operator init`; revoke after setup |
 
-The `claude` ServiceAccount and `claude-readonly` ClusterRole/ClusterRoleBinding are
+The `claude` ServiceAccount and `npe.llm-readonly` ClusterRole/ClusterRoleBinding are
 reconciled by Flux from [`openbao/app/rbac.yaml`](./openbao/app/rbac.yaml).
