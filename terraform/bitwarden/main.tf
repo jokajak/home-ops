@@ -310,3 +310,28 @@ resource "bitwarden_item_login" "immich" {
     hidden = random_password.immich_pg_superuser_pass.result
   }
 }
+
+################################################################################
+# volsync restic repository password
+################################################################################
+# Encryption password for the VolSync/restic backup repositories in MinIO. The
+# S3 credentials themselves come from the `minio-tf-backups` item (terraform/minio);
+# this is only the restic repo password. Losing it makes the backups unrecoverable.
+resource "random_password" "volsync_restic_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "volsync_restic" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "volsync restic"
+  password = random_password.volsync_restic_password.result
+
+  field {
+    name = "terraform"
+    text = "true"
+  }
+}

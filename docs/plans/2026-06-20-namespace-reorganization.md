@@ -161,5 +161,21 @@ the old namespace until the new one is verified healthy.
   preserved) + 5 cross-namespace NAD reference updates + 3 READMEs. Discovered the NAD coupling
   into `vpn`/`downloads`/`default` during pre-flight — wider than the original scope. Validated
   with flux-local build, kustomize build, and kubeconform (0 invalid/0 errors); grep confirms 0
-  stale `network` refs. **Remaining = owner-side cluster ops:** reconcile in a low-activity
-  window, verify qbittorrent/HA/CNI, then `kubectl delete ns network` once empty.
+  stale `network` refs.
+- **2026-06-20** — **Botched first push, then fixed (with cluster access).** Commit `32c5c98`
+  renamed the dirs but an atomic `git add` failure (stale `kubernetes/apps/network` pathspec)
+  silently dropped EVERY content edit, so the moved ks.yaml files still pointed at the deleted
+  `./network` path. On-cluster this showed as the CNI Kustomizations stuck `path not found`,
+  while pods stayed healthy. Local kustomize/kubeconform had passed because they ran against the
+  (correct) working tree, never the commit. Fix: commit `02268d8` landed the dropped content;
+  `flux reconcile cluster-apps --with-source` then created `network-system` and migrated
+  multus/whereabouts/node-network-operator (all `Ready=True`), and moved all 5 NADs.
+- **2026-06-20** — Added a guard so this can't recur: `scripts/validate-ks-paths.sh` (portable,
+  checks every Flux Kustomization `spec.path` resolves) wired as a pre-commit hook + CI job
+  (`4581537`).
+- **Still open after Phase 1:** (a) VPN consumers `vpn-gateway`/`vpn-dns`/`qbittorrent` are
+  `Ready=False` blocked by a **pre-existing, unrelated** dep — `cluster-apps-external-secrets-bitwarden`
+  (bitwarden ESO provider HelmRepository stuck `InProgress`); their running pods are healthy.
+  (b) Duplicate multus DaemonSet: old `network/multus` (not pruned by the targetNamespace move)
+  + new `network-system/multus`. **Do `kubectl delete ns network` only after** the VPN/HA
+  consumers re-roll onto the `network-system` NADs (currently gated by the bitwarden issue).
