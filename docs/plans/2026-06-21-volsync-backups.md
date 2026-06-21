@@ -50,21 +50,22 @@ The onedr0p component is the right *shape* but its backend assumes hardware we d
 
 ### 2. Reusable component — `kubernetes/components/volsync/`
 
-A Flux `kind: Component` (copied from onedr0p, retargeted) with four resources, all keyed on
-`${APP}` + `${VOLSYNC_*}` postBuild vars:
+A Flux `kind: Component` (adapted from onedr0p), all keyed on `${APP}` + `${VOLSYNC_*}` postBuild
+vars. **Three** resources — the onedr0p bootstrap `pvc.yaml` (`dataSourceRef → ReplicationDestination`
+auto-restore) is **omitted**, because the volume populator requires `copyMethod: Snapshot` /
+a VolumeSnapshotClass, which `nfs-csi` doesn't have. With `Direct`, restore is an **explicit**
+trigger (also safer — no accidental auto-clobber):
 
-- **`replicationsource.yaml`** — hourly restic backup of PVC `${APP}` to
+- **`replicationsource.yaml`** — hourly restic backup of PVC `${VOLSYNC_CLAIM:=${APP}}` to
   `s3:https://s3.${SECRET_DOMAIN}/backups/volsync/${APP}`, `copyMethod: Direct`, retain
   hourly:24/daily:7.
-- **`replicationdestination.yaml`** — `trigger: manual: restore-once`, restores the latest
-  snapshot into a PVC (used for migrations / disaster restore).
-- **`pvc.yaml`** — bootstrap PVC `${APP}` with `dataSourceRef → ReplicationDestination`, so a
-  fresh deploy auto-restores from the last backup. (Apps opt in by pointing their persistence at
-  `existingClaim: ${APP}`.)
+- **`replicationdestination.yaml`** — `trigger: manual: restore-once`; on trigger, provisions a
+  PVC and restores the latest restic snapshot into it (used for migrations / disaster restore).
 - **`externalsecret.yaml`** — builds the restic env (`RESTIC_REPOSITORY`, `RESTIC_PASSWORD`,
-  `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) from Bitwarden.
+  `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) from Bitwarden (`volsync restic` + `minio-tf-backups`).
 
-Apps consume it exactly like onedr0p — in the app's `ks.yaml`:
+The app keeps its own PVC; the component is purely additive. Apps opt in via their `ks.yaml`
+(`VOLSYNC_CLAIM` defaults to `${APP}` — set it when the PVC name differs, e.g. matter-hub):
 
 ```yaml
 spec:
@@ -73,9 +74,15 @@ spec:
   postBuild:
     substitute:
       APP: home-assistant-matter-hub
+      VOLSYNC_CLAIM: home-assistant-matter-hub-data
       VOLSYNC_CAPACITY: 1Gi
       VOLSYNC_STORAGECLASS: nfs-csi
 ```
+
+> `copyMethod: Direct` is the permanent choice here, not a stopgap. csi-driver-nfs "snapshots"
+> are just tarballs written back to the same Synology NFS share — not real CSI snapshots — so
+> `copyMethod: Snapshot` and the `dataSourceRef` volume-populator (auto-restore-on-deploy) aren't
+> meaningfully available on this storage and aren't worth pursuing.
 
 ### 3. Secrets
 
@@ -95,8 +102,8 @@ spec:
 - [x] Bucket: **reuse existing `backups`** (verified present + unused) — no minio terraform change
 - [x] restic password: added `volsync restic` item to `terraform/bitwarden` (IaC)
 - [ ] **Owner:** `tofu apply` in `terraform/bitwarden` → creates the `volsync restic` item
-- [ ] Deploy operator: `apps/volsync-system/` (backube HelmRepository + HelmRelease)
-- [ ] Add `components/volsync/` (restic/Direct/S3, adapted)
+- [x] Deploy operator: `apps/volsync-system/` (backube HelmRepository + HelmRelease) — built
+- [x] Add `components/volsync/` (restic/Direct/S3, adapted) — built
 
 ### Phase B — Verify on matter-hub (no app change yet)
 - [ ] Add a standalone `ReplicationSource` for the **existing** `home-assistant-matter-hub-data`

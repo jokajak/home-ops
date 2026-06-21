@@ -33,4 +33,5 @@ the tree from there. See each namespace's own `README.md` for the apps it contai
 | [storage](./storage/README.md) | Object storage (MinIO). |
 | [system](./system/README.md) | Cluster-wide utilities and add-ons. |
 | [system-upgrade](./system-upgrade/README.md) | Automated node OS upgrades. |
+| [volsync-system](./volsync-system/README.md) | PVC backup/restore (VolSync + restic to MinIO). |
 | [vpn](./vpn/README.md) | VPN egress gateway and DNS. |
