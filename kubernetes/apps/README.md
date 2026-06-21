@@ -32,7 +32,7 @@ the tree from there. See each namespace's own `README.md` for the apps it contai
 | [observability](./observability/README.md) | Metrics, logs, dashboards, monitoring. |
 | [openebs-system](./openebs-system/README.md) | Local node-disk persistent storage. |
 | [productivity](./productivity/README.md) | Personal productivity and utilities. |
-| [security](./security/README.md) | Authentication and SSO (Authentik). |
+| [security](./security/README.md) | Authentication, SSO (Authentik), and secrets management (OpenBao). |
 | [storage](./storage/README.md) | Object storage (MinIO). |
 | [system](./system/README.md) | Cluster-wide utilities and add-ons. |
 | [system-upgrade](./system-upgrade/README.md) | Automated node OS upgrades. |
