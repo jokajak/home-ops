@@ -5,11 +5,11 @@ metadata:
   name: cluster-apps-ha-matter-hub
   namespace: flux-system
 spec:
-  targetNamespace: default
+  targetNamespace: home-automation
   components:
     - ../../../../components/volsync
   interval: 10m
-  path: "./kubernetes/apps/default/home-assistant-matter-hub/app"
+  path: "./kubernetes/apps/home-automation/home-assistant-matter-hub/app"
   prune: true
   sourceRef:
     kind: GitRepository
