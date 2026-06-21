@@ -1,6 +1,8 @@
 # VolSync backups (restic → MinIO)
 
-> Status: **PLAN — awaiting review** · 2026-06-21 · Owner: Josh · Author: Luma (Claude)
+> Status: **IN PROGRESS** — Phases A+B done (operator live, backup+restore verified on
+> matter-hub); Phase C (migrate via restore) + D (roll out) remain · 2026-06-21 · Owner: Josh ·
+> Author: Luma (Claude)
 >
 > Closes a long-standing gap: the `storage/README` claims "restic/volsync backups" but
 > VolSync was never deployed. Pattern adapted from the onedr0p/home-operations Flux
@@ -105,12 +107,16 @@ spec:
 - [x] Deploy operator: `apps/volsync-system/` (backube HelmRepository + HelmRelease) — built
 - [x] Add `components/volsync/` (restic/Direct/S3, adapted) — built
 
-### Phase B — Verify on matter-hub (no app change yet)
-- [ ] Add a standalone `ReplicationSource` for the **existing** `home-assistant-matter-hub-data`
-      PVC in `default`; trigger a manual sync
-- [ ] **Verify backup:** restic snapshot present in `s3://volsync/...` (check via mc / restic
-      snapshots), `ReplicationSource.status.lastManualSync` set
-- [ ] **Verify restore:** `ReplicationDestination` → scratch PVC → mount + confirm `/data` content
+### Phase B — Verify on matter-hub ✅ DONE 2026-06-21
+- [x] Enrolled matter-hub via the component (`VOLSYNC_CLAIM=home-assistant-matter-hub-data`);
+      ExternalSecret `SecretSynced`, ReplicationSource created
+- [x] **Backup verified:** mover `Successful` — `snapshot 575fd214 saved` to
+      `s3://backups/volsync/home-assistant-matter-hub` (3 files, 17.3 KiB); hourly schedule active
+- [x] **Restore verified:** ad-hoc `ReplicationDestination` restored snapshot `575fd214` into a
+      scratch PVC; contents **byte-identical** to live `/data` (same 3 files + sizes). Scratch
+      resources cleaned up.
+
+> Operator deployed + verified healthy on-cluster (volsync `0.16.0`, pod 1/1, CRDs present).
 
 ### Phase C — Migrate matter-hub via restore (replaces the PV rebind)
 - [ ] Move matter-hub to `home-automation` with the volsync component; bootstrap PVC restores
