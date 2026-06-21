@@ -125,15 +125,24 @@ databases. **Do not centralize per-app CNPG into `database`.** (Phase 0 document
       NOT delete it; once empty, `kubectl delete namespace network`.
 - [ ] Update READMEs (`apps/README.md` table, both network READMEs)
 
-### Phase 2 — Evict stateless/low-state apps from `default`
+### Phase 2 — Evict apps from `default` into themed namespaces
 
-Order: **home-assistant-matter-hub first (emptyDir canary)**, then calibre, wallos, mealie.
+First batch ✅ DONE 2026-06-21 (data moved via the new VolSync mechanism, see
+[volsync plan](./2026-06-21-volsync-backups.md)):
+- [x] Create target namespaces `home-automation`, `media`, `productivity`
+- [x] **home-assistant-matter-hub → `home-automation`** — VolSync backup→restore (Matter data preserved)
+- [x] **calibre → `media`** — VolSync backup→restore (138 MiB library preserved)
+- [x] **mealie → `productivity`** — static Retain NFS PV rebound (cleared stale claimRef)
+- [x] **wallos → `productivity`** — fresh start (data intentionally dropped)
+- [x] Orphaned old `default` PVCs + the redundant Retain PV cleaned up; all four `Ready`/Running
 
-- [ ] Create target namespaces (`home-automation`, `media`, `productivity`) + `namespace.yaml`
-- [ ] Per app: confirm PV `Retain`, move manifests, re-encrypt any SOPS, re-pin `namespace:`,
-      verify PVC re-binds to the existing PV, then prune old
-- [ ] home-assistant-matter-hub (no PV — pure canary to prove the namespace wiring)
-- [ ] calibre · wallos · mealie · jellyfin · esphome · unifi
+> Method that worked for the `Delete`-policy nfs-csi apps (matter-hub, calibre): enroll in VolSync
+> → back up → move namespace → quiesce app (suspend HR + scale 0) → `ReplicationDestination`
+> with `destinationPVC` + **`restoreAsOf=<pre-migration cutoff>`** (so the empty post-move backup
+> can't be restored by mistake) → scale up + resume. No PV rebind needed — data lives in restic.
+
+Remaining (stateful, not yet moved):
+- [ ] jellyfin → `media` · esphome → `home-automation` · unifi (→ `home-automation` or own ns)
 
 ### Phase 3 — Evict the CNPG apps (highest risk, last)
 
@@ -179,3 +188,8 @@ the old namespace until the new one is verified healthy.
   (b) Duplicate multus DaemonSet: old `network/multus` (not pruned by the targetNamespace move)
   + new `network-system/multus`. **Do `kubectl delete ns network` only after** the VPN/HA
   consumers re-roll onto the `network-system` NADs (currently gated by the bitwarden issue).
+- **2026-06-21** — Phase 2 first batch done. Moved matter-hub→home-automation,
+  calibre→media, mealie+wallos→productivity. matter-hub + calibre data preserved via VolSync
+  backup→restore (restoreAsOf the pre-migration cutoff); mealie Retain PV rebound; wallos fresh.
+  All four Ready/Running, data verified, old default PVCs/PV cleaned up. jellyfin/esphome/unifi
+  still in default; immich/home-assistant (CNPG) remain Phase 3.
