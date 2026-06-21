@@ -3,7 +3,7 @@
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: claude
+  name: npe-llm
   namespace: security
 ---
 # Broad read-only view of cluster state. Intentionally excludes Secret values.
@@ -187,5 +187,5 @@ roleRef:
   name: npe.llm-readonly
 subjects:
   - kind: ServiceAccount
-    name: claude
+    name: npe-llm
     namespace: security

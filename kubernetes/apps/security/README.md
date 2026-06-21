@@ -44,7 +44,7 @@ kubectl exec -n security openbao-0 -- bao login <root-token>
 kubectl exec -n security openbao-0 -- bao secrets enable kubernetes
 
 kubectl exec -n security openbao-0 -- bao write kubernetes/roles/claude \
-  service_account_name=claude \
+  service_account_name=npe-llm \
   service_account_namespace=security \
   token_ttl=24h \
   token_max_ttl=48h
@@ -61,5 +61,5 @@ bao write kubernetes/creds/claude
 | Recovery keys (5 shares) | Bitwarden — store manually after `bao operator init` |
 | Root token | Bitwarden — store manually after `bao operator init`; revoke after setup |
 
-The `claude` ServiceAccount and `npe.llm-readonly` ClusterRole/ClusterRoleBinding are
+The `npe-llm` ServiceAccount and `npe.llm-readonly` ClusterRole/ClusterRoleBinding are
 reconciled by Flux from [`openbao/app/rbac.yaml`](./openbao/app/rbac.yaml).

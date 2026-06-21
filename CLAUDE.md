@@ -40,16 +40,16 @@ The pieces:
 
 ## Cluster read-only access for Claude
 
-A `npe.llm-readonly` ClusterRole and `claude` ServiceAccount (namespace: `security`) are defined
+A `npe.llm-readonly` ClusterRole and `npe-llm` ServiceAccount (namespace: `security`) are defined
 in `kubernetes/apps/security/openbao/app/rbac.yaml` and reconciled by Flux. They cover all
 meaningful cluster resources — Flux, Helm, cert-manager, ESO, CNPG, Cilium, VolSync, Dragonfly,
 Prometheus Operator — with `get`/`list`/`watch` only. Secrets are intentionally excluded.
 
-OpenBao mints short-lived tokens against the `claude` SA via its Kubernetes secrets engine.
+OpenBao mints short-lived tokens against the `npe-llm` SA via its Kubernetes secrets engine.
 The owner can get a session token with:
 
 ```sh
-bao write kubernetes/creds/claude
+bao write kubernetes/creds/npe-llm
 ```
 
 The unseal key lives in Bitwarden (`openbao credentials / unseal_key`), managed by
