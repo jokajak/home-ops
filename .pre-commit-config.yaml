@@ -9,3 +9,11 @@ repos:
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: check-json
+  - repo: local
+    hooks:
+      - id: flux-ks-paths
+        name: Validate Flux Kustomization spec.path references
+        entry: scripts/validate-ks-paths.sh
+        language: script
+        pass_filenames: false
+        files: ^kubernetes/.*\.yaml$
