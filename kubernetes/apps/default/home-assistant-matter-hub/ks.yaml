@@ -6,6 +6,8 @@ metadata:
   namespace: flux-system
 spec:
   targetNamespace: default
+  components:
+    - ../../../../components/volsync
   interval: 10m
   path: "./kubernetes/apps/default/home-assistant-matter-hub/app"
   prune: true
@@ -17,6 +19,9 @@ spec:
     substitute:
       APP: home-assistant-matter-hub
       GATUS_SUBDOMAIN: matterhub
+      VOLSYNC_CLAIM: home-assistant-matter-hub-data
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_STORAGECLASS: nfs-csi
     substituteFrom:
       - kind: Secret
         name: cluster-secrets

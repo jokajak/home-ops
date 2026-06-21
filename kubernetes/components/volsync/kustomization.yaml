@@ -13,7 +13,10 @@ kind: Component
 #         VOLSYNC_CLAIM: <pvc-name>     # defaults to ${APP}
 #         VOLSYNC_CAPACITY: 1Gi
 #         VOLSYNC_STORAGECLASS: nfs-csi
+# Backup-only by design: a ReplicationDestination with `trigger.manual` fires a restore the
+# moment it's created (Direct copyMethod can't use the dataSourceRef volume-populator that
+# nfs-csi lacks). So restore is an explicit, ad-hoc step — apply replicationdestination.yaml
+# manually when migrating/recovering (see docs/plans/2026-06-21-volsync-backups.md), not here.
 resources:
   - ./externalsecret.yaml
   - ./replicationsource.yaml
-  - ./replicationdestination.yaml

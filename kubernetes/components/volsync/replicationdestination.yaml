@@ -1,4 +1,8 @@
 ---
+# AD-HOC RESTORE TEMPLATE — not part of the volsync Component (see kustomization.yaml).
+# Apply manually to restore ${APP}'s latest restic snapshot into a new PVC named
+# "${APP}-dst" (then point the app at it / copy the data). Needs the same ${APP} +
+# ${VOLSYNC_*} substitutions the component uses. Creating it triggers a restore immediately.
 # yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/volsync.backube/replicationdestination_v1alpha1.json
 apiVersion: volsync.backube/v1alpha1
 kind: ReplicationDestination
