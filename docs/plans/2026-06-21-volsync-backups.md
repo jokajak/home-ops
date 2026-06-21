@@ -123,9 +123,14 @@ spec:
       from backup; confirm Matter bridge data intact
 - [ ] Retire the interim `Retain` PV + old `default` PVC
 
-### Phase D — Roll out
-- [ ] Opt in the other PVC apps worth protecting (unifi, zwave, esphome, jellyfin config, HA
-      config, calibre/wallos if kept, …) by adding the component to each `ks.yaml`
+### Phase D — Roll out — ✅ first wave done 2026-06-21
+- [x] Enrolled: home-assistant (568), jellyfin (568, jellyfin-config), mealie (65534),
+      unifi (root), zwave-js-ui (root), esphome (root), wallos (root) — plus matter-hub + calibre
+      already. All verified backing up real data (HA 4.7 GiB, jellyfin 1.2 GiB, unifi 1.1 GiB, …).
+- [x] Root-owned-data apps (unifi/zwave/esphome/wallos) need `VOLSYNC_PUID/PGID: "0"` **and** the
+      `volsync.backube/privileged-movers: "true"` annotation on their namespace (added to `default`
+      + `productivity`). Set `VOLSYNC_PUID/PGID` to match each app's data ownership.
+- Not backed up by design: immich photos (2TB on `Retain` NFS) and CNPG DBs (Barman).
 
 ## Decisions (resolved 2026-06-21)
 
