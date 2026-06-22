@@ -40,11 +40,11 @@ spec:
             env:
               TZ: ${TIMEZONE:=US}
               OIDC_PROVIDER_LABEL: Authentik
-              OIDC_AUTH_URL: https://auth.${SECRET_DOMAIN}/application/o/authorize/
-              OIDC_TOKEN_URL: https://auth.${SECRET_DOMAIN}/application/o/token/
-              OIDC_USER_URL: https://auth.${SECRET_DOMAIN}/application/o/userinfo/
-              OIDC_END_SESSION_URL: https://auth.${SECRET_DOMAIN}/application/o/wallos-provider/end-session/
-              OIDC_REDIRECT_URI: https://subs.${SECRET_DOMAIN}/api/oidc/callback
+              OIDC_AUTH_URL: https://auth.${SECRET_DOMAIN:=internal}/application/o/authorize/
+              OIDC_TOKEN_URL: https://auth.${SECRET_DOMAIN:=internal}/application/o/token/
+              OIDC_USER_URL: https://auth.${SECRET_DOMAIN:=internal}/application/o/userinfo/
+              OIDC_END_SESSION_URL: https://auth.${SECRET_DOMAIN:=internal}/application/o/wallos-provider/end-session/
+              OIDC_REDIRECT_URI: https://subs.${SECRET_DOMAIN:=internal}/api/oidc/callback
               OIDC_SCOPES: openid profile email
             envFrom:
               - secretRef:
