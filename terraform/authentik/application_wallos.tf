@@ -30,7 +30,7 @@ resource "authentik_provider_oauth2" "wallos_oauth" {
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://subs.${var.domain}/api/oidc/callback"
+      url               = "https://subs.${var.domain}/index.php"
     }
   ]
 
