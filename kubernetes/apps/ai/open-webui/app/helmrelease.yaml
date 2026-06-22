@@ -40,6 +40,8 @@ spec:
               OPENID_PROVIDER_URL: "https://auth.${SECRET_DOMAIN:=example.com}/application/o/open-webui/.well-known/openid-configuration"
               OAUTH_SCOPES: "openid email profile"
               OPENID_REDIRECT_URI: "https://chat.${SECRET_DOMAIN:=example.com}/oauth/oidc/callback"
+              # Disable local sentence-transformers download; RAG not in use
+              RAG_EMBEDDING_ENGINE: "openai"
               # WebSocket support (shared Dragonfly Redis)
               ENABLE_WEBSOCKET_SUPPORT: "true"
               WEBSOCKET_MANAGER: redis
