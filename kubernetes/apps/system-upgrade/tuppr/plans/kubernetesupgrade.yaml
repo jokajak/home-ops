@@ -20,6 +20,6 @@ spec:
       pullPolicy: IfNotPresent
   maintenance:
     windows:
-      - start: "0 8 * * 0"
+      - start: "0 2 * * 0"
         duration: "4h"
-        timezone: "UTC"
+        timezone: "America/New_York"
