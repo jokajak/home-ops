@@ -6,7 +6,7 @@ metadata:
 spec:
   talos:
     # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-    version: v1.13.4
+    version: v1.13.5
   # Image is resolved per-node by version-swapping each node's running install image, so every
   # node keeps its own schematic (control-plane has intel-ucode, workers don't, the rpi4 keeps
   # its board overlay) without hard-coding a schematic id here.
