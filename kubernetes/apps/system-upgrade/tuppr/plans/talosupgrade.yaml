@@ -1,0 +1,40 @@
+---
+apiVersion: tuppr.home-operations.com/v1alpha1
+kind: TalosUpgrade
+metadata:
+  name: cluster
+spec:
+  talos:
+    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
+    version: v1.13.4
+  # Image is resolved per-node by version-swapping each node's running install image, so every
+  # node keeps its own schematic (control-plane has intel-ucode, workers don't, the rpi4 keeps
+  # its board overlay) without hard-coding a schematic id here.
+  policy:
+    rebootMode: default
+    placement: hard
+    timeout: 30m
+  healthChecks:
+    - apiVersion: v1
+      kind: Node
+      expr: status.conditions.exists(c, c.type == "Ready" && c.status == "True")
+  talosctl:
+    image:
+      repository: ghcr.io/siderolabs/talosctl
+      # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
+      tag: v1.13.4
+      pullPolicy: IfNotPresent
+  maintenance:
+    windows:
+      - start: "0 8 * * 0"
+        duration: "4h"
+        timezone: "UTC"
+  # Match every node so nothing is pinned out of upgrade scope.
+  nodeSelector:
+    matchExpressions:
+      - key: kubernetes.io/os
+        operator: In
+        values: ["linux"]
+  parallelism: 1
+  drain:
+    enabled: true

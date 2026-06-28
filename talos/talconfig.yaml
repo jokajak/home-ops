@@ -74,7 +74,8 @@ nodes:
     ipAddress: 192.168.116.43
     installDisk: /dev/sda
     # ee21ef4a5ef808a9b7484cc0dda0f25075021691c8c09a276591eedb638ea1f9 from https://www.talos.dev/v1.8/talos-guides/install/single-board-computers/rpi_generic/
-    talosImageURL: factory.talos.dev/installer/11452416ac95f8db43dc7100fcba351d8378d9bd95feeb1d3dc5fc0100c958cd:v1.8.4
+    # renovate: datasource=docker depName=ghcr.io/siderolabs/installer extractVersion=^(?<version>.*)$
+    talosImageURL: factory.talos.dev/installer/11452416ac95f8db43dc7100fcba351d8378d9bd95feeb1d3dc5fc0100c958cd:v1.13.4
     controlPlane: false
     networkInterfaces:
       - deviceSelector:
