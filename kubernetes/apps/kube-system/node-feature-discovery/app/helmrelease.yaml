@@ -31,8 +31,9 @@ spec:
     worker:
       config:
         core:
-          # "system" is required so NFD emits feature.node.kubernetes.io/system-os_release.{ID,VERSION_ID};
-          # the system-upgrade-controller Plans select nodes on those labels (Talos/k8s auto-upgrades).
+          # "system" makes NFD emit feature.node.kubernetes.io/system-os_release.{ID,VERSION_ID}.
+          # No longer required by the upgrade tooling (tuppr reads Talos runtime state directly,
+          # not NFD labels); kept for general node introspection.
           labelSources: ["custom", "pci", "usb", "system"]
         sources:
           usb:

@@ -3,16 +3,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app system-upgrade-controller
+  name: &app tuppr
   namespace: flux-system
 spec:
   targetNamespace: system-upgrade
   commonMetadata:
     labels:
       app.kubernetes.io/name: *app
-  dependsOn:
-    - name: cluster-apps-node-feature-discovery-rules
-  path: ./kubernetes/apps/system-upgrade/system-upgrade-controller/app
+  path: ./kubernetes/apps/system-upgrade/tuppr/app
   prune: true
   sourceRef:
     kind: GitRepository
@@ -26,7 +24,7 @@ spec:
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: &app system-upgrade-controller-plans
+  name: &app tuppr-plans
   namespace: flux-system
 spec:
   targetNamespace: system-upgrade
@@ -34,8 +32,8 @@ spec:
     labels:
       app.kubernetes.io/name: *app
   dependsOn:
-    - name: system-upgrade-controller
-  path: ./kubernetes/apps/system-upgrade/system-upgrade-controller/plans
+    - name: tuppr
+  path: ./kubernetes/apps/system-upgrade/tuppr/plans
   prune: true
   sourceRef:
     kind: GitRepository
@@ -44,13 +42,3 @@ spec:
   interval: 30m
   retryInterval: 1m
   timeout: 5m
-  postBuild:
-    substitute:
-      # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-      # Talos OS upgrades may skip minors, so go straight to latest. One node was already
-      # on 1.13.4; keeping the fleet consistent here avoids a control-plane downgrade and a
-      # talosctl-vs-node compatibility failure in the kubernetes Plan's upgrade-k8s job.
-      TALOS_VERSION: v1.13.4
-      # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-      # k8s control-plane CANNOT skip a minor — step from running 1.34.1 to 1.35.x only.
-      KUBERNETES_VERSION: v1.35.6

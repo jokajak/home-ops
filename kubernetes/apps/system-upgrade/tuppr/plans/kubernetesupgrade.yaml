@@ -1,0 +1,25 @@
+---
+apiVersion: tuppr.home-operations.com/v1alpha1
+kind: KubernetesUpgrade
+metadata:
+  name: kubernetes
+spec:
+  kubernetes:
+    # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+    version: v1.35.6
+  healthChecks:
+    - apiVersion: v1
+      kind: Node
+      expr: status.conditions.exists(c, c.type == "Ready" && c.status == "True")
+      timeout: 10m
+  talosctl:
+    image:
+      repository: ghcr.io/siderolabs/talosctl
+      # renovate: datasource=docker depName=ghcr.io/siderolabs/talosctl
+      tag: v1.13.4
+      pullPolicy: IfNotPresent
+  maintenance:
+    windows:
+      - start: "0 8 * * 0"
+        duration: "4h"
+        timezone: "UTC"
