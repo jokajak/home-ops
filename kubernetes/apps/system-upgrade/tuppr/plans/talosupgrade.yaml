@@ -14,6 +14,8 @@ spec:
     rebootMode: default
     placement: hard
     timeout: 30m
+    # Drain nodes before upgrade (the deprecated spec.drain block is replaced by this).
+    nodrain: false
   healthChecks:
     - apiVersion: v1
       kind: Node
@@ -36,5 +38,3 @@ spec:
         operator: In
         values: ["linux"]
   parallelism: 1
-  drain:
-    enabled: true
