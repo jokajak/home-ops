@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-paperless
+  namespace: productivity
+  labels:
+    app.kubernetes.io/name: &name paperless
+    app.kubernetes.io/instance: *name
+spec:
+  storageClassName: nfs-paperless
+  capacity:
+    storage: 500Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_PATH:=/data}/paperless"
+  mountOptions:
+    - nfsvers=4.1
+    - tcp
+    - hard
+    - noatime
+    - nodiratime
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: paperless
+  namespace: productivity
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: nfs-paperless
