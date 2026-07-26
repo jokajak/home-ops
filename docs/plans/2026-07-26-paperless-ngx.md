@@ -162,7 +162,7 @@ celery worker and scheduler under s6, so no separate worker Deployment is needed
   strategy: Recreate      # single writer against NFS and the Tantivy index
   image:
     repository: ghcr.io/paperless-ngx/paperless-ngx
-    tag: v3.0.3
+    tag: 3.0.3   # ghcr tags drop the GitHub release's "v" prefix
 ```
 
 The settings worth calling out:
