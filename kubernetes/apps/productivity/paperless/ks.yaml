@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-paperless
+  namespace: flux-system
+spec:
+  targetNamespace: productivity
+  interval: 10m
+  path: "./kubernetes/apps/productivity/paperless/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  components:
+    - ../../../../components/volsync
+  postBuild:
+    substitute:
+      APP: paperless
+      # the image starts as root and drops to the `paperless` user (USERMAP_*),
+      # so the restic mover reads the NFS tree as that same uid/gid
+      VOLSYNC_PUID: "1000"
+      VOLSYNC_PGID: "1000"
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-cloudnative-pg
+    - name: cluster-apps-cnpg-barman-plugin
+    - name: dragonfly-cluster
+    - name: cluster-apps-csi-driver-nfs

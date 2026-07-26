@@ -67,3 +67,11 @@ resource "authentik_policy_binding" "admins_grafana" {
   group  = authentik_group.admins.id
   order  = 30
 }
+
+## Access only — paperless-ngx has no group-driven admin role, so its superuser is the
+## local account bootstrapped from PAPERLESS_ADMIN_USER, not this group.
+resource "authentik_policy_binding" "admins_paperless" {
+  target = authentik_application.paperless_application.uuid
+  group  = authentik_group.admins.id
+  order  = 30
+}

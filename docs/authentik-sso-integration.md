@@ -89,6 +89,7 @@ Mirror `application_grafana.tf`:
 |-----|--------|-------------------|----------------------|
 | **Grafana** | policy bindings (incl. `admins`, `readers`) | Helm `grafana.ini` `auth.generic_oauth.role_attribute_path` on the `groups` claim | **Yes** — `admins` → Admin, `readers` → Viewer. Both groups now exist and are bound to the app. |
 | **Immich** | policy binding (`users`) | **Internal to Immich** — admin is the first user / set in Immich; Immich does **not** map admin from OIDC group claims | No (cannot, today) |
+| **Paperless** | policy bindings (`users`, `admins`) | **Internal to Paperless** — superuser is the local account bootstrapped from `PAPERLESS_ADMIN_USER`. Paperless can sync *groups* from the `groups` claim (`PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS`) but "superuser" is not a group, so it cannot be granted by claim | No — `admins` gets access only |
 
 > When onboarding a new app, add a row here: how it grants access, how it decides admin, and
 > whether the `admins` group reaches its admin role. If an app can't map admin from a claim
@@ -113,3 +114,4 @@ Mirror `application_grafana.tf`:
 |-----|---------------|-------------|-------|
 | Grafana | ✅ wired (`application_grafana.tf` + Helm `generic_oauth`) | ⏳ `admins` group now bound + role_attribute_path matches `admins` | First target; verify after `site_admin.tf` apply |
 | Immich | ✅ wired (authn) | ❌ admin not via Authentik (internal) | Access via `users` group only |
+| Paperless | ✅ wired (`application_paperless.tf` + django-allauth `openid_connect`) | ❌ superuser not via Authentik (local account) | Provider config is a single JSON blob assembled in the `paperless-oidc` ExternalSecret; callback is `/accounts/oidc/authentik/login/callback/` |

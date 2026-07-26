@@ -279,6 +279,47 @@ resource "bitwarden_item_login" "immich" {
 }
 
 ################################################################################
+# paperless-ngx credentials
+################################################################################
+# Bootstraps the local paperless superuser (the fallback login when Authentik is
+# unavailable) and Django's SECRET_KEY. Postgres credentials are NOT here — the
+# CNPG cluster mints its own `paperless-database-app` secret in the cluster.
+resource "random_password" "paperless_admin_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "random_password" "paperless_secret_key" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "paperless" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "paperless credentials"
+  username = "admin"
+  password = random_password.paperless_admin_password.result
+
+  uri {
+    value = "https://paperless.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "secret_key"
+    hidden = random_password.paperless_secret_key.result
+  }
+}
+
+################################################################################
 # volsync restic repository password
 ################################################################################
 # Encryption password for the VolSync/restic backup repositories in MinIO. The
