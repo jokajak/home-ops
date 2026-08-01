@@ -17,6 +17,21 @@
     'prIgnoreNotification',
   ],
   rebaseWhen: 'conflicted',
+  // Cooldown: a release must be at least 2 days old before it is allowed to merge, so a
+  // just-published broken or compromised version cannot land unattended. Renovate puts a pending
+  // `renovate/stability-days` check on the branch and flips it to passing once the 2 days elapse;
+  // because every automerge rule sets `ignoreTests: false`, that check gates the merge.
+  minimumReleaseAge: '2 days',
+  // Raise the PR immediately anyway, carrying the pending check, so the cooldown is a visible
+  // waiting ticket. The default `strict` suppresses the PR entirely until the release is stable,
+  // which combined with the Saturday-only `schedule` below would push a Friday release out by a
+  // further week rather than merging it on the Sunday.
+  internalChecksFilter: 'none',
+  // Treat a release with no timestamp as stable. The default `timestamp-required` leaves such
+  // updates pending forever, silently putting those packages back on manual approval.
+  minimumReleaseAgeBehaviour: 'timestamp-optional',
+  // Branch creation follows `schedule`; automerge follows `automergeSchedule` (default "at any
+  // time"), so the weekly window does not quantise the cooldown above.
   schedule: [
     'on saturday',
   ],
