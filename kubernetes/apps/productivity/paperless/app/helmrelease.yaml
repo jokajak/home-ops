@@ -40,7 +40,7 @@ spec:
             image:
               repository: ghcr.io/paperless-ngx/paperless-ngx
               # NOTE: ghcr image tags have no "v" prefix, unlike the GitHub release tag
-              tag: 3.0.4
+              tag: 3.0.5
             env:
               PAPERLESS_URL: https://paperless.${SECRET_DOMAIN:=internal}
               PAPERLESS_TIME_ZONE: "${TIMEZONE:=America/New_York}"
