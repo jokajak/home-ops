@@ -100,10 +100,16 @@ spec:
       usb:
         enabled: true
         type: hostPath
-        hostPath: /dev/serial/by-id/usb-Silicon_Labs_Zooz_ZST10 700_Z-Wave_Stick_3038cec081e9eb118feea08787c335f3-if00-port0
+        # The gap before "700" is a non-breaking space (U+00A0), not a plain space. udev
+        # rewrites ASCII spaces to "_" when building by-id names -- which is why every other
+        # gap in this string is an underscore -- but preserves valid multi-byte UTF-8 from the
+        # USB product descriptor. Written as the \u00A0 escape so it is visible in diffs and
+        # survives whitespace normalisation. Do NOT replace it with a plain space: the
+        # CharDevice mount will fail. Anchored so both copies cannot drift.
+        hostPath: &usbDevice "/dev/serial/by-id/usb-Silicon_Labs_Zooz_ZST10\u00A0700_Z-Wave_Stick_3038cec081e9eb118feea08787c335f3-if00-port0"
         hostPathType: CharDevice
         globalMounts:
-          - path: /dev/serial/by-id/usb-Silicon_Labs_Zooz_ZST10 700_Z-Wave_Stick_3038cec081e9eb118feea08787c335f3-if00-port0
+          - path: *usbDevice
       config:
         enabled: true
         type: persistentVolumeClaim
