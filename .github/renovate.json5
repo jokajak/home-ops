@@ -6,7 +6,9 @@
     ':disableRateLimiting',
     ':dependencyDashboard',
     ':semanticCommits',
-    ':automergeBranch',
+    // PR automerge, not branch: every validation workflow triggers on `pull_request` only, so a
+    // bare renovate/* branch never gets checks and branch-automerge can never observe green.
+    ':automergePr',
   ],
   dependencyDashboard: true,
   dependencyDashboardTitle: 'Renovate Dashboard 🤖',
@@ -56,15 +58,20 @@
   commitMessageSuffix: '',
   packageRules: [
     {
+      // Note: workflow-only PRs are not covered by kubeconform/flux-diff/flux-ks-paths, which are
+      // all path-filtered to kubernetes/**. The effective gate here is the Labeler workflow
+      // (pull_request_target, no path filter). This buys an audit trail and a merge that waits on
+      // whatever checks exist; it is not deep validation of the action bump itself.
       description: [
-        'Auto merge Github Actions',
+        'Auto merge Github Actions once CI passes',
       ],
       matchManagers: [
         'github-actions',
       ],
       automerge: true,
-      automergeType: 'branch',
-      ignoreTests: true,
+      automergeType: 'pr',
+      platformAutomerge: false,
+      ignoreTests: false,
       matchUpdateTypes: [
         'minor',
         'patch',
@@ -72,13 +79,16 @@
       ],
     },
     {
-      description: 'Auto merge container digests',
+      // Digest bumps touch kubernetes/**, so kubeconform, flux-diff and flux-ks-paths all run —
+      // this is a real gate, unlike the github-actions rule above.
+      description: 'Auto merge container digests once CI passes',
       matchDatasources: [
         'docker',
       ],
       automerge: true,
-      automergeType: 'branch',
-      ignoreTests: true,
+      automergeType: 'pr',
+      platformAutomerge: false,
+      ignoreTests: false,
       matchUpdateTypes: [
         'digest',
       ],
