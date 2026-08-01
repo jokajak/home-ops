@@ -15,7 +15,7 @@
   role on this group's **name**; it must also be **policy-bound** to each app for access.
 - **Human users** (`users.tf` + `users.sops.yaml`) — real people, non-superuser, defined as a
   **list** in a **SOPS-encrypted** YAML file committed to git, read via
-  `yamldecode(data.sops_file…​.raw)["users"]`. Username is a field (not a map key), so every
+  `yamldecode(data.sops_file….raw)["users"]`. Username is a field (not a map key), so every
   value — usernames, names, emails — is encrypted/opaque in git. They log in via the GitHub
   source (`email_link` on their GitHub primary email). Edit with
   `sops terraform/authentik/users.sops.yaml`; bootstrap from `users.sops.yaml.example`.

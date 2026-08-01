@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: "Hidden Unicode"
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  hidden-unicode:
+    name: Detect hidden Unicode characters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Detect hidden Unicode characters
+        shell: bash
+        run: bash ./scripts/detect-hidden-unicode.sh
