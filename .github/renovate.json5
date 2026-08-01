@@ -84,13 +84,21 @@
       ],
     },
     {
-      description: 'Auto merge minor updates',
+      // Container images use the "docker" datasource, not "container" — the latter is not a
+      // Renovate datasource at all, so this rule previously matched only Helm charts.
+      //
+      // automergeType must be "pr": every validation workflow triggers on `pull_request` only,
+      // so a bare renovate/* branch never gets checks and branch-automerge can never see green.
+      // platformAutomerge must be false: GitHub native auto-merge needs `allow_auto_merge` on the
+      // repo plus a required check on main, neither of which is set — Renovate merges via API.
+      description: 'Auto merge minor and patch updates once CI passes',
       matchDatasources: [
-        'container',
+        'docker',
         'helm',
       ],
       automerge: true,
-      automergeType: 'branch',
+      automergeType: 'pr',
+      platformAutomerge: false,
       ignoreTests: false,
       matchUpdateTypes: [
         'minor',
