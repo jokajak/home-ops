@@ -35,12 +35,10 @@ if ! printf 'x' | grep -qP 'x' 2>/dev/null; then
 fi
 
 # Deliberate exemptions, as git pathspecs. Keep this list short, and always say why.
-exclusions=(
-    # Carries a U+00A0 inside the Z-Wave stick's udev /dev/serial/by-id name. The correct
-    # character depends on the real device name on the node, and guessing wrong silently
-    # breaks CharDevice passthrough. Verify against the node, fix, then drop this line.
-    ':(exclude)kubernetes/apps/default/zwave-js-ui/app/helmrelease.yaml'
-)
+# Empty by design: a character that genuinely has to exist can usually be written as an
+# escape instead -- see the \u00A0 escape in the zwave-js-ui device path, which keeps the file
+# bytes visible in review while still parsing to the character the node needs.
+exclusions=()
 
 # Detected character groups, as "label|PCRE class". Each entry is a single class (or a
 # two-class sequence) so the combined pattern below can join them with a plain `|`.
