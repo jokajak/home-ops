@@ -19,6 +19,10 @@ spec:
   values:
     controllers:
       vpn-gateway:
+        # Recreate (not RollingUpdate): two gluetun pods must never overlap, since
+        # ip rules are shared pod-wide and a survivor's rules wedge the new pod.
+        strategy: Recreate
+
         annotations:
           secret.reloader.stakater.com/reload: vpn-gateway-credentials
 
@@ -95,7 +99,9 @@ spec:
                   command:
                     - /bin/sh
                     - -c
-                    - ip rule del table 51820 || true
+                    # Pod netns outlives container restarts, so gluetun's ip rules
+                    # survive and it exits with "file exists". Clear v4 AND v6.
+                    - (ip rule del table 51820; ip -6 rule del table 51820) || true
             probes:
               liveness:
                 enabled: true
