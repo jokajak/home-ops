@@ -13,7 +13,13 @@ spec:
     # nfs-csi has no VolumeSnapshotClass; read the source PVC directly.
     copyMethod: Direct
     cacheCapacity: ${VOLSYNC_CACHE_CAPACITY:=2Gi}
-    cacheStorageClassName: ${VOLSYNC_CACHE_STORAGECLASS:=openebs-hostpath}
+    # NOT openebs-hostpath: that class is node-local (WaitForFirstConsumer + node
+    # affinity), while copyMethod Direct pins the mover to whichever node holds the
+    # RWO source PVC. When an app pod reschedules, the mover follows it but the cache
+    # PV cannot, and the mover is unschedulable forever -- silently, since backups
+    # just stop rather than erroring. nfs-csi binds Immediate with no node affinity,
+    # so the cache follows the mover anywhere.
+    cacheStorageClassName: ${VOLSYNC_CACHE_STORAGECLASS:=nfs-csi}
     pruneIntervalDays: 7
     moverSecurityContext:
       runAsUser: ${VOLSYNC_PUID:=1000}
