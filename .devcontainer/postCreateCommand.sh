@@ -11,9 +11,3 @@ fisher install jorgebucaran/autopair.fish
 fisher install nickeb96/puffer-fish
 fisher install PatrickF1/fzf.fish
 "
-
-# Create/update virtual environment
-if ! grep -q "venv /workspaces/" .venv/pyvenv.cfg; then
-    rm -rf .venv
-fi
-task workstation:venv

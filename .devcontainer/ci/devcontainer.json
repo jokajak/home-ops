@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
-  "name": "Flux Cluster Template (CI)",
+  "name": "home-ops (CI)",
   "build": {
     "dockerfile": "./Dockerfile",
     "context": "."
@@ -19,7 +19,6 @@
         "terminal.integrated.defaultProfile.linux": "fish"
       },
       "extensions": [
-        "redhat.ansible",
         "redhat.vscode-yaml"
       ]
     }

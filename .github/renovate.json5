@@ -37,35 +37,22 @@
   ],
   flux: {
     managerFilePatterns: [
-      '/(^|/)ansible/.+\\.ya?ml(\\.j2)?$/',
-      '/(^|/)kubernetes/.+\\.ya?ml(\\.j2)?$/',
+      '/(^|/)kubernetes/.+\\.ya?ml$/',
     ],
   },
   'helm-values': {
     managerFilePatterns: [
-      '/(^|/)ansible/.+\\.ya?ml(\\.j2)?$/',
-      '/(^|/)kubernetes/.+\\.ya?ml(\\.j2)?$/',
+      '/(^|/)kubernetes/.+\\.ya?ml$/',
     ],
   },
   kubernetes: {
     managerFilePatterns: [
-      '/(^|/)ansible/.+\\.ya?ml(\\.j2)?$/',
-      '/(^|/)kubernetes/.+\\.ya?ml(\\.j2)?$/',
+      '/(^|/)kubernetes/.+\\.ya?ml$/',
     ],
   },
   kustomize: {
     managerFilePatterns: [
-      '/(^|/)kustomization\\.ya?ml(\\.j2)?$/',
-    ],
-  },
-  pip_requirements: {
-    managerFilePatterns: [
-      '/(^|/)[\\w-]*requirements(-\\w+)?\\.(txt|pip)(\\.j2)?$/',
-    ],
-  },
-  'ansible-galaxy': {
-    managerFilePatterns: [
-      '/(^|/)(galaxy|requirements)(\\.ansible)?\\.ya?ml(\\.j2)?$/',
+      '/(^|/)kustomization\\.ya?ml$/',
     ],
   },
   commitMessageTopic: '{{depName}}',
@@ -242,38 +229,6 @@
     },
     {
       matchDatasources: [
-        'galaxy',
-        'galaxy-collection',
-      ],
-      matchUpdateTypes: [
-        'major',
-      ],
-      commitMessagePrefix: 'feat(ansible)!: ',
-    },
-    {
-      matchDatasources: [
-        'galaxy',
-        'galaxy-collection',
-      ],
-      matchUpdateTypes: [
-        'minor',
-      ],
-      semanticCommitType: 'feat',
-      semanticCommitScope: 'ansible',
-    },
-    {
-      matchDatasources: [
-        'galaxy',
-        'galaxy-collection',
-      ],
-      matchUpdateTypes: [
-        'patch',
-      ],
-      semanticCommitType: 'fix',
-      semanticCommitScope: 'ansible',
-    },
-    {
-      matchDatasources: [
         'github-releases',
         'github-tags',
       ],
@@ -375,15 +330,6 @@
     },
     {
       matchDatasources: [
-        'galaxy',
-        'galaxy-collection',
-      ],
-      addLabels: [
-        'renovate/ansible',
-      ],
-    },
-    {
-      matchDatasources: [
         'github-releases',
         'github-tags',
       ],
@@ -408,8 +354,7 @@
       ],
       managerFilePatterns: [
         '/(^|/).taskfiles/.+\\.ya?ml$/',
-        '/(^|/)ansible/.+\\.ya?ml(\\.j2)?$/',
-        '/(^|/)kubernetes/.+\\.ya?ml(\\.j2)?$/',
+        '/(^|/)kubernetes/.+\\.ya?ml$/',
       ],
       matchStrings: [
         '(?m:# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+?: "?(?<currentValue>\\S+?)"?$)',
