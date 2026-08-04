@@ -135,7 +135,10 @@ patch files (`talos/all/*.yaml`, `talos/control-plane/*.yaml`), and drives boots
 
 - **Verdict: defer.** `talhelper` works, tuppr already owns Talos/Kubernetes version upgrades
   in-cluster, and the Talos tree here needs consolidation before any tool swap makes sense — see
-  the open issue in [`ISSUES.md`](../ISSUES.md).
+  [`ISSUES.md`](../ISSUES.md) #6, and
+  [`2026-08-04-history-purge-plaintext-topology.md`](./2026-08-04-history-purge-plaintext-topology.md)
+  for the separate (planned, unexecuted) question of what the plaintext Talos config left behind
+  in git history.
 
 ### 7. Namespace names
 
