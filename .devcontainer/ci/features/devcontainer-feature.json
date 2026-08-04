@@ -1,6 +1,6 @@
 {
-  "name": "Flux Cluster Template (Tools)",
-  "id": "cluster-template",
+  "name": "home-ops (Tools)",
+  "id": "home-ops",
   "version": "1.0.0",
   "description": "Install Tools"
 }

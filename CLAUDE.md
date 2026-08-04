@@ -4,8 +4,13 @@ Guidance for Claude (and other AI agents) working in this repository.
 
 ## What this repo is
 
-A GitOps home-ops repo (fork of [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template))
-that declaratively manages a single Kubernetes cluster.
+A GitOps home-ops repo that declaratively manages a single Kubernetes cluster. It was originally
+derived from [onedr0p/cluster-template](https://github.com/onedr0p/cluster-template) but is now
+**fully detached** — the makejinja/`config.yaml` generation machinery has been removed, and
+`kubernetes/` is hand-maintained. Upstream has since been rewritten (mise + just, `cluster.toml`,
+flux-operator, `OCIRepository` chart refs, Envoy Gateway, `flate`); see
+[`docs/plans/2026-08-04-upstream-template-realignment.md`](docs/plans/2026-08-04-upstream-template-realignment.md)
+for the phased map of that delta. Don't reintroduce template scaffolding.
 
 **Guiding principle — everything as code.** The whole system is meant to be reproducible from
 this Git repository: no click-ops, no manual `kubectl apply`, no console-configured infra. State
@@ -113,11 +118,9 @@ ones that mirror CI.
   `flux-local` locally the same way to preview a change before pushing.
 - **Lint** — `yamllint .` (config in `.yamllint.yaml`) and `pre-commit run --all-files`
   (`.pre-commit-config.yaml`: trailing whitespace, EOF, merge-conflict, JSON checks).
-- **Encrypt a SOPS file** — `task sops:encrypt file=<path>` (in-place). Decryption requires the age
-  key, which is not present here — see the secrets section.
-- **Render the cluster-template** — `task configure` regenerates `kubernetes/` and `ansible/` from
-  `config.yaml` via makejinja; only relevant when changing template inputs, and it **overwrites**
-  generated files.
+- **Encrypt a SOPS file** — `task sops:encrypt` re-encrypts any unencrypted `*.sops.*` file under
+  `kubernetes/` and `terraform/`. Decryption requires the age key, which is not present here — see
+  the secrets section.
 
 ## Conventions
 

@@ -11,6 +11,8 @@
 | 3 | Immich automatic DB backups lapsed since Feb 8 | immich | Med | Verify |
 | 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
+| 6 | Talos config exists twice, divergently; root copy is plaintext | talos | Med | Open |
+| 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
 
 ---
 
@@ -63,6 +65,57 @@ beware a stale `KUBECONFIG` env pointing at the repo file.
 The restored Immich DB is from the Feb 8 dump; any assets added 2026-02-08 → 2026-06-14
 aren't in the metadata. Image **files** are safe on NFS. If any were added in that window, a
 library re-scan/re-import can recover them. (Likely none — Immich was broken for most of it.)
+
+## 6. Talos config exists twice, divergently; root copy is plaintext — Med
+
+Found during the 2026-08-04 de-templating pass and deliberately left alone — this needs its own
+focused change. Nothing under `talos/` or `kubernetes/talos/` was touched.
+
+- **Two trees, and the tooling disagrees about which is real.** `talos/talconfig.yaml`
+  (403 lines, 7 nodes) is what `.taskfiles/Talos` operates on via `TALOS_DIR`.
+  `kubernetes/talos/` holds a stale SOPS-encrypted `talconfig.yaml` (266 lines) plus the real
+  `talsecret.sops.yaml`, `cilium/`, `kubelet-csr-approver/`, `talconfig.yaml.norpi`, and seven
+  empty `clusterconfig.YYYYMMDD/` snapshot dirs. `.envrc` points `TALOSCONFIG` at the *second*
+  tree; the taskfiles use the first.
+- **The root copy is unencrypted** and matches no rule in `.sops.yaml`. It carries node
+  addresses, the API VIP, the gateway, VLAN IDs, MAC addresses and an internal hostname — exactly
+  the category `CLAUDE.md` says stays out of the repo.
+- **`.taskfiles/Talos` points at the wrong secret file.** `TALHELPER_SECRET_FILE` is
+  `talos/talhelper.sops.yaml`; the real bundle is `kubernetes/talos/talsecret.sops.yaml`
+  (`talsecret.sops.yaml` is also talhelper's own default name), so `task talos:gensecret` would
+  write a new bundle to the wrong path rather than reuse the existing one.
+- **`kubernetes/talos/talosconfig.20240317.1258` is a committed `os:admin` client certificate**
+  (`ca`/`crt`/`key`). It **expired 2025-03-17**, so there is no live exposure and nothing to
+  rotate — but it shouldn't be in the tree.
+- **Version drift.** `talconfig.yaml` pins Talos v1.13.4 / Kubernetes v1.35.6 while tuppr
+  (`kubernetes/apps/system-upgrade/tuppr/plans/talosupgrade.yaml`) drives the cluster at v1.13.7.
+  Renovate never scanned root `talos/` — its `managerFilePatterns` only ever covered
+  `kubernetes/` (and, until 2026-08-04, `ansible/`) — which is why the drift went unnoticed.
+
+**Next steps:** pick one canonical tree, move `talsecret.sops.yaml` and the `cilium` /
+`kubelet-csr-approver` kustomizations to sit beside it, fix `TALHELPER_SECRET_FILE` and
+`TALOSCONFIG` to agree, add a `.sops.yaml` rule covering the surviving `talconfig.yaml`, then
+`task sops:encrypt` it. Note that deleting files removes them from `HEAD`, not from history —
+scrubbing history is a separate decision.
+
+## 7. Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x — Low (verify)
+
+`.github/workflows/kubeconform.yaml` pins `FLUX_VERSION: "2.8.8"`, and `scripts/kubeconform.sh`
+pipes every kustomization through `flux envsubst --strict`. Observed 2026-08-04:
+
+- flux **2.8.8** → `bash scripts/kubeconform.sh ./kubernetes` exits **0**.
+- flux **2.9.3** → fails at `kubernetes/apps/networking/nginx/certificates/` with
+  `✗ variable not set (strict mode): "SECRET_DOMAIN"`.
+
+`--strict` in 2.9.x appears to error on variables the workflow never supplies (they come from
+`cluster-secrets` at reconcile time, not in CI). Renovate manages `FLUX_VERSION` via the custom
+manager in `renovate.json5`, so a routine bump would turn CI red for a reason unrelated to the
+PR's contents.
+
+**Next steps:** confirm the behaviour change against flux 2.9.x release notes, then either
+supply placeholder values in the workflow, drop `--strict`, or move to `flate` (see
+[the realignment roadmap](./plans/2026-08-04-upstream-template-realignment.md), phase 1) which
+handles substitution itself.
 
 ---
 
