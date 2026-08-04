@@ -13,6 +13,7 @@
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
 | 6 | Talos config exists twice, divergently; root copy is plaintext | talos | Med | Open |
 | 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
+| 8 | Node addresses live at `HEAD` in gatus configmap + 2 design docs | security | Med | Open |
 
 ---
 
@@ -95,8 +96,14 @@ focused change. Nothing under `talos/` or `kubernetes/talos/` was touched.
 **Next steps:** pick one canonical tree, move `talsecret.sops.yaml` and the `cilium` /
 `kubelet-csr-approver` kustomizations to sit beside it, fix `TALHELPER_SECRET_FILE` and
 `TALOSCONFIG` to agree, add a `.sops.yaml` rule covering the surviving `talconfig.yaml`, then
-`task sops:encrypt` it. Note that deleting files removes them from `HEAD`, not from history —
-scrubbing history is a separate decision.
+`task sops:encrypt` it. Note that deleting files removes them from `HEAD`, not from history.
+
+**History:** a full audit of all 1592 commits, plus the procedure to purge, is written up in
+[`plans/2026-08-04-history-purge-plaintext-topology.md`](./plans/2026-08-04-history-purge-plaintext-topology.md).
+It is **planned, not executed**. Two things it establishes that matter here: the encrypted
+`kubernetes/talos/talconfig.yaml` and `talsecret.sops.yaml` were **never** committed in the clear,
+and the same node addresses are still live at `HEAD` in three other files — so fixing those is a
+prerequisite, not a follow-up.
 
 ## 7. Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x — Low (verify)
 
@@ -116,6 +123,25 @@ PR's contents.
 supply placeholder values in the workflow, drop `--strict`, or move to `flate` (see
 [the realignment roadmap](./plans/2026-08-04-upstream-template-realignment.md), phase 1) which
 handles substitution itself.
+
+## 8. Node addresses live at `HEAD` in three files — Med
+
+Surfaced by the 2026-08-04 history audit. Real node addresses (7 occurrences each) are on the
+default branch of a **public** repository:
+
+| File | Note |
+| --- | --- |
+| `kubernetes/apps/observability/gatus/app/nodes-configmap.yaml` | Live manifest — gatus monitors kubelet on `:10250` per node |
+| `docs/plans/2026-02-08-cilium-gateway-api-migration.md` | Prose only |
+| `docs/plans/2026-02-08-distributed-gatus-design.md` | Prose only |
+
+This is the same data as issue #6, and it is **the blocker** on any history purge: rewriting
+history while `main` still publishes these values achieves nothing.
+
+**Next steps:** move the gatus addresses onto a `${SECRET_*}` substitution sourced from
+`cluster-secrets` (populate the variable *before* pushing the manifest, or the Kustomization
+won't reconcile), and redact the two design docs to `<node-N>` placeholders. See step 1 of
+[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md).
 
 ---
 
