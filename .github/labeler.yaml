@@ -15,7 +15,6 @@ area/taskfile:
 area/talos:
   - changed-files:
       - any-glob-to-any-file: talos/**/*
-      - any-glob-to-any-file: kubernetes/talos/**/*
 area/terraform:
   - changed-files:
       - any-glob-to-any-file: terraform/**/*

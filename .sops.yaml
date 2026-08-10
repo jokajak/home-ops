@@ -1,12 +1,21 @@
 ---
 creation_rules:
-  - # encrypt talos config
-    path_regex: kubernetes/talos/.*\.sops\.ya?ml
+  - # topf cluster + node inventory.
+    #
+    # Partial encryption: only the address-bearing values are ciphered, so the
+    # structure (hostnames, roles, versions, schematic refs) stays reviewable in
+    # a diff while no network topology reaches the repo in plaintext.
+    #
+    # topf parses `ip` and `clusterEndpoint` into typed Go values, so both must
+    # be listed here — a partially-encrypted file is decrypted by topf before
+    # parsing, but only when the `sops` binary is on PATH.
+    path_regex: talos/topf\.yaml
+    encrypted_regex: "^(ip|clusterEndpoint|vip|gateway|apiDNS|nodeCIDR|vlanCIDR|nameservers|vlanAddress)$"
     key_groups:
       - age:
           - "age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68"
-  - # encrypt talos helper config
-    path_regex: kubernetes/talos/talconfig.yaml
+  - # Talos secrets bundle (cluster PKI). Encrypted whole.
+    path_regex: talos/secrets\.yaml
     key_groups:
       - age:
           - "age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68"

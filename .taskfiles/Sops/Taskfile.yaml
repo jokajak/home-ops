@@ -27,6 +27,12 @@ tasks:
               [ -d "$dir" ] || continue
               find "$dir" -type f -name "*.sops.*" -exec grep -L "ENC\[AES256_GCM" {} \;
           done
+          # topf requires these exact filenames, so they carry no .sops. infix
+          # and have to be named explicitly.
+          for f in "{{.TALOS_DIR}}/topf.yaml" "{{.TALOS_DIR}}/secrets.yaml"; do
+              [ -f "$f" ] || continue
+              grep -L "ENC\[AES256_GCM" "$f"
+          done
 
   .encrypt-file:
     internal: true

@@ -12,4 +12,4 @@ running install image, so per-node Talos schematics are preserved automatically,
 serializes Talos vs. Kubernetes upgrades itself.
 
 Requires `machine.features.kubernetesTalosAPIAccess` enabled for this namespace in
-`talos/talconfig.yaml`.
+[`talos/control-plane/04-api-access.yaml`](../../../talos/control-plane/04-api-access.yaml).

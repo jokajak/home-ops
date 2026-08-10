@@ -21,7 +21,7 @@ is reconciled by machines, via two complementary engines:
 | `kubernetes/flux/` | The GitOps engine itself — sources, cluster settings/secrets, root `Kustomization`s. |
 | `kubernetes/components/` | Reusable Kustomize components (currently volsync). |
 | `kubernetes/templates/` | Shared manifest templates used across apps (Gatus configs). |
-| `talos/`, `kubernetes/talos/` | Talos machine configuration (talhelper). See [known issues](./docs/ISSUES.md). |
+| [`talos/`](./talos/README.md) | Talos machine configuration, managed with [topf](https://postfinance.github.io/topf/). |
 | [`terraform/`](./terraform) | OpenTofu for out-of-cluster state (Authentik, Bitwarden, MinIO). |
 | [`docs/plans/`](./docs/plans) | Dated design docs. Non-trivial changes get written up here first. |
 | [`docs/ISSUES.md`](./docs/ISSUES.md) | Living list of known issues and follow-ups. |

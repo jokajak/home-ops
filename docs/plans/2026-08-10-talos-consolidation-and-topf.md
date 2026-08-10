@@ -1,12 +1,15 @@
 # Talos: consolidate the two trees by migrating to topf
 
-> Status: **PLANNED — not executed** · 2026-08-10 · Owner: Josh · Author: Claude
+> Status: **STAGED — phases 1–6 committed, `topf apply` outstanding** · 2026-08-10 ·
+> Owner: Josh · Author: Claude
 >
 > Resolves [`ISSUES.md`](../ISSUES.md) **#6** (two divergent Talos trees, root copy in plaintext)
-> and unblocks **#8** (node addresses at `HEAD`), which is itself the prerequisite for
+> and **#8** (node addresses at `HEAD`), which is the prerequisite for
 > [the history purge](./2026-08-04-history-purge-plaintext-topology.md).
 >
-> Nothing here has been applied. No Talos file has been modified.
+> The repository is fully migrated. **No node has been touched** — `topf apply` is the only
+> remaining step and it needs the age key plus node access, so it belongs to the owner. See
+> [Execution record](#execution-record).
 
 ## Context
 
@@ -133,10 +136,11 @@ documented one, before proceeding.
 
 Add `.sops.yaml` rules for `talos/topf.yaml` and `talos/secrets.yaml`, then `task sops:encrypt`.
 
-> The age private key is not available to the agent — **the owner runs the encrypt step.** Confirm
-> `ENC[AES256_GCM` appears in both files before committing. Sequence this so the plaintext
-> `topf.yaml` is never committed unencrypted; if that is awkward, write it outside the repo and
-> `git add` only after encrypting.
+> **Superseded by what actually happened.** SOPS/age encryption is asymmetric, so the *public*
+> key in `.sops.yaml` is sufficient to encrypt and the agent did this step itself; only
+> decryption needs the private key. `topf.yaml` was encrypted before it was ever `git add`ed, so
+> no plaintext address reached a commit. The secrets bundle was moved with `git mv`, which never
+> opens the ciphertext.
 
 ### 4. Cut the tooling over
 
@@ -193,11 +197,98 @@ talhelper tree in git until phase 5, and phase 5 only after a successful `topf a
 
 ## Verification
 
-- [ ] Phase 1 render diff resolved — `topf render` output matches `talhelper genconfig` per node
+Done, in this repository, without the age key:
+
+- [x] Render diff resolved — see [Execution record](#execution-record)
+- [x] Both `topf.yaml` and `secrets.yaml` contain `ENC[AES256_GCM` before commit
+- [x] `task k8s:kubeconform` exits 0 (flux 2.8.8, kustomize 5.8.1, kubeconform 0.8.0 — CI's pins)
+- [x] `git grep` finds no node address or VLAN address anywhere at `HEAD`
+- [x] ISSUES #6 and #8 closed
+
+Left for the owner, because they need the key or the cluster:
+
+- [ ] `sops -d talos/topf.yaml` spot-check
+- [ ] `topf render` against the **real** `secrets.yaml`, diffed against the last
+      `talhelper genconfig` output
 - [ ] `topf nodes` reaches all 7 nodes
-- [ ] `secrets.yaml` is the same bundle — cluster PKI unchanged, `talosctl -n <node> version` works
-- [ ] Both `topf.yaml` and `secrets.yaml` contain `ENC[AES256_GCM` before commit
-- [ ] `task k8s:kubeconform`, `yamllint .`, `pre-commit run --all-files` clean
-- [ ] `git grep` finds no node address, MAC, or internal hostname anywhere at `HEAD`
+- [ ] `topf apply` (controllers last; `--dry-run` and `--nodes-filter` first)
 - [ ] Cluster healthy after apply: `talosctl health`, `kubectl get nodes`, `flux get ks -A`
-- [ ] ISSUES #6 and #8 closed; the purge plan's step 1 marked satisfied
+
+## Execution record
+
+### What proved the translation
+
+`talhelper genconfig` and `topf render` were pointed at the **same throwaway secrets bundle** and
+their per-node output normalised (documents sorted by kind/name, mapping keys sorted, cert
+material redacted) and diffed. Using one bundle for both makes PKI identical by construction, so
+the diff isolates exactly the config translation.
+
+Result: **six of seven nodes byte-identical.** The seventh, `basement-rpi4-chocolate`, differs in
+one line — its installer image path.
+
+| Difference | Why | Verdict |
+| --- | --- | --- |
+| `factory.talos.dev/installer/…` → `…/metal-installer/…` | topf builds the path as `<platform>-installer`; the legacy `installer/` name was hardcoded in `talconfig.yaml`'s `talosImageURL`. The other six nodes already use `metal-installer`. | Intentional. Both paths return HTTP 200 and both are multi-arch indexes carrying arm64, so the Pi is served correctly. `install.image` only takes effect at upgrade time, not on apply. |
+
+Schematic IDs were the part most likely to break silently, and they did not: topf computes them
+locally and produced exactly the IDs already in use —
+`0bf2de4e…` (control-plane), `1841b08a…` (worker), `11452416…` (Pi).
+
+The Pi's schematic is now a declarative file rather than a pinned hash. Querying
+`factory.talos.dev/schematics/11452416…` showed the running schematic contains
+`siderolabs/nut-client` and **omits** `net.ifnames=0` — neither of which matched the old
+`kubernetes/talos/README.md`. `talos/schematic-rpi.yaml` reproduces the true schematic and
+computes back to the same ID, so the node's image is unchanged.
+
+### That the encrypted config actually works
+
+Encrypting `topf.yaml` and hoping is not verification. A **throwaway age key** was generated,
+`topf.yaml` encrypted to it with the same `encrypted_regex` used in `.sops.yaml`, and
+`topf render` run against the encrypted file: output byte-identical to the plaintext render. The
+real file is encrypted to the owner's key only, and is not readable here.
+
+One sharp edge found doing this: topf detects encryption by shelling out to `sops filestatus`,
+and **if `sops` is not on `PATH` it silently treats the file as plaintext**, failing later with
+confusing YAML parse errors. The `task talos:*` recipes now check for `sops` up front.
+
+A second constraint shaped `.sops.yaml`: topf parses `clusterEndpoint` and `nodes[].ip` into
+typed Go values, so those keys must be inside the `encrypted_regex` — with whole-value
+encryption the file decrypts before parsing and both are fine, but they cannot be left out.
+
+### Two things that made this overdue
+
+Reproducing the talhelper baseline required *fixing* `talos/talconfig.yaml` first. It does not
+run as committed:
+
+1. `talosImageURL` carries `:v1.13.4`; talhelper 3.1.16 rejects a version or digest there.
+2. The RFC-6902 `op: remove` patch is rejected outright — *"JSON6902 patches are not supported
+   for multi-document machine configuration"* — which Talos v1.13 always is.
+
+So the root tree was not merely divergent from `kubernetes/talos/`; it was unusable with current
+tooling. Both problems disappear in the topf translation (`$patch: delete`, computed schematics).
+
+### Deviations from the plan as written
+
+- **Phase 3 ordering.** The plan expected the owner to run the encrypt step. Encryption only
+  needs the *public* key, so it was done here; `topf.yaml` was encrypted before it was ever
+  `git add`ed, and no plaintext address is in any commit.
+- **Partial encryption.** `topf.yaml` uses `encrypted_regex` rather than whole-file encryption,
+  so hostnames, roles, versions and structure stay reviewable in a diff while every address is
+  ciphered.
+- **`cluster-secrets-user`, not `cluster-secrets`.** Phase 6 assumed the gatus variables would go
+  into `cluster-secrets`. They went into a new `cluster-secrets-user` Secret instead — already
+  wired as an optional `substituteFrom` in `kubernetes/flux/apps.yaml`, just never created. This
+  is the sanctioned extension slot and needed no access to the existing encrypted secrets.
+- **No `worker/` directory.** Every worker-only patch in `talconfig.yaml` was also present in the
+  control-plane set, so they all collapsed into `all/`. The directory would have been empty.
+- **`talosctl upgrade-k8s`, not `topf upgrade-k8s`.** topf has no such subcommand; its own docs
+  defer to `talosctl` for the version-skew checks.
+- **No AUR package for topf**, so it is absent from the `Archfile`; Homebrew and the
+  `generic-linux` curl installer both carry it.
+
+### Known-good but not exercised here
+
+`topf apply`, `topf nodes`, and anything else that talks to a node were not run — this
+environment has no cluster access and no key. The render-diff is strong evidence about the
+*translation*; it is not evidence that the real PKI renders identically. Do one `topf render`
+against the real `secrets.yaml` and diff it before applying.

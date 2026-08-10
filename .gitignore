@@ -25,10 +25,12 @@ wiki
 /config.yaml
 
 # talos
-kubernetes/talos/talconfig.json
-kubernetes/talos/cilium/values.yaml
-talos/talconfig.json
 talos/cilium/values.yaml
+talos/talosconfig
+talos/output/
+# talhelper-era leftover; still holds a live admin talosconfig on some
+# checkouts. Safe to delete once `task talos:talosconfig` has been run.
+talos/clusterconfig/
 
 # bitwarden
 **/.bitwarden/data.json

@@ -26,7 +26,7 @@ There is no shared shape left to merge. Upstream today is a different program:
 | Secret substitution | `postBuild.substituteFrom` wired per-Kustomization | `components/sops` Kustomize Component + controller-level `--sops-age-secret` |
 | Ingress | ingress-nginx | Envoy Gateway (Gateway API) |
 | CI validation | `kubeconform` + `flux-local` + `flux-ks-paths` | `flate` (single tool) |
-| Talos | `talhelper` + `talconfig.yaml` | `topf` + `topf.yaml` + per-node patch files |
+| Talos | ~~`talhelper` + `talconfig.yaml`~~ → **`topf` (done 2026-08-10)** | `topf` + `topf.yaml` + per-node patch files |
 | Bootstrap | `flux install` + `kubectl apply` | `helmfile` chain (cilium → coredns → spegel → cert-manager → flux-operator → flux-instance) |
 
 Regenerating from the current template would mean porting 56 apps onto a new scaffold and
@@ -126,7 +126,7 @@ resources today).
   Resolve Cilium vs Envoy against that existing doc before any work starts. Whichever wins, the
   migration itself is a per-app `Ingress` → `HTTPRoute` conversion and belongs in its own plan.
 
-### 6. Talos → `topf`
+### 6. Talos → `topf` — **done (staged) 2026-08-10**
 
 Upstream replaced `talhelper` + `talconfig.yaml` with
 [`topf`](https://postfinance.github.io/topf/) + `topf.yaml` + numbered per-node machine-config
@@ -144,6 +144,11 @@ patch files (`talos/all/*.yaml`, `talos/control-plane/*.yaml`), and drives boots
   [`2026-08-10-talos-consolidation-and-topf.md`](./2026-08-10-talos-consolidation-and-topf.md).
   For what the plaintext Talos config left behind in git history, see
   [`2026-08-04-history-purge-plaintext-topology.md`](./2026-08-04-history-purge-plaintext-topology.md).
+- **Status: migrated in the repository; `topf apply` still outstanding.** `talos/` is now a topf
+  tree with an encrypted inventory, `kubernetes/talos/` is deleted, and ISSUES #6 and #8 are
+  closed. Equivalence was proven by rendering both tools against one throwaway secrets bundle —
+  six of seven nodes byte-identical, the seventh differing only in a corrected installer path.
+  The apply needs the age key and node access, so it belongs to the owner.
 
 ### 7. Namespace names
 
@@ -156,8 +161,8 @@ k8s-gateway) and `network-system` (cilium, multus, whereabouts) after the delibe
 
 ## Suggested order
 
-1. **Phase 6 (topf)** — promoted to the front as of 2026-08-10. It is the only phase that closes
-   open security issues (#6, #8), and #8 in turn gates the history purge.
+1. ~~**Phase 6 (topf)**~~ — **done 2026-08-10** (repository migrated; `topf apply` outstanding).
+   It closed issues #6 and #8, which in turn unblocks the history purge.
 2. Phase 1 (CI) — cheap, immediate feedback on everything after it.
 3. Phase 5's *decision* (Cilium vs Envoy) — unblocks planning, costs nothing to settle.
 4. Phase 2 (flux-operator) — its own design doc, its own maintenance window.

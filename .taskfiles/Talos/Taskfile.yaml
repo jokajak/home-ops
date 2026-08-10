@@ -2,66 +2,106 @@
 # yaml-language-server: $schema=https://taskfile.dev/schema.json
 version: "3"
 
+# Talos machine configuration is managed with topf, which reads talos/topf.yaml
+# (SOPS-encrypted) plus the patch tree in talos/{all,control-plane,worker,node}.
+#
+# topf shells out to `sops` to detect and decrypt encrypted inputs. If `sops` is
+# not on PATH it silently treats topf.yaml as plaintext and fails with confusing
+# YAML parse errors, so every recipe here checks for it up front.
+
 vars:
-  TALHELPER_SECRET_FILE: "{{.TALOS_DIR}}/talhelper.sops.yaml"
-  TALHELPER_CONFIG_FILE: "{{.TALOS_DIR}}/talconfig.yaml"
+  TOPF_CONFIG_FILE: "{{.TALOS_DIR}}/topf.yaml"
+  TOPF_SECRETS_FILE: "{{.TALOS_DIR}}/secrets.yaml"
 
 env:
-  TALOSCONFIG: "{{.TALOS_DIR}}/clusterconfig/talosconfig"
+  TALOSCONFIG: "{{.TALOS_DIR}}/talosconfig"
 
 tasks:
-  gensecret:
-    desc: Generate talos secret
-    prompt: This will overwrite the existing secret... continue?
+  nodes:
+    desc: List all nodes and their current state
     dir: "{{.TALOS_DIR}}"
-    cmds:
-      - talhelper gensecret > {{.TALHELPER_SECRET_FILE}}
-      - task: :sops:.encrypt-file
-        vars:
-          file: "{{.TALHELPER_SECRET_FILE}}"
+    cmd: topf nodes {{.CLI_ARGS}}
     preconditions:
-      - {
-          msg: "Missing talhelper config file",
-          sh: "test -f {{.TALHELPER_CONFIG_FILE}}",
-        }
+      - &topf { msg: "Missing topf binary", sh: "command -v topf" }
+      - &sops { msg: "Missing sops binary (topf needs it to decrypt topf.yaml)", sh: "command -v sops" }
+      - &config
+        msg: "Missing topf config file"
+        sh: "test -f {{.TOPF_CONFIG_FILE}}"
 
-  genconfig:
-    desc: Generate talos config
+  render:
+    desc: Render machine configs locally without touching any node
     dir: "{{.TALOS_DIR}}"
-    cmd: talhelper genconfig
-    preconditions:
-      - {
-          msg: "Missing talhelper config file",
-          sh: "test -f {{.TALHELPER_CONFIG_FILE}}",
-        }
+    cmd: topf render --output ./output {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
+
+  diff:
+    desc: Show what an apply would change, without applying it
+    dir: "{{.TALOS_DIR}}"
+    cmd: topf apply --dry-run {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
 
   apply:
-    desc: Apply talos config on a node
+    desc: Apply machine config to every node (use node=<regex> for one)
+    prompt: This will apply machine configuration to live nodes... continue?
     dir: "{{.TALOS_DIR}}"
-    cmd: talhelper gencommand apply --extra-flags=--insecure | bash
-    preconditions:
-      - {
-          msg: "Missing talhelper config file",
-          sh: "test -f {{.TALHELPER_CONFIG_FILE}}",
-        }
+    cmd: topf apply --confirm {{if .node}}--nodes-filter {{.node}}{{end}} {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
 
-  bootstrap:
-    desc: Bootstrap the talos cluster
+  upgrade:
+    desc: Upgrade Talos on every node (use node=<regex> for one)
+    prompt: This will upgrade and reboot Talos nodes... continue?
     dir: "{{.TALOS_DIR}}"
-    cmd: talhelper gencommand bootstrap | bash
+    cmd: topf upgrade --confirm --drain {{if .node}}--nodes-filter {{.node}}{{end}} {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
+
+  upgrade-k8s:
+    desc: Upgrade Kubernetes across the cluster (then bump kubernetesVersion in topf.yaml)
+    prompt: This will upgrade Kubernetes... continue?
+    # topf has no upgrade-k8s of its own; it defers to talosctl, which does the
+    # version-skew and component-readiness checks that `topf apply` skips.
+    cmd: talosctl --nodes {{.node}} upgrade-k8s --to {{.to}}
+    requires:
+      vars: ["node", "to"]
+
+  schematic-ids:
+    desc: Show the resolved image factory schematic ID for each node
+    dir: "{{.TALOS_DIR}}"
+    cmd: topf schematic-ids {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
+
+  talosconfig:
+    desc: Generate talosconfig from the secrets bundle
+    dir: "{{.TALOS_DIR}}"
+    cmd: topf talosconfig
     preconditions:
-      - {
-          msg: "Missing talhelper config file",
-          sh: "test -f {{.TALHELPER_CONFIG_FILE}}",
-        }
+      - *topf
+      - *sops
+      - *config
+      - { msg: "Missing secrets bundle", sh: "test -f {{.TOPF_SECRETS_FILE}}" }
 
   kubeconfig:
-    desc: Generate talos kubeconfig
-    prompt: This will overwrite the existing kubeconfig... continue?
+    desc: Generate a temporary admin kubeconfig
     dir: "{{.TALOS_DIR}}"
-    cmd: talosctl --nodes {{.node}} kubeconfig {{.ROOT_DIR}} --force
-    requires:
-      vars: ["node"]
+    cmd: topf kubeconfig {{.CLI_ARGS}}
+    preconditions: [*topf, *sops, *config]
+
+  gensecret:
+    desc: Generate a Talos secrets bundle (only when one does not already exist)
+    prompt: This creates new cluster PKI. Only ever do this for a brand-new cluster... continue?
+    dir: "{{.TALOS_DIR}}"
+    # `topf secrets` prints the bundle to stdout, and prints the *existing* one
+    # when secrets.yaml is present. Redirecting straight into secrets.yaml would
+    # truncate it before topf could read it, destroying the cluster PKI — hence
+    # the guard and the temp file.
+    cmds:
+      - topf secrets > secrets.yaml.tmp
+      - mv secrets.yaml.tmp {{.TOPF_SECRETS_FILE}}
+      - sops --encrypt --in-place {{.TOPF_SECRETS_FILE}}
+    preconditions:
+      - *topf
+      - *sops
+      - msg: "secrets.yaml already exists — refusing to overwrite the cluster PKI"
+        sh: "test ! -f {{.TOPF_SECRETS_FILE}}"
 
   apply-extras:
     desc: Apply extras
@@ -71,25 +111,3 @@ tasks:
       - kubectl --kubeconfig {{.KUBECONFIG_FILE}} kustomize --enable-helm ./kubelet-csr-approver | kubectl apply --kubeconfig {{.KUBECONFIG_FILE}} --server-side --filename -
     preconditions:
       - { msg: "Missing kubeconfig", sh: "test -f {{.KUBECONFIG_FILE}}" }
-
-  upgrade-talos:
-    desc: Upgrade talos on a node
-    cmd: talosctl --nodes {{.node}} upgrade --image {{.image}} --preserve=true --reboot-mode=default
-    requires:
-      vars: ["node", "image"]
-    preconditions:
-      - {
-          msg: "Node not found",
-          sh: "talosctl --nodes {{.node}} get machineconfig",
-        }
-
-  upgrade-k8s:
-    desc: Upgrade k8s on a node
-    cmd: talosctl --nodes {{.node}} upgrade-k8s --to {{.to}}
-    requires:
-      vars: ["node", "to"]
-    preconditions:
-      - {
-          msg: "Node not found",
-          sh: "talosctl --nodes {{.node}} get machineconfig",
-        }
