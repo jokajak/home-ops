@@ -18,6 +18,7 @@
 | 10 | Live machine configs are Talos v1.9.5-era; repo has not been applied since | talos | **High** | Open |
 | 11 | Fleet runs the empty schematic; repo declares extensions never installed | talos | Med | Open |
 | 12 | `topf apply` migrates networking to multi-doc config in one shot | talos | Med | Open |
+| 13 | `basement-rpi4-chocolate` is offline and was last seen on a DHCP address | talos | **High** | Open |
 
 ---
 
@@ -306,6 +307,37 @@ the VIP the API server is reached through, on **all seven nodes**.
   (control-plane) and `basement-rpi4-chocolate` are `NotReady`, leaving 2 of 3 control-plane
   nodes up. Neither could be reached for config comparison, so they are also the two nodes whose
   drift is *unmeasured*. Restore them before touching networking.
+
+## 13. `basement-rpi4-chocolate` is offline and was last seen on a DHCP address — High
+
+Found 2026-08-10 while verifying that the new `cluster-secrets-user` Secret carries real node
+addresses. Six of seven entries match the live cluster exactly. Chocolate does not.
+
+- The repo (both `topf.yaml` and the new Secret) carries chocolate's **configured static
+  address**, in the same contiguous block as every other node.
+- The node's last-reported `InternalIP` in Kubernetes is a **different address, from the DHCP
+  range** — so the static network config in this repo was not in effect the last time it booted.
+- It is currently unreachable on **both** addresses (`talosctl` times out on port 50000) and its
+  Kubernetes conditions are `Ready=Unknown (NodeStatusUnknown)` — the kubelet has stopped posting
+  status entirely. `NetworkUnavailable=False (CiliumIsUp)` is stale, left over from when it was
+  last healthy.
+
+This is consistent with #10: the running machine configs predate this repo's patches by several
+Talos releases, so it is unsurprising that a node is not on the address the repo assigns it.
+
+**Consequences:**
+
+- `topf apply` targets nodes by the `ip` in `topf.yaml`. For chocolate that address does not
+  currently answer, so it will fail against this node regardless of anything else.
+- The address in the Secret is therefore also what a future gatus node check would probe. If the
+  node is brought back on DHCP rather than its static address, that check would report a false
+  failure. (Moot today — `nodes-configmap.yaml` is still not wired into the gatus
+  `kustomization.yaml`; see #8.)
+
+**Next steps:** get the node physically back up first, then confirm which address it comes up on.
+If it lands on DHCP again, its static config genuinely never applied and `topf apply` against
+that one node — once reachable — is the fix. Do not treat the repo's address as wrong and edit it
+to match the DHCP lease; the static address is the intent.
 
 ---
 
