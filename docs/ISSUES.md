@@ -93,10 +93,16 @@ focused change. Nothing under `talos/` or `kubernetes/talos/` was touched.
   Renovate never scanned root `talos/` — its `managerFilePatterns` only ever covered
   `kubernetes/` (and, until 2026-08-04, `ansible/`) — which is why the drift went unnoticed.
 
-**Next steps:** pick one canonical tree, move `talsecret.sops.yaml` and the `cilium` /
-`kubelet-csr-approver` kustomizations to sit beside it, fix `TALHELPER_SECRET_FILE` and
-`TALOSCONFIG` to agree, add a `.sops.yaml` rule covering the surviving `talconfig.yaml`, then
-`task sops:encrypt` it. Note that deleting files removes them from `HEAD`, not from history.
+**Resolution path (2026-08-10):** don't pick a winner — migrate to `topf`, which reads
+`topf.yaml` itself through a SOPS-decrypt pipeline, so the node inventory can be **encrypted at
+rest**. That makes the tool swap the fix rather than a follow-up. The existing Talos secrets
+bundle is compatible and is renamed, not regenerated, so cluster PKI is untouched. Full plan,
+with a render-diff step that proves equivalence before any node is touched, in
+[`plans/2026-08-10-talos-consolidation-and-topf.md`](./plans/2026-08-10-talos-consolidation-and-topf.md).
+
+Provenance is settled: `kubernetes/talos/` is the template-derived tree (this repo forked
+2024-02-11, four days before upstream moved Talos out of `kubernetes/`); root `talos/` was
+hand-written 2026-06-17 and matches upstream's current location only by coincidence. Note that deleting files removes them from `HEAD`, not from history.
 
 **History:** a full audit of all 1592 commits, plus the procedure to purge, is written up in
 [`plans/2026-08-04-history-purge-plaintext-topology.md`](./plans/2026-08-04-history-purge-plaintext-topology.md).
@@ -141,7 +147,9 @@ history while `main` still publishes these values achieves nothing.
 **Next steps:** move the gatus addresses onto a `${SECRET_*}` substitution sourced from
 `cluster-secrets` (populate the variable *before* pushing the manifest, or the Kustomization
 won't reconcile), and redact the two design docs to `<node-N>` placeholders. See step 1 of
-[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md).
+[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md), and phase 6 of
+[the topf migration](./plans/2026-08-10-talos-consolidation-and-topf.md) — once `topf.yaml` is
+encrypted, these three files are the *last* plaintext addresses at `HEAD`.
 
 ---
 

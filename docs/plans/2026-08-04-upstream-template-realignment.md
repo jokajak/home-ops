@@ -133,12 +133,17 @@ Upstream replaced `talhelper` + `talconfig.yaml` with
 patch files (`talos/all/*.yaml`, `talos/control-plane/*.yaml`), and drives bootstrap through
 `topf apply --auto-bootstrap`.
 
-- **Verdict: defer.** `talhelper` works, tuppr already owns Talos/Kubernetes version upgrades
-  in-cluster, and the Talos tree here needs consolidation before any tool swap makes sense — see
-  [`ISSUES.md`](../ISSUES.md) #6, and
-  [`2026-08-04-history-purge-plaintext-topology.md`](./2026-08-04-history-purge-plaintext-topology.md)
-  for the separate (planned, unexecuted) question of what the plaintext Talos config left behind
-  in git history.
+- **Verdict: recommended.** *Reclassified 2026-08-10 — this previously said "defer", on the
+  reasoning that talhelper works and the Talos tree needed consolidating first. That was wrong in
+  one important way: topf decrypts `topf.yaml` itself via SOPS, so migrating is what **lets** the
+  node inventory be encrypted at rest. The consolidation and the tool swap are the same move, and
+  the swap resolves [`ISSUES.md`](../ISSUES.md) #6 and #8 rather than merely tracking upstream.*
+  The usual blocker — regenerating cluster PKI — does not apply: the existing Talos secrets bundle
+  is compatible and is renamed, not regenerated. Full plan, including a render-diff step that
+  proves equivalence before any node is touched, in
+  [`2026-08-10-talos-consolidation-and-topf.md`](./2026-08-10-talos-consolidation-and-topf.md).
+  For what the plaintext Talos config left behind in git history, see
+  [`2026-08-04-history-purge-plaintext-topology.md`](./2026-08-04-history-purge-plaintext-topology.md).
 
 ### 7. Namespace names
 
@@ -151,11 +156,13 @@ k8s-gateway) and `network-system` (cilium, multus, whereabouts) after the delibe
 
 ## Suggested order
 
-1. Phase 1 (CI) — cheap, immediate feedback on everything after it.
-2. Phase 5's *decision* (Cilium vs Envoy) — unblocks planning, costs nothing to settle.
-3. Phase 2 (flux-operator) — its own design doc, its own maintenance window.
-4. Phase 3 (OCIRepository) — trickles in per namespace afterwards.
-5. Phase 4 (mise) if wanted; phases 6 and 7 probably never.
+1. **Phase 6 (topf)** — promoted to the front as of 2026-08-10. It is the only phase that closes
+   open security issues (#6, #8), and #8 in turn gates the history purge.
+2. Phase 1 (CI) — cheap, immediate feedback on everything after it.
+3. Phase 5's *decision* (Cilium vs Envoy) — unblocks planning, costs nothing to settle.
+4. Phase 2 (flux-operator) — its own design doc, its own maintenance window.
+5. Phase 3 (OCIRepository) — trickles in per namespace afterwards.
+6. Phase 4 (mise) if wanted; phase 7 probably never.
 
 ## Verification
 
