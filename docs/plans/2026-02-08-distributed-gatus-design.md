@@ -77,15 +77,20 @@ Both: no pushover alerts.
 
 Separate ConfigMap `gatus-nodes-ep` in `kubernetes/apps/observability/gatus/app/nodes-configmap.yaml`. Uses TCP checks against kubelet port 10250 (ICMP not possible due to dropped capabilities). Group: `nodes`.
 
-| Node | IP |
-|------|-----|
-| basement-dell-sff | 192.168.116.42 |
-| basement-lenovo-m910q | 192.168.116.48 |
-| basement-rpi4-chocolate | 192.168.116.43 |
-| basement-rpi4-peach | 192.168.116.45 |
-| foyer-dell-3040 | 192.168.116.46 |
-| foyer-dell-mff | 192.168.116.40 |
-| foyer-hp-800g3 | 192.168.116.47 |
+Addresses are not written here or in the manifest. Each endpoint substitutes a
+`${SECRET_NODE_*}` variable from the `cluster-secrets-user` Secret
+(`kubernetes/flux/vars/cluster-secrets-user.sops.yaml`); the authoritative copy
+of the inventory is `talos/topf.yaml`.
+
+| Node | Substitution variable |
+|------|-----------------------|
+| basement-dell-sff | `${SECRET_NODE_BASEMENT_DELL_SFF}` |
+| basement-lenovo-m910q | `${SECRET_NODE_BASEMENT_LENOVO_M910Q}` |
+| basement-rpi4-chocolate | `${SECRET_NODE_BASEMENT_RPI4_CHOCOLATE}` |
+| basement-rpi4-peach | `${SECRET_NODE_BASEMENT_RPI4_PEACH}` |
+| foyer-dell-3040 | `${SECRET_NODE_FOYER_DELL_3040}` |
+| foyer-dell-mff | `${SECRET_NODE_FOYER_DELL_MFF}` |
+| foyer-hp-800g3 | `${SECRET_NODE_FOYER_HP_800G3}` |
 
 This file is NOT committed to git.
 

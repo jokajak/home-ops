@@ -1,0 +1,15 @@
+# talconfig.yaml expressed these as top-level cniConfig/clusterPodNets/
+# clusterSvcNets. topf has no equivalent fields, so they are a patch; without
+# it Talos falls back to its own defaults (10.244.0.0/16, 10.96.0.0/12) and
+# installs a CNI, which would fight Cilium.
+#
+# These are cluster-internal overlay CIDRs, not LAN topology, so they stay in
+# plaintext for reviewability.
+cluster:
+  network:
+    cni:
+      name: none
+    podSubnets:
+      - 10.42.0.0/16
+    serviceSubnets:
+      - 10.43.0.0/16

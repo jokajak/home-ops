@@ -6,7 +6,7 @@ Incrementally migrate from dual nginx ingress controllers (internal/external) to
 
 ## Current State
 
-- **Ingress controllers**: nginx-internal (192.168.116.82), nginx-external (192.168.116.83)
+- **Ingress controllers**: nginx-internal and nginx-external, each holding an address from the LB pool
 - **CNI**: Cilium 1.19.0 with L2 announcements, Maglev LB, DSR mode
 - **LB IP pool**: `${LB_CIDR_V4}` via CiliumLoadBalancerIPPool
 - **Cert-manager**: Let's Encrypt via Hurricane Electric DNS-01 webhook, wildcard cert in `networking/${SECRET_DOMAIN/./-}-production-tls`
@@ -44,12 +44,12 @@ Consider managing these CRDs via a Flux Kustomization for GitOps.
 
 ### 0.2 Allocate new Gateway IPs
 
-Choose two new IPs from the LB pool for the Cilium Gateways (do NOT reuse 192.168.116.82/83):
+Choose two new IPs from the LB pool for the Cilium Gateways (do NOT reuse the addresses nginx already holds):
 
 | Gateway | Suggested IP | Purpose |
 |---------|-------------|---------|
-| gateway-internal | TBD (e.g., 192.168.116.90) | Internal services |
-| gateway-external | TBD (e.g., 192.168.116.91) | External services |
+| gateway-internal | TBD, from `${LB_CIDR_V4}` | Internal services |
+| gateway-external | TBD, from `${LB_CIDR_V4}` | External services |
 
 These will coexist with nginx IPs during transition.
 
@@ -313,7 +313,7 @@ Once all apps are migrated and verified:
 2. Remove nginx references from `kubernetes/apps/networking/kustomization.yaml`
 3. Remove the ingress-nginx HelmRepository if no longer used
 4. Clean up old DNS records in Pi-hole (external.${SECRET_DOMAIN} and internal.${SECRET_DOMAIN} pointing to old nginx IPs)
-5. Release nginx IPs (192.168.116.82, 192.168.116.83) back to the pool
+5. Release the nginx IPs back to the pool
 
 ## Phase 6 (Optional): Upgrade Gatus to use gatus-sidecar
 
@@ -345,8 +345,8 @@ Since nginx and Gateways coexist during transition:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| GATEWAY_INTERNAL_IP | New IP for internal gateway | 192.168.116.90 |
-| GATEWAY_EXTERNAL_IP | New IP for external gateway | 192.168.116.91 |
+| GATEWAY_INTERNAL_IP | New IP for internal gateway | an address from `${LB_CIDR_V4}` |
+| GATEWAY_EXTERNAL_IP | New IP for external gateway | an address from `${LB_CIDR_V4}` |
 
 Add these to `cluster-settings` ConfigMap or `cluster-secrets` Secret.
 

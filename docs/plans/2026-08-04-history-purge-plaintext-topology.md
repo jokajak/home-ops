@@ -88,6 +88,12 @@ No key material, in any revision. The file was deleted in `cc157a3` as template 
 These are the same addresses the purge targets. Left alone, they remain on the default branch of a
 public repo and the rewrite is theatre.
 
+> **Cleared 2026-08-10.** All three are fixed, plus a fourth the table missed —
+> `talos/talconfig.yaml`, which held the same addresses in the clear and has been replaced by the
+> SOPS-encrypted `talos/topf.yaml`. `git grep` for the node prefix and the VLAN prefix now returns
+> nothing at `HEAD`. See [the topf migration](./2026-08-10-talos-consolidation-and-topf.md).
+> The ordering problem is resolved; the purge itself remains **planned and unexecuted**.
+
 ## Procedure
 
 ### 0. Start from a full mirror
@@ -103,19 +109,21 @@ git rev-list --count --all      # sanity: expect ~1592+, not ~50
 > shallow clone rewrites only the grafted commits and silently truncates everything older.
 > Always check the commit count before filtering.
 
-### 1. Fix `HEAD` first
+### 1. Fix `HEAD` first — **done 2026-08-10**
 
-Nothing else in this procedure is worth doing until this lands on `main`:
+Nothing else in this procedure was worth doing until this landed on `main`. What shipped:
 
-- **`kubernetes/apps/observability/gatus/app/nodes-configmap.yaml`** — move the 7 addresses onto a
-  `${SECRET_*}` substitution sourced from `cluster-secrets`, the same way the rest of the repo
-  handles topology. The gatus Kustomization **will not reconcile** until the new variable is
-  populated in the SOPS-encrypted `cluster-secrets`, so add the variable before pushing the
-  manifest change.
-- **The two design docs** — redact to `<node-N>` placeholders. They are prose; nothing depends on
-  the literals.
+- **`kubernetes/apps/observability/gatus/app/nodes-configmap.yaml`** — the 7 addresses are now
+  `${SECRET_NODE_*}` substitutions. They resolve from a new `cluster-secrets-user` Secret rather
+  than `cluster-secrets`: `kubernetes/flux/apps.yaml` already wired `cluster-secrets-user` into
+  every Kustomization as an *optional* `substituteFrom`, so it was the sanctioned slot and needed
+  no access to the existing encrypted secrets. The variable was created and populated in the same
+  change, so there is no window where the Kustomization cannot reconcile.
+- **The two design docs** — redacted. They refer to nodes by name and to addresses by variable.
+- **`talos/talconfig.yaml`** — not in the original table, but it carried the same addresses in the
+  clear. Replaced by the SOPS-encrypted `talos/topf.yaml`.
 
-Commit and push these normally. Then, and only then, proceed.
+Verified: `git grep` for the node prefix and the VLAN prefix returns nothing at `HEAD`.
 
 ### 2. Back up off-origin
 
@@ -243,11 +251,11 @@ remedy, and that is a decision about the network, not about git.
 
 Before declaring the purge done:
 
-- [ ] `HEAD` fixed and pushed (step 1) — gatus configmap variabilized, design docs redacted
+- [x] `HEAD` fixed and pushed (step 1) — gatus configmap variabilized, design docs redacted, `talconfig.yaml` replaced by an encrypted `topf.yaml` (2026-08-10)
 - [ ] Commit count on the mirror sane before filtering (not shallow)
 - [ ] Off-origin bundle exists and has been checked
 - [ ] Post-rewrite blob scan returns zero hits
-- [ ] `talsecret.sops.yaml` and encrypted `talconfig.yaml` survived
+- [ ] `talsecret.sops.yaml` (now `talos/secrets.yaml`) and the encrypted `kubernetes/talos/talconfig.yaml` blob survived the rewrite
 - [ ] Tags deleted locally and on origin
 - [ ] All branches force-pushed
 - [ ] Every local clone reset to `origin/main` (not merged)

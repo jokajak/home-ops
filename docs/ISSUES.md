@@ -11,9 +11,9 @@
 | 3 | Immich automatic DB backups lapsed since Feb 8 | immich | Med | Verify |
 | 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
-| 6 | Talos config exists twice, divergently; root copy is plaintext | talos | Med | Open |
+| 6 | Talos config exists twice, divergently; root copy is plaintext | talos | Med | Resolved 2026-08-10 |
 | 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
-| 8 | Node addresses live at `HEAD` in gatus configmap + 2 design docs | security | Med | Open |
+| 8 | Node addresses live at `HEAD` in gatus configmap + 2 design docs | security | Med | Resolved 2026-08-10 |
 
 ---
 
@@ -93,12 +93,25 @@ focused change. Nothing under `talos/` or `kubernetes/talos/` was touched.
   Renovate never scanned root `talos/` — its `managerFilePatterns` only ever covered
   `kubernetes/` (and, until 2026-08-04, `ansible/`) — which is why the drift went unnoticed.
 
-**Resolution path (2026-08-10):** don't pick a winner — migrate to `topf`, which reads
-`topf.yaml` itself through a SOPS-decrypt pipeline, so the node inventory can be **encrypted at
-rest**. That makes the tool swap the fix rather than a follow-up. The existing Talos secrets
-bundle is compatible and is renamed, not regenerated, so cluster PKI is untouched. Full plan,
-with a render-diff step that proves equivalence before any node is touched, in
+**Resolved 2026-08-10.** There is one Talos tree, at `talos/`, managed by `topf`, and the node
+inventory is SOPS-encrypted at rest. `kubernetes/talos/` is gone, including the expired
+`os:admin` certificate. The secrets bundle was renamed to `talos/secrets.yaml`, never
+regenerated, so cluster PKI is untouched.
+
+Equivalence was proven before anything was staged: `talhelper genconfig` and `topf render` were
+run against the *same* throwaway secrets bundle and the rendered machine configs diffed per node.
+Six of seven are byte-identical after normalising key order; the seventh differs only in the
+Raspberry Pi's installer path (`installer/` → `metal-installer/`, the Talos 1.10+ name the other
+six already use). Details in
 [`plans/2026-08-10-talos-consolidation-and-topf.md`](./plans/2026-08-10-talos-consolidation-and-topf.md).
+
+Two things found along the way that made the migration more urgent than the plan assumed: the
+old `talos/talconfig.yaml` **no longer parsed** under talhelper 3.1.16 (`talosImageURL` carrying a
+version tag), and its RFC-6902 patch is rejected outright by Talos v1.13 multi-document configs.
+The tree that looked merely divergent was in fact unusable with current tooling.
+
+Version drift persists by design — tuppr owns upgrades, so `topf.yaml`'s version fields are
+declarative-only. That is documented in `talos/README.md` rather than tracked as a bug.
 
 Provenance is settled: `kubernetes/talos/` is the template-derived tree (this repo forked
 2024-02-11, four days before upstream moved Talos out of `kubernetes/`); root `talos/` was
@@ -144,12 +157,25 @@ default branch of a **public** repository:
 This is the same data as issue #6, and it is **the blocker** on any history purge: rewriting
 history while `main` still publishes these values achieves nothing.
 
-**Next steps:** move the gatus addresses onto a `${SECRET_*}` substitution sourced from
-`cluster-secrets` (populate the variable *before* pushing the manifest, or the Kustomization
-won't reconcile), and redact the two design docs to `<node-N>` placeholders. See step 1 of
-[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md), and phase 6 of
-[the topf migration](./plans/2026-08-10-talos-consolidation-and-topf.md) — once `topf.yaml` is
-encrypted, these three files are the *last* plaintext addresses at `HEAD`.
+**Resolved 2026-08-10.** All three files are clean, and so is the rest of the tree:
+`git grep` for the node prefix and the VLAN prefix returns nothing at `HEAD`.
+
+- The gatus configmap now substitutes `${SECRET_NODE_*}` from a new
+  `cluster-secrets-user` Secret (`kubernetes/flux/vars/cluster-secrets-user.sops.yaml`).
+  `cluster-secrets-user` was already wired into every Kustomization as an *optional*
+  `substituteFrom` by `kubernetes/flux/apps.yaml`; the file simply never existed. Creating it
+  needed no access to `cluster-secrets.sops.yaml`.
+- Both design docs refer to nodes by name and to addresses by variable.
+- `talos/talconfig.yaml`, which held the same addresses in the clear, is gone — replaced by the
+  SOPS-encrypted `talos/topf.yaml` (issue #6).
+
+> Noticed while doing this: `nodes-configmap.yaml` is **not** listed in the gatus
+> `kustomization.yaml` and never has been, so those node checks have never actually run. The
+> substitution is correct and will work the moment the file is added to the resources list —
+> activating monitoring that has never been on is a separate decision, left to the owner.
+
+Deleting from `HEAD` is not deleting from history; the purge remains planned and unexecuted. See
+[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md).
 
 ---
 

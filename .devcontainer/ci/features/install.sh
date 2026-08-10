@@ -16,7 +16,7 @@ sudo apk add --no-cache \
         lsd
 
 for app in \
-    "budimanjojo/talhelper!" \
+    "postfinance/topf!" \
     "cilium/cilium-cli!!?as=cilium&type=script" \
     "cli/cli!!?as=gh&type=script" \
 "derailed/k9s!!?as=k9s&type=script" \
@@ -39,7 +39,7 @@ done
 mkdir -p /home/vscode/.config/fish/{completions,conf.d}
 
 # Setup autocompletions for fish
-for tool in cilium flux helm k9s kubectl kustomize talhelper talosctl; do
+for tool in cilium flux helm k9s kubectl kustomize talosctl; do
     $tool completion fish > /home/vscode/.config/fish/completions/$tool.fish
 done
 gh completion --shell fish > /home/vscode/.config/fish/completions/gh.fish

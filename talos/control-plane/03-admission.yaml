@@ -1,0 +1,7 @@
+# Disable default API server admission plugins. Under talhelper this was an
+# RFC-6902 `op: remove`, which Talos v1.13 rejects for multi-document machine
+# configuration; the strategic-merge equivalent is `$patch: delete`.
+cluster:
+  apiServer:
+    admissionControl:
+      $patch: delete

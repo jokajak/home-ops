@@ -6,47 +6,55 @@ metadata:
   labels:
     gatus.io/enabled: "true"
 data:
+  # Node addresses come from the cluster-secrets-user Secret, wired in as an
+  # optional substituteFrom by kubernetes/flux/apps.yaml. Adding a node means
+  # adding it there and in talos/topf.yaml.
+  #
+  # NOTE: this file is not listed in ./kustomization.yaml, so Flux does not
+  # apply it and these endpoints are not being monitored today. It has never
+  # been wired in. Adding `- ./nodes-configmap.yaml` to the resources list is
+  # all it would take; the substitutions above already resolve.
   config.yaml: |
     endpoints:
       - name: basement-dell-sff
         group: nodes
-        url: tcp://192.168.116.42:10250
+        url: tcp://${SECRET_NODE_BASEMENT_DELL_SFF}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: basement-lenovo-m910q
         group: nodes
-        url: tcp://192.168.116.48:10250
+        url: tcp://${SECRET_NODE_BASEMENT_LENOVO_M910Q}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: basement-rpi4-chocolate
         group: nodes
-        url: tcp://192.168.116.43:10250
+        url: tcp://${SECRET_NODE_BASEMENT_RPI4_CHOCOLATE}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: basement-rpi4-peach
         group: nodes
-        url: tcp://192.168.116.45:10250
+        url: tcp://${SECRET_NODE_BASEMENT_RPI4_PEACH}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: foyer-dell-3040
         group: nodes
-        url: tcp://192.168.116.46:10250
+        url: tcp://${SECRET_NODE_FOYER_DELL_3040}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: foyer-dell-mff
         group: nodes
-        url: tcp://192.168.116.40:10250
+        url: tcp://${SECRET_NODE_FOYER_DELL_MFF}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"
       - name: foyer-hp-800g3
         group: nodes
-        url: tcp://192.168.116.47:10250
+        url: tcp://${SECRET_NODE_FOYER_HP_800G3}:10250
         interval: 1m
         conditions:
           - "[CONNECTED] == true"

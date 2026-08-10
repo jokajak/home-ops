@@ -1,0 +1,23 @@
+# Image factory schematic for basement-rpi4-chocolate.
+#
+# This is the *exact* schematic currently installed on that node — verified
+# against https://factory.talos.dev/schematics/11452416ac95f8db43dc7100fcba351d8378d9bd95feeb1d3dc5fc0100c958cd
+# and confirmed to compute back to that same ID locally. Editing this file
+# changes the node's installer image and therefore requires a Talos upgrade.
+#
+# Two deliberate differences from schematic.yaml.tpl (the x86 nodes), both
+# pre-existing and preserved as-is:
+#   - siderolabs/nut-client is present here and nowhere else.
+#   - extraKernelArgs (net.ifnames=0) is absent here. Interface selection still
+#     works because all/20-link-alias.yaml.tpl selects on bus path, not name.
+overlay:
+  image: siderolabs/sbc-raspberrypi
+  name: rpi_generic
+customization:
+  systemExtensions:
+    officialExtensions:
+      - siderolabs/crun
+      - siderolabs/kata-containers
+      - siderolabs/nut-client
+      - siderolabs/spin
+      - siderolabs/wasmedge
