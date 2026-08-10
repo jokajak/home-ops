@@ -13,8 +13,8 @@ Talos tree under `kubernetes/`.
 talos/
 ├── topf.yaml            # SOPS-encrypted: cluster settings + node inventory
 ├── secrets.yaml         # SOPS-encrypted: cluster PKI (the talhelper bundle, renamed)
-├── schematic.yaml.tpl   # image factory schematic for the x86 nodes, by role
-├── schematic-rpi.yaml   # image factory schematic for the Raspberry Pi node
+├── schematic.yaml.tpl   # image factory schematic for the x86 nodes
+├── schematic-rpi.yaml   # image factory schematic for the Raspberry Pi nodes
 ├── all/                 # patches applied to every node
 ├── control-plane/       # patches applied to control-plane nodes only
 ├── cilium/              # bootstrap-time Cilium install (task talos:apply-extras)
@@ -67,22 +67,48 @@ check a change before applying it.
 ## Image factory schematics
 
 Schematic IDs are computed **locally** from the schematic files — no factory
-round-trip — and were verified to match the IDs already running on the fleet:
+round-trip:
 
 | Schematic | ID | Nodes |
 | --- | --- | --- |
-| `schematic.yaml.tpl` (control-plane) | `0bf2de4e…` | x86 control-plane |
-| `schematic.yaml.tpl` (worker) | `1841b08a…` | x86 workers |
-| `schematic-rpi.yaml` | `11452416…` | `basement-rpi4-chocolate` |
+| `schematic.yaml.tpl` | `9e8cc193…` | all x86 nodes |
+| `schematic-rpi.yaml` | `ee21ef4a…` | `basement-rpi4-chocolate` |
+
+Both resolve at the image factory today, so neither needs
+`--submit-to-factory`. `ee21ef4a…` is the stock upstream [`rpi_generic`
+schematic][rpi]; the x86 one adds `net.ifnames=0` and `siderolabs/intel-ucode`.
 
 Editing a schematic file changes the node's installer image and therefore needs
 a Talos upgrade, not just an apply. A brand-new schematic the factory has never
 seen must be registered once with `--submit-to-factory`.
 
-The Raspberry Pi schematic differs from the x86 worker one in two pre-existing
-ways: it includes `siderolabs/nut-client`, and it omits the
-`net.ifnames=0` kernel argument. Interface selection still works because
-`all/20-link-alias.yaml.tpl` matches on bus path rather than interface name.
+> **None of these are what the fleet is running.** Every node currently reports
+> schematic `376567988…`, which is `customization: {}` — no system extensions at
+> all. The declared schematics take effect at the next upgrade, which will
+> therefore not be a no-op. See [ISSUES #11](../docs/ISSUES.md).
+
+The Raspberry Pi schematic omits the `net.ifnames=0` kernel argument. Interface
+selection still works because `all/20-link-alias.yaml.tpl` matches on bus path
+rather than interface name.
+
+## Reconciled against the live cluster — 2026-08-10
+
+The rendered configs were diffed per node against `talosctl get machineconfig
+v1alpha1`. Install disk, kubelet arguments/mounts/`nodeIP`, the containerd
+`files` entry, time servers, sysctls, KubePrism, hostDNS, Talos API access, etcd
+arguments, cluster networking and the `admissionControl` deletion all match
+byte-for-byte. What does **not** match is recorded in
+[ISSUES #9–#12](../docs/ISSUES.md); the short version:
+
+- Live `install.image` is pinned to `v1.9.5` while the nodes run v1.13.4 — the
+  running config predates this repo's patches by several Talos releases.
+- `basement-rpi4-peach` is aimed at an x86 schematic with no Pi overlay
+  (**#9** — fixing it needs the age key).
+- `topf apply` moves networking out of `machine.network.interfaces` into
+  separate `LinkConfig`/`VLANConfig`/`Layer2VIPConfig` documents. Stage it on one
+  worker (**#12**).
+
+[rpi]: https://www.talos.dev/v1.8/talos-guides/install/single-board-computers/rpi_generic/
 
 ## Versions are declarative-only
 
@@ -90,6 +116,14 @@ ways: it includes `siderolabs/nut-client`, and it omits the
 would write. Actual upgrades are driven in-cluster by
 [tuppr](../kubernetes/apps/system-upgrade/tuppr/), so these fields can drift
 behind the running fleet. Don't read them as the source of truth.
+
+As of 2026-08-10 they are **not** stale: `talosVersion: v1.13.4` matches all
+seven nodes, and `kubernetesVersion: v1.35.6` matches five of seven —
+`basement-dell-sff` and `foyer-dell-3040` still trail at v1.34.1. tuppr targets
+v1.13.8/v1.36.3 but has not reached them: its `TalosUpgrade` sits in
+`MaintenanceWindow` and its `KubernetesUpgrade` is stuck in `HealthChecking`,
+because two nodes are `NotReady`. Applying this branch is therefore not a
+Kubernetes downgrade.
 
 [plan]: ../docs/plans/2026-08-10-talos-consolidation-and-topf.md
 [sops-partial]: ../.sops.yaml

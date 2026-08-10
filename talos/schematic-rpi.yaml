@@ -1,23 +1,19 @@
-# Image factory schematic for basement-rpi4-chocolate.
+# Image factory schematic for the Raspberry Pi 4 nodes.
 #
-# This is the *exact* schematic currently installed on that node — verified
-# against https://factory.talos.dev/schematics/11452416ac95f8db43dc7100fcba351d8378d9bd95feeb1d3dc5fc0100c958cd
-# and confirmed to compute back to that same ID locally. Editing this file
-# changes the node's installer image and therefore requires a Talos upgrade.
+# The overlay is the load-bearing part: an arm64 Pi will not boot an image built
+# without siderolabs/sbc-raspberrypi. basement-rpi4-peach is currently pointed at
+# the x86 worker schematic and so has no overlay — see docs/ISSUES.md #9 for the
+# fix, which needs the age key.
 #
-# Two deliberate differences from schematic.yaml.tpl (the x86 nodes), both
-# pre-existing and preserved as-is:
-#   - siderolabs/nut-client is present here and nowhere else.
-#   - extraKernelArgs (net.ifnames=0) is absent here. Interface selection still
-#     works because all/20-link-alias.yaml.tpl selects on bus path, not name.
+# Trimmed 2026-08-10: siderolabs/nut-client was declared here but nothing in the
+# repo or the cluster uses it — there is no NUT server, no upsd, no UPS
+# monitoring of any kind. Dropping it also means peach can safely share this file
+# with chocolate. See docs/ISSUES.md #11.
+#
+# No extraKernelArgs here, deliberately: net.ifnames=0 is not needed because
+# interface selection on these nodes matches on bus path, not interface name
+# (all/20-link-alias.yaml.tpl).
 overlay:
   image: siderolabs/sbc-raspberrypi
   name: rpi_generic
-customization:
-  systemExtensions:
-    officialExtensions:
-      - siderolabs/crun
-      - siderolabs/kata-containers
-      - siderolabs/nut-client
-      - siderolabs/spin
-      - siderolabs/wasmedge
+customization: {}

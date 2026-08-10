@@ -1,21 +1,21 @@
-# Image factory schematic for the x86 nodes, branching on role.
+# Image factory schematic for the x86 nodes.
 #
-# Both variants were verified to compute locally to the schematic IDs already
-# in use on the fleet, matching what talhelper produced from talconfig.yaml:
-#   control-plane -> 0bf2de4e77b3fbc706d8d073dde8418c20842dde7b8ed2f49d35983d388b2449
-#   worker        -> 1841b08a4f5414495c0014324f8366e7b112718c1b86ce154326c9d142ee50e3
+# Trimmed 2026-08-10 to what this cluster can actually use. Previously this
+# declared crun, kata-containers, spin and wasmedge; none were installed on any
+# node (the whole fleet runs the empty schematic 376567988…) and none were
+# reachable either — the cluster has no RuntimeClasses and no pod sets
+# `runtimeClassName`. See docs/ISSUES.md #11.
 #
-# The Raspberry Pi node uses schematic-rpi.yaml instead.
+# intel-ucode was previously gated to control-plane nodes only, which left the
+# Intel workers foyer-hp-800g3 and basement-lenovo-m910q without microcode
+# updates. Every x86 node here reports GenuineIntel, so it now applies to all of
+# them and the role branch is gone.
+#
+# The Raspberry Pi nodes use schematic-rpi.yaml instead.
 customization:
   # disable predictable names so that multus is easier
   extraKernelArgs:
     - net.ifnames=0
   systemExtensions:
     officialExtensions:
-      - siderolabs/crun
-      {{- if eq (printf "%s" .Node.Role) "control-plane" }}
       - siderolabs/intel-ucode
-      {{- end }}
-      - siderolabs/kata-containers
-      - siderolabs/spin
-      - siderolabs/wasmedge
