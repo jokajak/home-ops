@@ -45,7 +45,7 @@ spec:
               PAPERLESS_URL: https://paperless.${SECRET_DOMAIN:=internal}
               PAPERLESS_TIME_ZONE: "${TIMEZONE:=America/New_York}"
               PAPERLESS_OCR_LANGUAGE: eng
-              # shared dragonfly; index 0 is authentik/open-webui, 1 is immich
+              # shared dragonfly; index 0 is authentik, 1 is immich
               PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local.:6379/2
               PAPERLESS_DBENGINE: postgresql
               PAPERLESS_DBHOST:
