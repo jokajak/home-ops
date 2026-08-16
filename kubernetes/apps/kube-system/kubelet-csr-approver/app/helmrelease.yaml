@@ -23,7 +23,12 @@ spec:
   uninstall:
     keepHistory: false
   values:
-    providerRegex: ^(foyer-dell-mff|foyer-udoo-x86|basement-dell-mff|basement-rpi4-chocolate|basement-rpi4-pecan|basement-rpi4-peach|basement-dell-sff)$
+    # Every node in the cluster must be listed here, or its kubelet serving-cert
+    # CSR is never approved (kubelet sets rotate-server-certificates: true, and
+    # bypassDnsResolution makes this regex the only gate). A node missing from
+    # this list looks healthy but loses kubectl logs/exec and metrics.
+    # Kept in sync with talos/topf.yaml.
+    providerRegex: ^(basement-dell-sff|basement-lenovo-m910q|basement-rpi4-chocolate|basement-rpi4-peach|foyer-dell-3040|foyer-dell-mff|foyer-hp-800g3)$
     bypassDnsResolution: true
     metrics:
       enable: true
