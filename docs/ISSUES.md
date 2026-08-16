@@ -4,61 +4,63 @@
 > they're found; move to **Resolved** with a date when fixed. Severity: High
 > (broken / data-risk), Med (degraded / decision needed), Low (cleanup / nice-to-have).
 
+Numbers are stable and never reused; resolved entries are deleted, leaving gaps.
+`talos/README.md` cross-references these by number.
+
 | # | Issue | Area | Severity | Status |
 |---|-------|------|----------|--------|
-| 1 | Gatus metrics ingestion into VictoriaMetrics unconfirmed | observability | Med | Verify |
-| 2 | Backup alerting may use removed CNPG metric names | observability | Med | Verify |
-| 3 | Immich automatic DB backups lapsed since Feb 8 | immich | Med | Verify |
+| 1 | Gatus reaches VictoriaMetrics, but only 1 of 17 endpoints produces series | observability | Med | Open |
+| 2 | Grafana dashboards may still reference removed CNPG metric names | observability | Low | Verify |
 | 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
-| 6 | Talos config exists twice, divergently; root copy is plaintext | talos | Med | Resolved 2026-08-10 |
 | 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
-| 8 | Node addresses live at `HEAD` in gatus configmap + 2 design docs | security | Med | Resolved 2026-08-10 |
 | 9 | `basement-rpi4-peach` aimed at a schematic with no Raspberry Pi overlay | talos | **High** | Open |
 | 10 | Live machine configs are Talos v1.9.5-era; repo has not been applied since | talos | **High** | Open |
 | 11 | Fleet runs the empty schematic; repo declares extensions never installed | talos | Med | Open |
 | 12 | `topf apply` migrates networking to multi-doc config in one shot | talos | Med | Open |
-| 13 | `basement-rpi4-chocolate` is offline and was last seen on a DHCP address | talos | **High** | Open |
+| 13 | `basement-rpi4-chocolate`'s static network config has never applied | talos | Med | Open |
+| 14 | `basement-dell-sff` is dead; etcd is permanently at 2-of-3 | talos | **High** | Open |
 
 ---
 
-## 1. Gatus metrics ingestion into VictoriaMetrics unconfirmed — Med (verify)
+## 1. Gatus reaches VictoriaMetrics, but only 1 of 17 endpoints produces series — Med
 
-Gatus runs on in-memory storage (SQLite-on-PVC was attempted and reverted — see Resolved), so
-VictoriaMetrics is intended to be the source of truth for uptime history/alerting. Gatus's
-`/metrics` endpoint serves data and a `vmservicescrape/gatus` exists and reports `operational`,
-**but a VM query for gatus series returned empty during verification** — so ingestion is not
-confirmed.
+The original question here was whether gatus metrics reach VM at all. **They do** — verified
+2026-08-16, `count(gatus_results_total)` returns 1 (it previously returned empty). Ingestion,
+the vmservicescrape selector and the scrape path are all fine.
 
-- **Findings:** the vmservicescrape selector (`app.kubernetes.io/{instance,name,service}=gatus`)
-  matches the gatus Service labels and port `http`; gatus `/metrics` returns `gatus_results_*`.
-  VM query `count(gatus_results_total)` came back empty (could be timing, a label/job mismatch,
-  or vmagent not scraping the vmservicescrape).
-- **Next steps:** check vmagent targets for gatus, confirm the scrape is active, query VM for
-  `gatus_results_total`, then build Grafana dashboards + VMAlert rules for uptime alerting.
+That answer exposed a sharper problem. Gatus is configured by 17 ConfigMaps labelled
+`gatus.io/enabled=true`, but VM holds series for exactly **one** endpoint:
 
-## 2. Backup alerting may reference removed CNPG metric names — Med (verify)
+```console
+$ count(count by (key) (gatus_results_total))   # => 1
+$ kubectl get cm -A -l gatus.io/enabled=true | wc -l   # => 17
+```
 
-After the Barman Cloud Plugin migration, backup/recoverability status is reported via
+So roughly sixteen monitored endpoints are producing no uptime data, and any alerting built on
+these series would be silently blind for all of them.
+
+- **Likely causes:** the k8s-sidecar isn't loading the ConfigMaps into the gatus pod, or gatus is
+  loading them but the endpoints fail before recording a result. Check the sidecar's logs and the
+  merged config inside the pod before touching VM.
+- **Next steps:** confirm how many endpoints gatus itself reports (`/api/v1/endpoints/statuses`)
+  to split "not loaded" from "loaded but not scraped", then build dashboards/VMAlert rules once
+  coverage is real. Note `nodes-configmap.yaml` is still not wired into the gatus
+  `kustomization.yaml`, so node checks have never run.
+
+## 2. Grafana dashboards may still reference removed CNPG metric names — Low (verify)
+
+After the Barman Cloud Plugin migration, backup status is reported via
 `barman_cloud_cloudnative_pg_io_*` metrics; the in-core `cnpg_collector_*` metrics (and the
-in-core cluster `firstRecoverabilityPoint`/`lastSuccessfulBackup` fields) no longer update.
+cluster `firstRecoverabilityPoint`/`lastSuccessfulBackup` fields) no longer update.
 
-- **Done:** added `CNPGBackupFailed` / `CNPGBackupTooOld` alerts to the postgres
-  `cluster/prometheusrule.yaml` using the new `barman_cloud_cloudnative_pg_io_*` timestamp
-  metrics, so backup-failure alerting is no longer blind.
-- **Next steps (cluster-side):** confirm the exact exported metric names against the running
-  Barman plugin (`barman_cloud_cloudnative_pg_io_last_available_backup_timestamp` /
-  `*_last_failed_backup_timestamp`) and that the alerts evaluate non-empty in vmalert; update any
-  Grafana dashboards still referencing the old `cnpg_collector_*` names.
+**The alerting half is confirmed working** (2026-08-16):
+`count(barman_cloud_cloudnative_pg_io_last_available_backup_timestamp)` returns 10 series, so the
+`CNPGBackupFailed` / `CNPGBackupTooOld` alerts in the postgres `cluster/prometheusrule.yaml`
+evaluate against real data rather than an empty vector.
 
-## 3. Immich automatic DB backups lapsed since Feb 8 — Med (verify)
-
-Immich's own daily `pg_dumpall` backups to NFS (`/usr/src/app/upload/backups/`) stopped
-2026-02-08 (when Immich broke). Now that Immich is healthy again, confirm they resume on
-the next scheduled run; if not, fix the Immich backup settings.
-
-- **Note:** CNPG plugin backups to MinIO are the primary DR; these NFS dumps are a secondary
-  safety net.
+- **Remaining:** audit Grafana dashboards for panels still querying the old `cnpg_collector_*`
+  names, which would render empty.
 
 ## 4. Repo-root `kubeconfig` client cert expired — Low
 
@@ -71,63 +73,6 @@ beware a stale `KUBECONFIG` env pointing at the repo file.
 The restored Immich DB is from the Feb 8 dump; any assets added 2026-02-08 → 2026-06-14
 aren't in the metadata. Image **files** are safe on NFS. If any were added in that window, a
 library re-scan/re-import can recover them. (Likely none — Immich was broken for most of it.)
-
-## 6. Talos config exists twice, divergently; root copy is plaintext — Med
-
-Found during the 2026-08-04 de-templating pass and deliberately left alone — this needs its own
-focused change. Nothing under `talos/` or `kubernetes/talos/` was touched.
-
-- **Two trees, and the tooling disagrees about which is real.** `talos/talconfig.yaml`
-  (403 lines, 7 nodes) is what `.taskfiles/Talos` operates on via `TALOS_DIR`.
-  `kubernetes/talos/` holds a stale SOPS-encrypted `talconfig.yaml` (266 lines) plus the real
-  `talsecret.sops.yaml`, `cilium/`, `kubelet-csr-approver/`, `talconfig.yaml.norpi`, and seven
-  empty `clusterconfig.YYYYMMDD/` snapshot dirs. `.envrc` points `TALOSCONFIG` at the *second*
-  tree; the taskfiles use the first.
-- **The root copy is unencrypted** and matches no rule in `.sops.yaml`. It carries node
-  addresses, the API VIP, the gateway, VLAN IDs, MAC addresses and an internal hostname — exactly
-  the category `CLAUDE.md` says stays out of the repo.
-- **`.taskfiles/Talos` points at the wrong secret file.** `TALHELPER_SECRET_FILE` is
-  `talos/talhelper.sops.yaml`; the real bundle is `kubernetes/talos/talsecret.sops.yaml`
-  (`talsecret.sops.yaml` is also talhelper's own default name), so `task talos:gensecret` would
-  write a new bundle to the wrong path rather than reuse the existing one.
-- **`kubernetes/talos/talosconfig.20240317.1258` is a committed `os:admin` client certificate**
-  (`ca`/`crt`/`key`). It **expired 2025-03-17**, so there is no live exposure and nothing to
-  rotate — but it shouldn't be in the tree.
-- **Version drift.** `talconfig.yaml` pins Talos v1.13.4 / Kubernetes v1.35.6 while tuppr
-  (`kubernetes/apps/system-upgrade/tuppr/plans/talosupgrade.yaml`) drives the cluster at v1.13.7.
-  Renovate never scanned root `talos/` — its `managerFilePatterns` only ever covered
-  `kubernetes/` (and, until 2026-08-04, `ansible/`) — which is why the drift went unnoticed.
-
-**Resolved 2026-08-10.** There is one Talos tree, at `talos/`, managed by `topf`, and the node
-inventory is SOPS-encrypted at rest. `kubernetes/talos/` is gone, including the expired
-`os:admin` certificate. The secrets bundle was renamed to `talos/secrets.yaml`, never
-regenerated, so cluster PKI is untouched.
-
-Equivalence was proven before anything was staged: `talhelper genconfig` and `topf render` were
-run against the *same* throwaway secrets bundle and the rendered machine configs diffed per node.
-Six of seven are byte-identical after normalising key order; the seventh differs only in the
-Raspberry Pi's installer path (`installer/` → `metal-installer/`, the Talos 1.10+ name the other
-six already use). Details in
-[`plans/2026-08-10-talos-consolidation-and-topf.md`](./plans/2026-08-10-talos-consolidation-and-topf.md).
-
-Two things found along the way that made the migration more urgent than the plan assumed: the
-old `talos/talconfig.yaml` **no longer parsed** under talhelper 3.1.16 (`talosImageURL` carrying a
-version tag), and its RFC-6902 patch is rejected outright by Talos v1.13 multi-document configs.
-The tree that looked merely divergent was in fact unusable with current tooling.
-
-Version drift persists by design — tuppr owns upgrades, so `topf.yaml`'s version fields are
-declarative-only. That is documented in `talos/README.md` rather than tracked as a bug.
-
-Provenance is settled: `kubernetes/talos/` is the template-derived tree (this repo forked
-2024-02-11, four days before upstream moved Talos out of `kubernetes/`); root `talos/` was
-hand-written 2026-06-17 and matches upstream's current location only by coincidence. Note that deleting files removes them from `HEAD`, not from history.
-
-**History:** a full audit of all 1592 commits, plus the procedure to purge, is written up in
-[`plans/2026-08-04-history-purge-plaintext-topology.md`](./plans/2026-08-04-history-purge-plaintext-topology.md).
-It is **planned, not executed**. Two things it establishes that matter here: the encrypted
-`kubernetes/talos/talconfig.yaml` and `talsecret.sops.yaml` were **never** committed in the clear,
-and the same node addresses are still live at `HEAD` in three other files — so fixing those is a
-prerequisite, not a follow-up.
 
 ## 7. Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x — Low (verify)
 
@@ -147,40 +92,6 @@ PR's contents.
 supply placeholder values in the workflow, drop `--strict`, or move to `flate` (see
 [the realignment roadmap](./plans/2026-08-04-upstream-template-realignment.md), phase 1) which
 handles substitution itself.
-
-## 8. Node addresses live at `HEAD` in three files — Med
-
-Surfaced by the 2026-08-04 history audit. Real node addresses (7 occurrences each) are on the
-default branch of a **public** repository:
-
-| File | Note |
-| --- | --- |
-| `kubernetes/apps/observability/gatus/app/nodes-configmap.yaml` | Live manifest — gatus monitors kubelet on `:10250` per node |
-| `docs/plans/2026-02-08-cilium-gateway-api-migration.md` | Prose only |
-| `docs/plans/2026-02-08-distributed-gatus-design.md` | Prose only |
-
-This is the same data as issue #6, and it is **the blocker** on any history purge: rewriting
-history while `main` still publishes these values achieves nothing.
-
-**Resolved 2026-08-10.** All three files are clean, and so is the rest of the tree:
-`git grep` for the node prefix and the VLAN prefix returns nothing at `HEAD`.
-
-- The gatus configmap now substitutes `${SECRET_NODE_*}` from a new
-  `cluster-secrets-user` Secret (`kubernetes/flux/vars/cluster-secrets-user.sops.yaml`).
-  `cluster-secrets-user` was already wired into every Kustomization as an *optional*
-  `substituteFrom` by `kubernetes/flux/apps.yaml`; the file simply never existed. Creating it
-  needed no access to `cluster-secrets.sops.yaml`.
-- Both design docs refer to nodes by name and to addresses by variable.
-- `talos/talconfig.yaml`, which held the same addresses in the clear, is gone — replaced by the
-  SOPS-encrypted `talos/topf.yaml` (issue #6).
-
-> Noticed while doing this: `nodes-configmap.yaml` is **not** listed in the gatus
-> `kustomization.yaml` and never has been, so those node checks have never actually run. The
-> substitution is correct and will work the moment the file is added to the resources list —
-> activating monitoring that has never been on is a separate decision, left to the owner.
-
-Deleting from `HEAD` is not deleting from history; the purge remains planned and unexecuted. See
-[the purge plan](./plans/2026-08-04-history-purge-plaintext-topology.md).
 
 ## 9. `basement-rpi4-peach` aimed at a schematic with no Raspberry Pi overlay — High
 
@@ -207,7 +118,7 @@ hazard is latent, not active.
   # add `schematicId: '@schematic-rpi.yaml'` under the basement-rpi4-peach entry,
   # as a sibling of `role:` (same level as chocolate's)
   $ sops encrypt --in-place talos/topf.yaml
-  $ topf schematic-ids   # expect 0bf2de4e…, 1841b08a…, 11452416…
+  $ topf schematic-ids   # expect exactly two: 9e8cc193… (x86) and ee21ef4a… (rpi)
   ```
 
 - **No side effect any more.** Sharing `schematic-rpi.yaml` used to also hand peach
@@ -308,7 +219,7 @@ the VIP the API server is reached through, on **all seven nodes**.
   nodes up. Neither could be reached for config comparison, so they are also the two nodes whose
   drift is *unmeasured*. Restore them before touching networking.
 
-## 13. `basement-rpi4-chocolate` is offline and was last seen on a DHCP address — High
+## 13. `basement-rpi4-chocolate`'s static network config has never applied — Med
 
 Found 2026-08-10 while verifying that the new `cluster-secrets-user` Secret carries real node
 addresses. Six of seven entries match the live cluster exactly. Chocolate does not.
@@ -332,12 +243,123 @@ Talos releases, so it is unsurprising that a node is not on the address the repo
 - The address in the Secret is therefore also what a future gatus node check would probe. If the
   node is brought back on DHCP rather than its static address, that check would report a false
   failure. (Moot today — `nodes-configmap.yaml` is still not wired into the gatus
-  `kustomization.yaml`; see #8.)
+  `kustomization.yaml`; see #1.)
 
 **Next steps:** get the node physically back up first, then confirm which address it comes up on.
 If it lands on DHCP again, its static config genuinely never applied and `topf apply` against
 that one node — once reachable — is the fix. Do not treat the repo's address as wrong and edit it
 to match the DHCP lease; the static address is the intent.
+
+**Answered 2026-08-15.** The node is back `Ready` and came up on the **DHCP address again**, well
+outside the contiguous static block the repo assigns. That settles it: chocolate's static network
+config has never taken effect, exactly as suspected. `topf apply` against this one node is the
+fix, and the repo's address stays as-is.
+
+> **Do not stage the `topf apply` here, though.** Chocolate now hosts `postgres-3`, the primary of
+> the `database/postgres` cluster recovered on 2026-08-15 (see #14) — and for a period it was the
+> *only* copy of that data. Rebuild the other replicas first, or stage on a worker holding no
+> stateful workload. `topf apply` also migrates networking to multi-doc config in one shot (#12),
+> which is precisely the change most likely to strand a node whose static config has never
+> applied.
+
+## 14. `basement-dell-sff` is dead; etcd is permanently at 2-of-3 — High
+
+Confirmed 2026-08-15. The node will not boot and its drive reports unrecoverable sectors. It is
+**not coming back without a reinstall on new hardware/disk**, so this is a permanent topology
+change rather than an outage to wait out.
+
+- It is one of **three control-plane nodes**. etcd therefore has three voting members with only
+  two reachable: quorum holds, but **fault tolerance is zero** — a single further control-plane
+  failure takes the API server down. Removing the dead member does not help; a two-member cluster
+  still needs both.
+- `openebs-hostpath` is node-local, so its disk took four PVCs with it. Three were CNPG replicas
+  and were rebuilt from healthy primaries (`default/home-assistant-db-2`, `default/immich-database-1`,
+  and `database/postgres-1`). The fourth, `ai/open-webui-data`, had no replica and no backup, so
+  open-webui was removed from the repo entirely rather than restored (2026-08-16); Flux prunes its
+  HelmRelease, ExternalSecret and PVC. The `ai` namespace stays for future work.
+- **`database/postgres` was a full outage** (0/3 ready) because `postgres-1` — the primary — lived
+  on this disk. Recovery is recorded below; the `authentik` database survived intact at 136 MB.
+
+**Consequences for the topf work:**
+
+- `topf.yaml` carries this node as one of its three `control-plane` entries. That entry is still
+  correct as *intent*, but no `topf apply` can reach the node until it is rebuilt.
+- The rebuild is an **opportunity, not just a cost**: a fresh install writes the declared
+  schematic and Talos version directly, so it sidesteps both the v1.9.5-era drift (#10) and the
+  risky in-place multi-doc networking migration (#12) for this node. It is the cleanest possible
+  first application of the new configuration — a node that is being reinstalled anyway cannot be
+  stranded by the migration.
+- Restoring real fault tolerance means either reinstalling this node as control-plane or promoting
+  an existing worker. That is a topology decision the owner has not yet made, and it should be
+  made **before** the reinstall, since it determines the node's role in `topf.yaml`.
+
+### Fallout: `basement-rpi4-peach` had stale nameservers — resolved 2026-08-16
+
+Peach rejoined the cluster but nothing scheduled there could pull an image:
+
+```
+Failed to pull image "...": dial tcp: lookup ghcr.io on 127.0.0.53:53: server misbehaving
+```
+
+Talos hostDNS was running and answering, but forwarding to a stale upstream — **another instance
+of #10**, the live config predating the repo's patches. The network itself was fine: querying the
+intended resolver directly from a pod on peach resolved correctly, which is the test that
+separates "wrong config" from "unreachable resolver". Peach was also on its *static* address
+(unlike chocolate, #13), so only its nameservers had drifted.
+
+- **Fix applied:** a targeted `talosctl patch mc` on `machine.network.nameservers`. Prefer this
+  over a full `topf apply`, which would additionally trigger the multi-doc networking migration
+  (#12) and write an x86 installer reference onto an arm64 Pi (#9). Nameservers reconcile live,
+  so no reboot is needed.
+- **Check while `topf.yaml` is decrypted for #9:** confirm its `nameservers` value is the correct
+  resolver. That field is encrypted, so it has not been verified — if it holds the same stale
+  address, a future `topf apply` re-breaks DNS on *every* node.
+
+> **Diagnosing this is misleading.** Kubelet's image-pull backoff stretches to ~25 minutes, so
+> pods keep reporting the old DNS error long after DNS is fixed. Check the age of the `Pulling`
+> event, not the text of the `Failed` one, and delete the pods to reset the backoff before
+> concluding a fix did not work.
+
+### Fallout: the openebs provisioner wedges silently — 2026-08-16
+
+`openebs-localpv-provisioner` had 31 restarts and was hot-looping on
+`v1 Endpoints is deprecated in v1.33+` warnings every ~2s while draining no work. Even once
+peach could pull images again, it never created the `init-pvc-…` helper, so `postgres-2`'s PVC
+sat `Pending` and reported only the generic `create process timeout after 120 seconds`.
+
+`kubectl rollout restart deploy -n openebs-system openebs-localpv-provisioner` cleared it and the
+PVC bound within seconds. Worth suspecting whenever an `openebs-hostpath` PVC is `Pending` with
+no helper pod in `openebs-system` — the provisioner reports itself `Running` and `1/1` throughout.
+
+Also seen: openebs `cleanup-pvc-*` helpers stick in `Terminating` forever when their node is
+gone, and must be `--force --grace-period=0` deleted.
+
+### `database/postgres` recovery — 2026-08-15
+
+Recorded because the failure mode is non-obvious and likely to recur with node-local storage.
+
+With the primary's disk gone, CNPG deadlocked: both surviving replicas started as standbys
+waiting on the `postgres-rw` service, which still resolved to the deleted `postgres-1`, while the
+operator refused to promote either — `"Wrong target primary, the chosen one is not active or not
+present"` — because neither could become *active* without a primary to stream from. `cnpg promote`
+cannot break this; it is built for promoting an already-healthy replica.
+
+The fix was to stop the operator so its reconcile loop could not revert a status edit:
+
+```console
+$ kubectl scale deploy -n database cloudnative-pg --replicas=0
+$ kubectl patch cluster -n database postgres --subresource=status --type=merge \
+    -p '{"status":{"currentPrimary":"postgres-3","targetPrimary":"postgres-3"}}'
+$ kubectl scale deploy -n database cloudnative-pg --replicas=1
+```
+
+> **Do not delete the instance pod while the operator is scaled to zero.** CNPG instance pods are
+> created by the operator, not by a StatefulSet, so nothing recreates them. Scale the operator
+> back up and let it rebuild the pod against the patched status.
+
+Both replicas held the identical LSN (`37/B6000028`, timeline 4), so the choice between them was
+arbitrary; the promoted instance replayed to `37/BA000000`, ahead of its last checkpoint. Backups
+had been stalled 12 days and resumed on their own once a target pod existed.
 
 ---
 
