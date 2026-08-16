@@ -35,9 +35,12 @@ tasks:
     preconditions: [*topf, *sops, *config]
 
   diff:
-    desc: Show what an apply would change, without applying it
+    desc: Show what an apply would change, without applying it (use node=<regex> for one)
     dir: "{{.TALOS_DIR}}"
-    cmd: topf apply --dry-run {{.CLI_ARGS}}
+    # Mirrors `apply`'s --nodes-filter. Without it `node=` was silently ignored,
+    # so a dry-run could not be scoped to the node you were about to apply to,
+    # and one unreachable node aborted the whole preview.
+    cmd: topf apply --dry-run {{if .node}}--nodes-filter {{.node}}{{end}} {{.CLI_ARGS}}
     preconditions: [*topf, *sops, *config]
 
   apply:

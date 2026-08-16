@@ -4,13 +4,18 @@ kind: NetworkAttachmentDefinition
 metadata:
   name: iot-vlan
 spec:
+  # master was eth0.50 until 2026-08-16. The Talos multi-doc network migration
+  # builds the VLAN on the LinkAliasConfig alias (talos/all/20-link-alias.yaml.tpl,
+  # alias ethSel0), so the interface is ethSel0.50 and eth0.50 no longer exists.
+  # Verified on foyer-hp-800g3. Nodes that have not had topf applied yet still
+  # present eth0.50, so IoT attachment stays broken on those until they migrate.
   config: |
     {
       "cniVersion": "0.3.1",
       "plugins": [
         {
           "type": "macvlan",
-          "master": "eth0.50",
+          "master": "ethSel0.50",
           "mode": "bridge",
           "ipam": {
             "type": "whereabouts",
