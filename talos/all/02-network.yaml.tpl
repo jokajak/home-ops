@@ -7,8 +7,4 @@ machine:
       - {{ . }}
       {{- end }}
   certSANs:
-    - {{ .Data.vip }}
-    # KubePrism
-    - 127.0.0.1
-    - {{ .Data.vip }}
-    - {{ .Data.apiDNS }}
+    - 127.0.0.1 # KubePrism

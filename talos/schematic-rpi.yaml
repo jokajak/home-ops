@@ -1,18 +1,4 @@
 # Image factory schematic for the Raspberry Pi 4 nodes.
-#
-# The overlay is the load-bearing part: an arm64 Pi will not boot an image built
-# without siderolabs/sbc-raspberrypi. Both basement-rpi4-chocolate and
-# basement-rpi4-peach reference this file from talos/topf.yaml; peach was added
-# 2026-08-16, having previously inherited the x86 schematic (docs/ISSUES.md #9).
-#
-# Trimmed 2026-08-10: siderolabs/nut-client was declared here but nothing in the
-# repo or the cluster uses it — there is no NUT server, no upsd, no UPS
-# monitoring of any kind. Dropping it also means peach can safely share this file
-# with chocolate. See docs/ISSUES.md #11.
-#
-# No extraKernelArgs here, deliberately: net.ifnames=0 is not needed because
-# interface selection on these nodes matches on bus path, not interface name
-# (all/20-link-alias.yaml.tpl).
 overlay:
   image: siderolabs/sbc-raspberrypi
   name: rpi_generic
