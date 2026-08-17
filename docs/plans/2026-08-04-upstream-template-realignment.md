@@ -55,20 +55,25 @@ The de-templating pass (2026-08-04), which changed **zero** Kubernetes objects:
 
 ## Phases
 
-### 1. CI → `flate`
+### 1. CI → `flate` — **done 2026-08-17**
 
-Replace `kubeconform.yaml` + `flux-diff.yaml` + `flux-ks-paths.yaml` with
-[`home-operations/flate`](https://github.com/home-operations/flate), which upstream now runs as a
-single `flate test all -p ./kubernetes/flux/cluster` step. It covers schema validation and
-Kustomization/HelmRelease rendering in one pass.
+`.github/workflows/flate.yaml` now runs `flate test all`, adapted from upstream's workflow with
+the action SHAs it pins. `kubeconform.yaml`, `flux-diff.yaml` and `scripts/kubeconform.sh` are
+deleted; `task k8s:kubeconform` became `task k8s:flate` (aliases kept), so local validation and
+CI run the identical command.
 
-- **Blast radius:** CI only. No cluster contact, fully reversible.
-- **Snag:** `flate` wants a single root path to walk. This repo's root is
-  `kubernetes/flux/config` + `kubernetes/flux/apps.yaml`, not upstream's
-  `kubernetes/flux/cluster`. Either point `flate` at the existing layout or sequence this after
-  phase 2. `scripts/validate-ks-paths.sh` and `scripts/detect-hidden-unicode.sh` are local
-  additions with no upstream equivalent — keep them regardless.
-- **Verdict: recommended.** Best value-to-risk ratio here; do it first.
+- **The path snag resolved in our favour.** `flate test all -p ./kubernetes/flux/config` walks
+  the whole tree — 156 checks pass. `config/cluster.yaml` declares the GitRepository plus a
+  Kustomization whose path is `./kubernetes/flux`, which is what reaches `apps.yaml`,
+  `repositories/` and `vars/`. No restructuring was needed and phase 2 is not a prerequisite.
+- **`flux-ks-paths.yaml` was kept**, contrary to the original wording above. It runs
+  `scripts/validate-ks-paths.sh`, which checks every Flux Kustomization `spec.path` resolves to
+  a real directory — a local addition with no upstream equivalent, as this section itself noted.
+- **Side effect:** retiring `kubeconform.yaml` removed the pinned `FLUX_VERSION` and the
+  `flux envsubst --strict` breakage it carried, closing what was ISSUES #7 outright.
+- **One caveat:** the workflow pins the flate action at v0.4.12 (upstream's pin) while local
+  runs used 0.5.0, so local green is not a strict guarantee of CI green until they converge.
+  Renovate now tracks `.github/workflows/**`, so the pin will surface as a PR.
 
 ### 2. Flux control plane → flux-operator
 

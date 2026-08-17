@@ -46,14 +46,14 @@ sourced from `cluster-settings` and `cluster-secrets`.
 Before pushing, run the same checks CI runs:
 
 ```sh
-task k8s:kubeconform        # schema-validate every manifest
+task k8s:flate              # validate manifests + rendering (same as CI)
 yamllint .
 pre-commit run --all-files
 ```
 
-To preview what a change would do to the cluster, run
-[flux-local](https://github.com/allenporter/flux-local) the way
-[`.github/workflows/flux-diff.yaml`](./.github/workflows/flux-diff.yaml) does.
+`task k8s:flate` renders every Kustomization and HelmRelease as well as validating schemas, so
+it previews rendering problems before they reach the cluster. It is the same command CI runs in
+[`.github/workflows/flate.yaml`](./.github/workflows/flate.yaml).
 
 Day-2 helpers: `task flux:reconcile`, `task flux:apply path=<ns>/<app>`, `task k8s:resources`,
 `task talos:*`. Dependency updates arrive as [Renovate](https://www.mend.io/free-developer-tools/renovate/)

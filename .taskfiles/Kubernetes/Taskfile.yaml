@@ -3,7 +3,7 @@
 version: "3"
 
 vars:
-  KUBECONFORM_SCRIPT: "{{.SCRIPTS_DIR}}/kubeconform.sh"
+  FLUX_ROOT: "{{.KUBERNETES_DIR}}/flux/config"
 
 tasks:
 
@@ -24,11 +24,15 @@ tasks:
         ingresses
         pods
 
-  kubeconform:
-    desc: Validate Kubernetes manifests with kubeconform
-    cmd: |
-      if [ -d "{{.KUBERNETES_DIR}}/flux" ]; then
-          bash {{.KUBECONFORM_SCRIPT}} {{.KUBERNETES_DIR}}
-      fi
+  # Replaces the former kubeconform task. flate covers schema validation and
+  # Kustomization/HelmRelease rendering in one pass, and is what CI now runs
+  # (.github/workflows/flate.yaml), so this matches CI exactly. FLUX_ROOT is
+  # kubernetes/flux/config rather than upstream's kubernetes/flux/cluster -
+  # see the comment in that workflow.
+  flate:
+    aliases: ["kubeconform", "validate"]
+    desc: Validate manifests and rendering with flate (same as CI)
+    cmd: flate test all -p {{.FLUX_ROOT}} {{.CLI_ARGS}}
     preconditions:
-      - { msg: "Missing kubeconform script", sh: "test -f {{.KUBECONFORM_SCRIPT}}" }
+      - { msg: "Missing flate binary", sh: "command -v flate" }
+      - { msg: "Missing flux root {{.FLUX_ROOT}}", sh: "test -d {{.FLUX_ROOT}}" }

@@ -76,7 +76,7 @@
       commitMessageSuffix: '(talos config)',
     },
     {
-      // Note: workflow-only PRs are not covered by kubeconform/flux-diff/flux-ks-paths, which are
+      // Note: workflow-only PRs are not covered by flate/flux-ks-paths, which are
       // all path-filtered to kubernetes/**. The effective gate here is the Labeler workflow
       // (pull_request_target, no path filter). This buys an audit trail and a merge that waits on
       // whatever checks exist; it is not deep validation of the action bump itself.
@@ -97,7 +97,7 @@
       ],
     },
     {
-      // Digest bumps touch kubernetes/**, so kubeconform, flux-diff and flux-ks-paths all run —
+      // Digest bumps touch kubernetes/**, so flate and flux-ks-paths both run —
       // this is a real gate, unlike the github-actions rule above.
       description: 'Auto merge container digests once CI passes',
       matchDatasources: [

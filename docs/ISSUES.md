@@ -12,7 +12,6 @@ Numbers are stable and never reused; resolved entries are deleted, leaving gaps.
 | 2 | Grafana dashboards may still reference removed CNPG metric names | observability | Low | Verify |
 | 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
-| 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
 | 14 | `basement-dell-sff` is dead and not yet replaced | talos | Med | Open |
 
 ---
@@ -42,25 +41,6 @@ beware a stale `KUBECONFIG` env pointing at the repo file.
 The restored Immich DB is from the Feb 8 dump; any assets added 2026-02-08 → 2026-06-14
 aren't in the metadata. Image **files** are safe on NFS. If any were added in that window, a
 library re-scan/re-import can recover them. (Likely none — Immich was broken for most of it.)
-
-## 7. Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x — Low (verify)
-
-`.github/workflows/kubeconform.yaml` pins `FLUX_VERSION: "2.8.8"`, and `scripts/kubeconform.sh`
-pipes every kustomization through `flux envsubst --strict`. Observed 2026-08-04:
-
-- flux **2.8.8** → `bash scripts/kubeconform.sh ./kubernetes` exits **0**.
-- flux **2.9.3** → fails at `kubernetes/apps/networking/nginx/certificates/` with
-  `✗ variable not set (strict mode): "SECRET_DOMAIN"`.
-
-`--strict` in 2.9.x appears to error on variables the workflow never supplies (they come from
-`cluster-secrets` at reconcile time, not in CI). Renovate manages `FLUX_VERSION` via the custom
-manager in `renovate.json5`, so a routine bump would turn CI red for a reason unrelated to the
-PR's contents.
-
-**Next steps:** confirm the behaviour change against flux 2.9.x release notes, then either
-supply placeholder values in the workflow, drop `--strict`, or move to `flate` (see
-[the realignment roadmap](./plans/2026-08-04-upstream-template-realignment.md), phase 1) which
-handles substitution itself.
 
 ## 14. `basement-dell-sff` is dead and not yet replaced — Med
 

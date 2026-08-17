@@ -96,10 +96,10 @@ sensitive — same posture as secrets.
   and no cluster access**. I cannot run `kubectl`, `flux`, or `talosctl` against the live
   cluster, and I should not assume I can observe runtime state. Changes take effect only after
   the owner reconciles Flux from the pushed branch.
-- Validation I *can* do locally: schema/lint checks the way CI does them — `kubeconform`
-  (see `.github/workflows/kubeconform.yaml`), `flux-local` diffs
-  (`.github/workflows/flux-diff.yaml`), `yamllint`, and the `pre-commit` hooks. Prefer these
-  over claiming runtime verification.
+- Validation I *can* do locally: schema/lint checks the way CI does them — `flate`
+  (see `.github/workflows/flate.yaml`), which covers schema validation and
+  Kustomization/HelmRelease rendering in one pass, plus `yamllint` and the `pre-commit`
+  hooks. Prefer these over claiming runtime verification.
 - Outbound network access depends on the environment's network policy; don't assume arbitrary
   egress.
 
@@ -111,11 +111,11 @@ cluster-touching tasks (`flux:*`, `talos:*`, anything needing `KUBECONFIG`) **wo
 container** — no kubeconfig, no cluster. The ones below are the locally useful, read-only/validation
 ones that mirror CI.
 
-- **Validate manifests (kubeconform)** — `task k8s:kubeconform` (wraps `scripts/kubeconform.sh`,
-  same as `.github/workflows/kubeconform.yaml`). Run this after editing any HelmRelease/Kustomization.
-- **Flux diff (what would change on the cluster)** — CI uses the `ghcr.io/allenporter/flux-local`
-  image to `diff helmrelease` and `diff kustomization` (see `.github/workflows/flux-diff.yaml`); run
-  `flux-local` locally the same way to preview a change before pushing.
+- **Validate manifests and rendering** — `task k8s:flate` (aliases: `kubeconform`, `validate`).
+  Runs `flate test all -p kubernetes/flux/config`, exactly what CI runs in
+  `.github/workflows/flate.yaml`. This replaced both the kubeconform and flux-local jobs: it
+  schema-validates every manifest *and* renders Kustomizations/HelmReleases in one pass. Run it
+  after editing any HelmRelease/Kustomization.
 - **Lint** — `yamllint .` (config in `.yamllint.yaml`) and `pre-commit run --all-files`
   (`.pre-commit-config.yaml`: trailing whitespace, EOF, merge-conflict, JSON checks).
 - **Encrypt a SOPS file** — `task sops:encrypt` re-encrypts any unencrypted `*.sops.*` file under
