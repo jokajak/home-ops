@@ -82,33 +82,41 @@ Editing a schematic file changes the node's installer image and therefore needs
 a Talos upgrade, not just an apply. A brand-new schematic the factory has never
 seen must be registered once with `--submit-to-factory`.
 
-> **None of these are what the fleet is running.** Every node currently reports
-> schematic `376567988…`, which is `customization: {}` — no system extensions at
-> all. The declared schematics take effect at the next upgrade, which will
-> therefore not be a no-op. See [ISSUES #11](../docs/ISSUES.md).
+> **Declared, not yet installed.** `install.image` is only read at install or
+> upgrade time, and a Talos upgrade does not rewrite it — so `intel-ucode` lands
+> on each x86 node at its *next* upgrade, not on apply. Only
+> `basement-rpi4-chocolate`, reinstalled from scratch, runs its declared
+> schematic today. See [ISSUES #11](../docs/ISSUES.md).
 
 The Raspberry Pi schematic omits the `net.ifnames=0` kernel argument. Interface
 selection still works because `all/20-link-alias.yaml.tpl` matches on bus path
-rather than interface name.
-
-## Reconciled against the live cluster — 2026-08-10
-
-The rendered configs were diffed per node against `talosctl get machineconfig
-v1alpha1`. Install disk, kubelet arguments/mounts/`nodeIP`, the containerd
-`files` entry, time servers, sysctls, KubePrism, hostDNS, Talos API access, etcd
-arguments, cluster networking and the `admissionControl` deletion all match
-byte-for-byte. What does **not** match is recorded in
-[ISSUES #9–#12](../docs/ISSUES.md); the short version:
-
-- Live `install.image` is pinned to `v1.9.5` while the nodes run v1.13.4 — the
-  running config predates this repo's patches by several Talos releases.
-- `basement-rpi4-peach` is aimed at an x86 schematic with no Pi overlay
-  (**#9** — fixing it needs the age key).
-- `topf apply` moves networking out of `machine.network.interfaces` into
-  separate `LinkConfig`/`VLANConfig`/`Layer2VIPConfig` documents. Stage it on one
-  worker (**#12**).
+rather than interface name — and that glob is per-node (`.Node.Data.busPath`),
+so it must match the real hardware. A Pi 4's onboard NIC is `fd580000.ethernet`;
+an x86 NIC matches `0*`. **Getting this wrong leaves the node with no network
+after apply**, because the alias binds nothing and `LinkConfig` has no interface
+to address.
 
 [rpi]: https://www.talos.dev/v1.8/talos-guides/install/single-board-computers/rpi_generic/
+
+## Applied to the whole fleet — 2026-08-16
+
+All six nodes now run this configuration. The apply is a **reboot** wherever
+`install.*` changes, and it moves networking out of `machine.network.interfaces`
+into separate `HostnameConfig`/`LinkAliasConfig`/`LinkConfig`/`VLANConfig`
+documents. Verified afterwards on each node: static address held, `ethSel0` and
+`ethSel0.50` present, default route via the gateway.
+
+Two things worth knowing before the next apply:
+
+- **`Ready` is not sufficient verification.** Cilium can take several minutes to
+  reinstall `auto-direct-node-routes` after a reboot, during which the node looks
+  healthy but its pods are unreachable from the rest of the cluster. Check that
+  each node has one peer route per other node:
+  `kubectl exec -n kube-system <cilium-pod> -c cilium-agent -- ip route | grep -c '^10.42..*via'`
+- **The alias rename breaks anything referencing the old interface name.** The
+  multus `iot-vlan` NetworkAttachmentDefinition had `master: eth0.50`, which no
+  longer exists; it is now `ethSel0.50`. Pods attaching to that NAD fail sandbox
+  creation until it matches.
 
 ## Versions are declarative-only
 
@@ -117,13 +125,10 @@ would write. Actual upgrades are driven in-cluster by
 [tuppr](../kubernetes/apps/system-upgrade/tuppr/), so these fields can drift
 behind the running fleet. Don't read them as the source of truth.
 
-As of 2026-08-10 they are **not** stale: `talosVersion: v1.13.4` matches all
-seven nodes, and `kubernetesVersion: v1.35.6` matches five of seven —
-`basement-dell-sff` and `foyer-dell-3040` still trail at v1.34.1. tuppr targets
-v1.13.8/v1.36.3 but has not reached them: its `TalosUpgrade` sits in
-`MaintenanceWindow` and its `KubernetesUpgrade` is stuck in `HealthChecking`,
-because two nodes are `NotReady`. Applying this branch is therefore not a
-Kubernetes downgrade.
+As of 2026-08-16 they match: `talosVersion: v1.13.4` and
+`kubernetesVersion: v1.35.6` on all six nodes. Applying `topf` was in fact what
+finally moved `foyer-dell-3040` off v1.34.1 — tuppr's `KubernetesUpgrade` had
+been wedged for 49 days, so the kubelet image came from `topf.yaml` instead.
 
 [plan]: ../docs/plans/2026-08-10-talos-consolidation-and-topf.md
 [sops-partial]: ../.sops.yaml
