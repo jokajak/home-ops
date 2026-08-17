@@ -11,6 +11,14 @@ env:
   KUBERNETES_DIR: ./kubernetes
   KUBECONFORM_VERSION: "0.8.0"
   KUSTOMIZE_VERSION: "5.8.1"
+  # Pinned deliberately: flux 2.9.x changed `flux envsubst --strict` so it errors
+  # on variables this workflow never supplies (they come from cluster-secrets at
+  # reconcile time), failing scripts/kubeconform.sh at
+  # kubernetes/apps/networking/nginx/certificates/. Annotated so Renovate raises a
+  # visible PR rather than leaving the pin to drift silently — in-cluster flux is
+  # already on 2.9.x. Do not merge the bump until --strict is dealt with: supply
+  # placeholders here, drop --strict, or move to flate. See docs/ISSUES.md #7.
+  # renovate: datasource=github-releases depName=fluxcd/flux2
   FLUX_VERSION: "2.8.8"
 
 jobs:

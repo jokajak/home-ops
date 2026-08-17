@@ -375,6 +375,9 @@
         // kubernetesVersion but was never in scope, so those two fields silently
         // stopped tracking upstream while tuppr (under kubernetes/) kept moving.
         '/(^|/)talos/.+\\.ya?ml$/',
+        // Workflow env pins (FLUX_VERSION et al). The github-actions manager only
+        // handles `uses:` refs, so without this these versions track nothing.
+        '/(^|/)\\.github/workflows/.+\\.ya?ml$/',
       ],
       matchStrings: [
         '(?m:# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+?: "?(?<currentValue>\\S+?)"?$)',
