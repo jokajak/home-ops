@@ -60,6 +60,22 @@
   commitMessageSuffix: '',
   packageRules: [
     {
+      // ghcr.io/siderolabs/installer is referenced twice with different meanings:
+      // tuppr's TalosUpgrade plan (kubernetes/**) is the version the running fleet
+      // is rolled to, while talos/topf.yaml is only what a fresh install or
+      // `topf apply` writes. Without this they land in one PR, so approving a
+      // declarative bump would also approve a rolling upgrade of every node.
+      // additionalBranchPrefix forces a distinct branch, hence a distinct PR.
+      description: [
+        'Keep talos/ version bumps in their own PR, separate from tuppr upgrade plans',
+      ],
+      matchFileNames: [
+        'talos/**',
+      ],
+      additionalBranchPrefix: 'talos-',
+      commitMessageSuffix: '(talos config)',
+    },
+    {
       // Note: workflow-only PRs are not covered by kubeconform/flux-diff/flux-ks-paths, which are
       // all path-filtered to kubernetes/**. The effective gate here is the Labeler workflow
       // (pull_request_target, no path filter). This buys an audit trail and a merge that waits on
@@ -355,6 +371,10 @@
       managerFilePatterns: [
         '/(^|/).taskfiles/.+\\.ya?ml$/',
         '/(^|/)kubernetes/.+\\.ya?ml$/',
+        // talos/topf.yaml carries `# renovate:` annotations for talosVersion and
+        // kubernetesVersion but was never in scope, so those two fields silently
+        // stopped tracking upstream while tuppr (under kubernetes/) kept moving.
+        '/(^|/)talos/.+\\.ya?ml$/',
       ],
       matchStrings: [
         '(?m:# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)( repository=(?<registryUrl>\\S+))?\\n.+?: "?(?<currentValue>\\S+?)"?$)',
