@@ -9,41 +9,13 @@ Numbers are stable and never reused; resolved entries are deleted, leaving gaps.
 
 | # | Issue | Area | Severity | Status |
 |---|-------|------|----------|--------|
-| 1 | Gatus reaches VictoriaMetrics, but only 1 of 17 endpoints produces series | observability | Med | Open |
 | 2 | Grafana dashboards may still reference removed CNPG metric names | observability | Low | Verify |
 | 4 | Repo-root `kubeconfig` client cert expired | tooling | Low | Open |
 | 5 | Immich asset metadata gap Feb 8 → Jun 14 | immich | Low | Open |
 | 7 | Kubeconform CI breaks if `FLUX_VERSION` is bumped to 2.9.x | tooling | Low | Verify |
-| 11 | Declared system extensions do not land until each node's next Talos upgrade | talos | Low | Open |
 | 14 | `basement-dell-sff` is dead and not yet replaced | talos | Med | Open |
-| 15 | `foyer-hp-800g3` and `basement-lenovo-m910q` cannot ARP their peers | network | **High** | Open |
 
 ---
-
-## 1. Gatus reaches VictoriaMetrics, but only 1 of 17 endpoints produces series — Med
-
-The original question here was whether gatus metrics reach VM at all. **They do** — verified
-2026-08-16, `count(gatus_results_total)` returns 1 (it previously returned empty). Ingestion,
-the vmservicescrape selector and the scrape path are all fine.
-
-That answer exposed a sharper problem. Gatus is configured by 17 ConfigMaps labelled
-`gatus.io/enabled=true`, but VM holds series for exactly **one** endpoint:
-
-```console
-$ count(count by (key) (gatus_results_total))   # => 1
-$ kubectl get cm -A -l gatus.io/enabled=true | wc -l   # => 17
-```
-
-So roughly sixteen monitored endpoints are producing no uptime data, and any alerting built on
-these series would be silently blind for all of them.
-
-- **Likely causes:** the k8s-sidecar isn't loading the ConfigMaps into the gatus pod, or gatus is
-  loading them but the endpoints fail before recording a result. Check the sidecar's logs and the
-  merged config inside the pod before touching VM.
-- **Next steps:** confirm how many endpoints gatus itself reports (`/api/v1/endpoints/statuses`)
-  to split "not loaded" from "loaded but not scraped", then build dashboards/VMAlert rules once
-  coverage is real. Note `nodes-configmap.yaml` is still not wired into the gatus
-  `kustomization.yaml`, so node checks have never run.
 
 ## 2. Grafana dashboards may still reference removed CNPG metric names — Low (verify)
 
@@ -89,19 +61,6 @@ PR's contents.
 supply placeholder values in the workflow, drop `--strict`, or move to `flate` (see
 [the realignment roadmap](./plans/2026-08-04-upstream-template-realignment.md), phase 1) which
 handles substitution itself.
-
-## 11. Declared extensions do not land until each node's next Talos upgrade — Low
-
-Every node now carries the correct installer reference — `9e8cc193…` on the five x86 nodes,
-`ee21ef4a…` on both Pis — but `install.image` is only consulted at install/upgrade time. Talos
-upgrades do not rewrite it either, which is why the fleet ran the empty schematic
-`376567988…` for so long: each upgrade carried forward whatever was already installed.
-
-So `intel-ucode` is declared but not yet installed anywhere. It lands on each x86 node at its
-next Talos upgrade (tuppr targets v1.13.8), not before. Nothing depends on it today, hence Low.
-
-`basement-rpi4-chocolate` was reinstalled from scratch on 2026-08-16, so it is the one node
-already running its declared schematic.
 
 ## 14. `basement-dell-sff` is dead and not yet replaced — Med
 
@@ -201,40 +160,6 @@ had been stalled 12 days and resumed on their own once a target pod existed.
 
 ---
 
-## 15. `foyer-hp-800g3` and `basement-lenovo-m910q` cannot ARP their peers — High
-
-All six nodes share one `/24` and should be L2-adjacent, but two cannot resolve their peers.
-Cilium's `auto-direct-node-routes` needs L2 adjacency to install a route to each peer's pod
-CIDR, so those two end up with incomplete or empty routing tables and pods on them become
-unreachable from the rest of the cluster.
-
-Measured 2026-08-16, after every node had been migrated to the new baseline:
-
-| Node | ARP entries for peers | Cilium peer routes |
-|---|---|---|
-| `basement-rpi4-chocolate` | 5 | 5 |
-| `basement-rpi4-peach` | 5 | 5 |
-| `foyer-dell-3040` | 5 | 5 |
-| `foyer-dell-mff` | 5 | 5 |
-| `foyer-hp-800g3` | 3 | 0–5, **flapping** |
-| `basement-lenovo-m910q` | 0 | 0 |
-
-**This is not a Kubernetes, Cilium or Talos fault.** It survived a complete machine-config
-replacement on all six nodes, and the two affected are the two Intel SFF boxes while the two
-Dells and two Pis are fine — which points at their switch ports rather than the hosts.
-
-Downstream effects seen while it was active: pods on `foyer-hp-800g3` unreachable from other
-nodes, the CNPG barman plugin (which ran there) failing every backup with
-`rpc error: exit status 1`, `home-assistant-db` unable to replicate, and `kubectl logs`/`exec`
-intermittently returning `pod does not exist`. Each of those looked like an application fault
-and was misdiagnosed as one before the common cause was found.
-
-**Next step:** check the switch ports for those two nodes — VLAN assignment, port isolation /
-private VLAN, or whether they sit on a different switch whose uplink routes rather than bridges.
-
-> `basement-lenovo-m910q` is a **control-plane** node with zero peer routes, so etcd peer
-> traffic may be affected even though the API server answers normally.
-
 ## Recently resolved — 2026-06-14
 
 - **Immich database recovered**: restored the Feb 8 dump, migrated vector search
@@ -249,7 +174,7 @@ private VLAN, or whether they sit on a different switch whose uplink routes rath
 - **Gatus storage decided = in-memory**: SQLite-on-PVC was attempted but reverted — the rollout
   couldn't converge within Flux's helm timeout (Recreate + `WaitForFirstConsumer` PVC + Stakater
   reloader churn), which wedged the release in `pending-upgrade`; cleared the stuck revision and
-  reverted to memory. (VM ingestion of its metrics is the open item #1.)
+  reverted to memory. (VM ingestion of its metrics was confirmed working 2026-08-17.)
 - **Postgres cluster kept**: Authentik now consumes it, so the decommission question is closed.
 
 See `docs/plans/2026-06-14-cnpg-barman-cloud-plugin-migration.md` and the immich restore

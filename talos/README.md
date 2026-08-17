@@ -83,10 +83,12 @@ a Talos upgrade, not just an apply. A brand-new schematic the factory has never
 seen must be registered once with `--submit-to-factory`.
 
 > **Declared, not yet installed.** `install.image` is only read at install or
-> upgrade time, and a Talos upgrade does not rewrite it — so `intel-ucode` lands
-> on each x86 node at its *next* upgrade, not on apply. Only
-> `basement-rpi4-chocolate`, reinstalled from scratch, runs its declared
-> schematic today. See [ISSUES #11](../docs/ISSUES.md).
+> upgrade time, and a Talos upgrade does not rewrite it, so changing a schematic
+> here does nothing until a node is next upgraded or reinstalled. As of
+> 2026-08-17 all six nodes still run the empty schematic `376567988…` while
+> declaring `9e8cc193…` / `ee21ef4a…`; `intel-ucode` and the Pi overlay land at
+> the next upgrade. This is also why the fleet ran the empty schematic for so
+> long — each upgrade carried forward whatever was already installed.
 
 The Raspberry Pi schematic omits the `net.ifnames=0` kernel argument. Interface
 selection still works because `all/20-link-alias.yaml.tpl` matches on bus path
