@@ -75,7 +75,15 @@ tasks:
   talosconfig:
     desc: Generate talosconfig from the secrets bundle
     dir: "{{.TALOS_DIR}}"
-    cmd: topf talosconfig
+    # `topf talosconfig` writes the config to STDOUT despite its help text
+    # saying "generate and save"; it also leaves an empty 25-byte stub at
+    # $TALOSCONFIG. Without this redirect every talosctl call fails with
+    # "talos config file is empty", which is not an obvious symptom.
+    # Write to a temp file first so a failed run cannot truncate a good config.
+    cmd: >-
+      topf talosconfig > talosconfig.tmp
+      && mv talosconfig.tmp talosconfig
+      && chmod 600 talosconfig
     preconditions:
       - *topf
       - *sops

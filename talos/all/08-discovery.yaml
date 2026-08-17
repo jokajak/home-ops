@@ -1,8 +1,20 @@
-# Enable cluster discovery
+# Enable cluster discovery.
+#
+# The Kubernetes registry stays DISABLED. It makes every node `list` all Node
+# objects using its own kubelet credentials, which the NodeRestriction authorizer
+# refuses by design ("node X cannot read all nodes, only its own Node object").
+# Talos retries on a backoff, so each node emits a steady few-per-minute stream
+# of failed reconciles that never succeeds. The service registry is the supported
+# mechanism and is sufficient on its own.
+#
+# The repo declared `false` from the talhelper era while every live node had it
+# `true`; docs/ISSUES.md #10 recorded that mismatch and chose to keep the repo's
+# value. That was the wrong call - the live setting was correct. Applied and
+# reverted 2026-08-16.
 cluster:
   discovery:
     registries:
       kubernetes:
-        disabled: false
+        disabled: true
       service:
         disabled: false
