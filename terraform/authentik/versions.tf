@@ -16,7 +16,7 @@ terraform {
     # renovate bump this ahead of the chart.
     authentik = {
       source  = "goauthentik/authentik"
-      version = "2026.5.0"
+      version = "2026.5.1"
     }
   }
 }
