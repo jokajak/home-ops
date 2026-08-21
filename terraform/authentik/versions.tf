@@ -7,7 +7,7 @@ terraform {
     }
     bitwarden = {
       source  = "maxlaverse/bitwarden"
-      version = "0.17.6"
+      version = "0.18.0"
     }
     # Keep in lockstep with the Authentik SERVER line (Helm chart in
     # kubernetes/apps/security/authentik, currently 2026.5.3). A provider that is newer than
