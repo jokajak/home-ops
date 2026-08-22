@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrepository-source-v1beta2.json
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: forgejo
+  namespace: productivity
+spec:
+  interval: 1h
+  # The chart is published only to Forgejo's own OCI registry — the classic
+  # index.yaml at /api/packages/forgejo-helm/helm is empty.
+  type: oci
+  url: oci://code.forgejo.org/forgejo-helm

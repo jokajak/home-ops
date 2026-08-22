@@ -1,0 +1,194 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/helmrelease-helm-v2.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: forgejo
+  namespace: productivity
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: forgejo
+      version: 17.1.5
+      sourceRef:
+        kind: HelmRepository
+        name: forgejo
+        namespace: productivity
+      interval: 30m
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    image:
+      # Explicitly `-rootless`, per the chart README: renovate otherwise tracks
+      # the rootful tag while `image.rootless` silently pulls a different image.
+      tag: 15.0.7-rootless
+      rootless: true
+
+    # Single writer against the NFS repository tree and the bleve indexers.
+    # (`strategy.type` already defaults to Recreate in this chart.)
+    replicaCount: 1
+
+    podSecurityContext:
+      fsGroup: 1000
+    containerSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 2Gi
+
+    service:
+      http:
+        type: ClusterIP
+        port: 3000
+      ssh:
+        # Git-over-SSH cannot go through the HTTP ingress, so it gets its own
+        # cilium L2 address. `git.${SECRET_DOMAIN}` already points at the nginx
+        # controller, hence the separate `git-ssh` name — SSH_DOMAIN below must
+        # match it or the clone URLs Forgejo advertises will not resolve.
+        type: LoadBalancer
+        port: 22
+        externalTrafficPolicy: Cluster
+        loadBalancerIP: ${LB_FORGEJO_CIDR_V4:=192.168.1.1}
+        annotations:
+          external-dns.alpha.kubernetes.io/hostname: git-ssh.${SECRET_DOMAIN:=internal}
+
+    ingress:
+      enabled: true
+      className: internal
+      annotations:
+        # git pushes over HTTP are large and streamed; do not buffer them
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      hosts:
+        - host: &host git.${SECRET_DOMAIN:=internal}
+          paths:
+            - path: /
+              pathType: Prefix
+              port: http
+      tls:
+        - hosts:
+            - *host
+          secretName: wildcard-cert-tls
+
+    persistence:
+      enabled: true
+      # the PV/PVC pair is managed in pvc.yaml, not by the chart
+      create: false
+      mount: true
+      claimName: forgejo
+
+    # `gitea:` is the chart's inherited top-level key — Forgejo forked the Gitea
+    # chart and kept the schema. It is not a stray copy-paste.
+    gitea:
+      admin:
+        # break-glass local account; Authentik is the normal path in
+        existingSecret: forgejo-admin-secret
+        email: "admin@${SECRET_DOMAIN:=internal}"
+        # do not fight the user if they rotate the password in the UI
+        passwordMode: initialOnlyNoReset
+
+      metrics:
+        enabled: true
+        serviceMonitor:
+          enabled: true
+
+      oauth:
+        # The chart runs `forgejo admin auth add-oauth` with these on startup.
+        # `name` becomes the callback path segment, so it must match the
+        # redirect URI registered in terraform/authentik.
+        - name: authentik
+          provider: openidConnect
+          existingSecret: forgejo-oidc-secret
+          autoDiscoverUrl: https://auth.${SECRET_DOMAIN:=internal}/application/o/forgejo-provider/.well-known/openid-configuration
+
+      additionalConfigFromEnvs:
+        # env-to-ini: FORGEJO__<section>__<KEY> wins over gitea.config, which
+        # keeps the CNPG-minted credentials out of the rendered app.ini
+        - name: FORGEJO__DATABASE__USER
+          valueFrom:
+            secretKeyRef:
+              name: &dbSecret forgejo-database-app
+              key: username
+        - name: FORGEJO__DATABASE__PASSWD
+          valueFrom:
+            secretKeyRef:
+              name: *dbSecret
+              key: password
+
+      config:
+        APP_NAME: Forgejo
+        RUN_MODE: prod
+
+        server:
+          DOMAIN: *host
+          ROOT_URL: https://git.${SECRET_DOMAIN:=internal}/
+          # advertised in clone URLs; resolves to the SSH LoadBalancer above
+          SSH_DOMAIN: git-ssh.${SECRET_DOMAIN:=internal}
+          SSH_PORT: 22
+          # rootless images run the built-in Go SSH server unprivileged
+          START_SSH_SERVER: true
+          SSH_LISTEN_PORT: 2222
+          LFS_START_SERVER: true
+
+        database:
+          DB_TYPE: postgres
+          # USER and PASSWD come from additionalConfigFromEnvs above
+          HOST: forgejo-database-rw.productivity.svc.cluster.local:5432
+          NAME: forgejo
+          SSL_MODE: require
+
+        # shared dragonfly; index 0 is authentik, 1 is immich, 2 is paperless
+        cache:
+          ADAPTER: redis
+          HOST: redis://dragonfly.database.svc.cluster.local.:6379/3
+        session:
+          PROVIDER: redis
+          PROVIDER_CONFIG: redis://dragonfly.database.svc.cluster.local.:6379/4
+        queue:
+          TYPE: redis
+          CONN_STR: redis://dragonfly.database.svc.cluster.local.:6379/5
+
+        service:
+          # accounts are created only by completing the Authentik round-trip,
+          # so DISABLE_REGISTRATION stays false — setting it would block that too
+          DISABLE_REGISTRATION: false
+          ALLOW_ONLY_EXTERNAL_REGISTRATION: true
+          SHOW_REGISTRATION_BUTTON: false
+          REQUIRE_SIGNIN_VIEW: true
+          # no SMTP anywhere in this cluster; fail closed rather than queue mail
+          ENABLE_NOTIFY_MAIL: false
+
+        oauth2_client:
+          ENABLE_AUTO_REGISTRATION: true
+          ACCOUNT_LINKING: auto
+          UPDATE_AVATAR: true
+
+        repository:
+          DEFAULT_BRANCH: main
+          DEFAULT_PRIVATE: private
+
+        actions:
+          # Forgejo Actions needs a forgejo-runner deployment that does not exist
+          # yet; off by default so enabling it is deliberate
+          ENABLED: false
+
+    # the chart's helm-test pod pulls busybox:latest, which nothing else here does
+    test:
+      enabled: false

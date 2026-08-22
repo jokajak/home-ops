@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: forgejo-database
+  namespace: productivity
+spec:
+  instances: 2
+  # Stock CNPG image — Forgejo needs no Postgres extensions beyond the defaults,
+  # so there is nothing to load in postInitApplicationSQL.
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.0-10
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: openebs-hostpath
+  enableSuperuserAccess: true
+  nodeMaintenanceWindow:
+    inProgress: false
+    reusePVC: true
+  resources:
+    requests:
+      cpu: 100m
+    limits:
+      memory: 1Gi
+  monitoring:
+    enablePodMonitor: true
+    # Ref: https://github.com/cloudnative-pg/cloudnative-pg/issues/2501
+    podMonitorMetricRelabelings:
+      - {
+          sourceLabels: ["cluster"],
+          targetLabel: cnpg_cluster,
+          action: replace,
+        }
+      - { regex: cluster, action: labeldrop }
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: forgejo-objectstore
+        serverName: forgejo-v1
+  # No managed.roles block: CNPG then auto-generates the forgejo-database-app
+  # secret (username/password/host/port/dbname/uri) for the bootstrap owner,
+  # so no externally-supplied DB credential is needed.
+  bootstrap:
+    initdb:
+      database: forgejo
+      owner: forgejo

@@ -343,3 +343,36 @@ resource "bitwarden_item_login" "volsync_restic" {
     text = "true"
   }
 }
+
+################################################################################
+# forgejo credentials
+################################################################################
+# Bootstraps the local Forgejo site administrator — the break-glass login when
+# Authentik is unavailable. Postgres credentials are NOT here: the CNPG cluster
+# mints its own `forgejo-database-app` secret in the cluster. The OIDC client
+# credentials are NOT here either: terraform/authentik's oidc_creds module
+# creates them as `authentik-client-forgejo`.
+resource "random_password" "forgejo_admin_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "forgejo" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "forgejo credentials"
+  username = "forgejo_admin"
+  password = random_password.forgejo_admin_password.result
+
+  uri {
+    value = "https://git.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+}
