@@ -22,6 +22,7 @@ data:
     LB_EMQX_CIDR_V4: ENC[AES256_GCM,data:irDsQFzPJMlB8nq4eds=,iv:trTp/3EDJoYKlceLrshGejMT8ZORK52C5ALNV0E4L0U=,tag:U8/EetK/oyTJWguijnBBxg==,type:str]
     LB_CIDR_MINECRAFT_V4: ENC[AES256_GCM,data:HCDYBxNJIcGKfFRCh80=,iv:58AuCOh2bP6uCCzm5H5SshgAWBU3V1giaSJYGmK/e9k=,tag:dhsHmLGmeXGOeOKqKGVekg==,type:str]
     LB_CIDR_GEYSERMC_V4: ENC[AES256_GCM,data:x8ZtunMawwYHMdIjD14=,iv:eDzLFWhvCgOzDctntIYPIizeVDV//Fej7a6r91J5K5U=,tag:cvBzd3H31DLUtHYaAEDU0g==,type:str]
+    LB_FORGEJO_CIDR_V4: ENC[AES256_GCM,data:O5wR9FPST2+FiTezmTU=,iv:zpMX/b28uoUl/Z6A50S5nzJTP9/G5AAAEUMGMvJqrGs=,tag:6l/hl0nPySRy5ItaseQdfA==,type:str]
     #ENC[AES256_GCM,data:p5At/oRwAxScqW1Wb+A9ztqikxMdCqII5cSd3GGJMN6MarHIWw2bnGvMd0uY,iv:N61y9DjTmUJ0PXLRjcezB/FnJDAbQMTcyhT5rqGh1No=,tag:1aBuFHxPbuGkcCwAqn9T3g==,type:comment]
     LB_CIDR_V4: ENC[AES256_GCM,data:hcsxz6rvBcIp0m61/cAcS+c=,iv:9PZ9F3pG2p0S/v8pxOini1XB3GUUSxRzXcPu0eheaOU=,tag:ztKilCWofjW5yJe7u0RiFA==,type:str]
     LB_CIDR_V6: ENC[AES256_GCM,data:mFeFmr1SyqcqQQAXlW2zHgQOe5ooMsgCKqOBDhm2,iv:iAzCogIclTsWIH92dLPJtywVzOYu6wDNebAwG7oHbLA=,tag:WV5u9VShFSktCwCWG4jIUw==,type:str]
@@ -60,7 +61,7 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-02-25T15:18:37Z"
-    mac: ENC[AES256_GCM,data:e71McTMDyhJ9BCzNNhsmlnpEQhTRrjlXIdmW7yxO6KCeUW07M1VA3vi53nxy8RDtv2TFn7JYt6DwKZPrsOQgbBy0nCwVTFAyhGamyS5tYxmeNXUpd3pS4foxinP4hvTW+Zbtf3ReEgYA2jaa1v5NMnlo0aB0S1g8eWxPVRHBi7s=,iv:m+hiVd56pYE99Vqvqi8X3S49VqDgGHSmJa6qeGTvEbU=,tag:bjULkiT1E52rtsyt6GCu3A==,type:str]
+    lastmodified: "2026-08-23T01:50:26Z"
+    mac: ENC[AES256_GCM,data:NESJL/P0TH7BBu1rgTgBItWzGr6ctrVYav1VMeFq9KA/+H4ls33WX/qI7HF0FMH+rhw3Gdzq5gE48yKNti6yZ4rPh4B0coeg0KS2BzFunFX3pAcIia/84j/3+a+kZOKsLfs2g52Ii6P3HZQM9yyRHsZUhBiEwXqWri2vIub4MhQ=,iv:phyOU5QNMfkANmNGL6zAX21wWFLH1HRFWRhzkCF7WwM=,tag:+kmCjnYYozE789qmVON6fw==,type:str]
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
-    version: 3.12.1
+    version: 3.12.2
