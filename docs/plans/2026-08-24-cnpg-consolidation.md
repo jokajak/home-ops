@@ -1,6 +1,6 @@
 # Collapsing the per-app CNPG clusters
 
-> Status: **LITELLM DONE · FORGEJO STAGED, NEEDS THE RUNBOOK BELOW BEFORE MERGE** · 2026-08-24 ·
+> Status: **LITELLM + FORGEJO DONE · PAPERLESS AND HOME-ASSISTANT NEXT** · 2026-08-24 ·
 > Owner: Josh · Author: Claude
 >
 > Six Postgres clusters and fourteen pods to serve six apps, on five small nodes. This collapses
@@ -20,7 +20,7 @@ Where that left us:
 | `postgres` | `database` | 3 | **The shared one.** Already hosts `authentik` |
 | `immich-database` | `default` | 3 | **Stays separate** — see below |
 | `home-assistant-db` | `default` | 2 | Collapsible, last |
-| `forgejo-database` | `productivity` | 2 | **Collapsing now** |
+| `forgejo-database` | `productivity` | 2 | **Collapsed** (stood up 2026-08-22, no data yet) |
 | `paperless-database` | `productivity` | 2 | Collapsible, next |
 | `litellm-database` | `ai` | 2 | **Collapsed** (never deployed, so free) |
 
@@ -95,22 +95,40 @@ into the wrong host and fails in a way that looks like a network problem.
 
 Needs one new Bitwarden item: **`litellm pgcreds`** (login: username + password).
 
-## Forgejo: the runbook
+## Done: forgejo
 
-⚠️ **The manifest change is staged on this branch and must not reach `main` until step 5 is
-done.** Flux tracks `main`, so the branch itself is inert — that is the gate. If the repointed
-manifests reconcile before the data is restored, Forgejo finds an empty database, migrates a
-fresh schema into it, and you are then merging two schemas by hand.
+Forgejo went in on 2026-08-22 and has nothing in its database yet, so this is the same free
+conversion litellm got — no dump, no restore, no merge gate. `postgres-init` creates the role and
+the empty database, and the chart's `configure-gitea` migrates a fresh schema into it on first
+start, exactly as it did against the old cluster.
 
-The other reason ordering matters: removing `forgejo-database` from Git means Flux prunes the
-`Cluster`, and **CNPG deletes its PVCs with it**. The dump has to exist first.
+**One ordering requirement remains, and it is small:** create the Bitwarden login item
+**`forgejo pgcreds`** (username `forgejo`, generated password) before this reaches `main`. Without
+it the `ExternalSecret` never syncs, `forgejo-pg-secret` never exists, and the deployment cannot
+start — it mounts that secret with both `secretKeyRef` and `envFrom`. Nothing is damaged; Forgejo
+just sits unready until the item shows up.
+
+Removing `forgejo-database` from Git prunes the `Cluster`, and CNPG deletes its PVCs with it.
+That is the intent here. Note only that Forgejo's *repository* tree is separate — it lives on the
+`nfs-forgejo` PV, which is `Retain` — so if anything was ever pushed, the files survive while the
+new empty database has no record of them. Fresh install, nothing to reconcile; worth knowing only
+because the two halves of Forgejo's state are on different storage with different lifecycles.
+
+## Migrating an app that *does* have data
+
+Neither app above needed this. Paperless and home-assistant will. The ordering is the whole
+procedure — get it wrong and the app migrates a fresh schema into an empty database while the old
+one is being pruned out from under it.
+
+⚠️ **Flux tracks `main`, so a feature branch is inert. That is the gate.** Do not merge the
+repointing commit until the restore has happened.
 
 ### 1. Pre-flight
 
 ```sh
 # How big is it really, and will it fit? The shared cluster's volume is 10Gi.
-kubectl -n productivity exec forgejo-database-1 -- \
-  psql -U postgres -d forgejo -c "SELECT pg_size_pretty(pg_database_size('forgejo'));"
+kubectl -n <ns> exec <app>-database-1 -- \
+  psql -U postgres -d <app> -c "SELECT pg_size_pretty(pg_database_size('<app>'));"
 kubectl -n database exec postgres-1 -- df -h /var/lib/postgresql/data
 ```
 
@@ -119,67 +137,59 @@ reconcile **before** going further. CNPG expands a volume online; it will not sh
 
 ### 2. Create the Bitwarden item
 
-**`forgejo pgcreds`** — a login item, username `forgejo`, password freshly generated. This
-replaces the credential the old CNPG cluster minted for itself
-(`forgejo-database-app`), which does not carry over.
+**`<app> pgcreds`** — a login item, username `<app>`, password freshly generated. This replaces the
+credential the old CNPG cluster minted for itself (`<app>-database-app`), which does not carry
+over.
 
-### 3. Quiesce Forgejo
+### 3. Quiesce the app
 
 ```sh
-kubectl -n productivity scale deploy/forgejo --replicas=0
+kubectl -n <ns> scale deploy/<app> --replicas=0
 ```
 
-Do not skip this. A dump taken while Forgejo is writing is crash-consistent at best, and the
-half of the state that lives on NFS (repositories, LFS) will not match it.
+Do not skip this. A dump taken while the app is writing is crash-consistent at best, and for an
+app whose other half lives on NFS the two will not match.
 
 ### 4. Dump
 
 ```sh
-kubectl -n productivity exec forgejo-database-1 -- \
-  pg_dump -U postgres -d forgejo -Fc --no-owner --no-acl > /tmp/forgejo.dump
-ls -lh /tmp/forgejo.dump   # sanity-check it is not 0 bytes
+kubectl -n <ns> exec <app>-database-1 -- \
+  pg_dump -U postgres -d <app> -Fc --no-owner --no-acl > /tmp/<app>.dump
+ls -lh /tmp/<app>.dump   # sanity-check it is not 0 bytes
 ```
 
 ### 5. Create the role + database on the shared cluster, and restore
 
 ```sh
-# Use the password you just put in Bitwarden.
 kubectl -n database exec -i postgres-1 -- psql -U postgres <<'SQL'
-CREATE ROLE forgejo WITH LOGIN PASSWORD '<the password from Bitwarden>';
-CREATE DATABASE forgejo OWNER forgejo;
+CREATE ROLE <app> WITH LOGIN PASSWORD '<the password from Bitwarden>';
+CREATE DATABASE <app> OWNER <app>;
 SQL
 
 kubectl -n database exec -i postgres-1 -- \
-  pg_restore -U postgres -d forgejo --no-owner --role=forgejo < /tmp/forgejo.dump
+  pg_restore -U postgres -d <app> --no-owner --role=<app> < /tmp/<app>.dump
 
 # Verify before trusting it — row counts should match the old cluster.
-kubectl -n database exec postgres-1 -- \
-  psql -U postgres -d forgejo -c "SELECT count(*) FROM repository;"
-kubectl -n productivity exec forgejo-database-1 -- \
-  psql -U postgres -d forgejo -c "SELECT count(*) FROM repository;"
+kubectl -n database exec postgres-1 -- psql -U postgres -d <app> -c "SELECT count(*) FROM <table>;"
+kubectl -n <ns> exec <app>-database-1 -- psql -U postgres -d <app> -c "SELECT count(*) FROM <table>;"
 ```
 
-`postgres-init` would create the role and database itself on first boot, but it runs *after*
-this branch merges — and the restore has to happen first. Creating them by hand here is the
-ordering fix, and postgres-init is a no-op afterwards.
+`postgres-init` would create the role and database itself, but it only runs after the branch
+merges — and the restore has to happen first. Creating them by hand here is the ordering fix;
+postgres-init is a no-op afterwards.
 
-### 6. Merge this branch
+### 6. Merge, verify, then let the old PVCs go
 
-Flux repoints Forgejo at `postgres-rw.database.svc.cluster.local`, injects `init-db`, and prunes
-the old `forgejo-database` cluster, its `ObjectStore` and its `ScheduledBackup`.
-
-### 7. Verify, then let the old PVCs go
-
-Log in, open a repository, push a commit. Then confirm the old cluster is gone:
+Flux repoints the app, injects `init-db`, and prunes the old cluster, its `ObjectStore` and its
+`ScheduledBackup`. Exercise the app, then confirm:
 
 ```sh
-kubectl -n productivity get cluster,pvc | grep forgejo-database   # expect nothing
+kubectl -n <ns> get cluster,pvc | grep <app>-database   # expect nothing
 ```
 
-Keep `/tmp/forgejo.dump` somewhere real until you have used Forgejo for a few days. Its old
-barman lineage (`forgejo-v1` under `s3://databases/`) also survives the prune — the ObjectStore
-resource goes away, the objects in MinIO do not — so there is a second way back for as long as
-that retention window lasts.
+Keep the dump until you have used the app for a few days. The old barman lineage under
+`s3://databases/` also survives the prune — the `ObjectStore` resource goes away, the objects in
+MinIO do not — so there is a second way back for as long as that retention window lasts.
 
 ### If it goes wrong
 
@@ -191,13 +201,15 @@ the barman lineage. This is why step 4 is not optional.
 
 Same shape, in this order:
 
-- **paperless** — `paperless-database`, 2 instances, small. Its chart is `app-template`, which
-  takes init containers natively, so no post-renderer needed. Same runbook with the table name in
-  step 5 changed to something paperless-specific (`documents_document`).
+- **paperless** — `paperless-database`, 2 instances, small, and it **does** have documents, so
+  this is the first one that needs the migration procedure above. Its chart is `app-template`,
+  which takes init containers natively, so no post-renderer needed. Use `documents_document` as
+  the row-count check in step 5.
 - **home-assistant** — `home-assistant-db`, 2 instances. Deliberately last: the recorder is the
   only genuinely write-heavy workload in the collapsible set, and it is the one that could make
   the shared cluster a noisy-neighbour problem. Do it once forgejo and paperless have been on
-  the shared cluster long enough to see whether the write load is boring. If HA's recorder turns
+  the shared cluster long enough to see whether the write load is boring. Its recorder history
+  is real data, so the migration procedure applies here too. If HA's recorder turns
   out to dominate, leaving it on its own cluster is a legitimate final answer rather than a
   failure.
 
