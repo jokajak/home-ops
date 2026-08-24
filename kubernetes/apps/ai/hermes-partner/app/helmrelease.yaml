@@ -1,0 +1,229 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# Partner's Hermes agent.
+#
+# One container per person, not one container with two profiles. Upstream
+# recommends the multi-profile layout and it is cheaper, but it lists
+# "distinct credentials never share an OS-level process tree" as a reason to
+# override that default — which is exactly hearthai's first non-negotiable:
+# a private memory store is private by construction, not by policy.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hermes-partner
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 10m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      hermes-partner:
+        # One writer only: SQLite in WAL mode plus s6 supervision state on an
+        # RWO volume. Upstream is explicit that two gateways against one data
+        # directory corrupt sessions and memory, so no rolling update.
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            # Must start as root. The image's PID 1 is s6-overlay, which remaps
+            # its internal hermes user to HERMES_UID/HERMES_GID, chowns the data
+            # volume, then drops every supervised service to that user with
+            # s6-setuidgid. The image's own entrypoint rejects being started as
+            # an arbitrary non-root UID, so runAsNonRoot is not available here.
+            runAsUser: 0
+        initContainers:
+          # Seed config.yaml on first boot only; afterwards the agent owns it.
+          01-seed-config:
+            image:
+              repository: docker.io/library/busybox
+              tag: 1.37.0
+            command:
+              - /bin/sh
+              - -c
+              - |
+                if [ -f /opt/data/config.yaml ]; then
+                  echo "config.yaml already present — leaving it alone"
+                  exit 0
+                fi
+                cp /seed/config.yaml /opt/data/config.yaml
+                # The image's boot-time chown is targeted: it fixes the data
+                # directory itself and a fixed list of subdirectories, not
+                # arbitrary files at the top level. A root-owned config.yaml
+                # would survive that and the agent could never rewrite it.
+                chown 10000:10000 /opt/data/config.yaml
+                chmod 0644 /opt/data/config.yaml
+                echo "seeded config.yaml"
+          # hearthai's shared-memory skill, fetched fresh each start so it
+          # tracks upstream rather than being vendored (and drifting) here.
+          02-fetch-skills:
+            image:
+              repository: docker.io/alpine/git
+              tag: v2.54.0
+            command:
+              - /bin/sh
+              - -c
+              - |
+                # Best effort by design: GitHub being unreachable must not keep
+                # a household assistant from starting. Hermes skips a missing
+                # external skills directory silently, so the cost of failure is
+                # shared memory being unavailable for this session — and the
+                # skill's CLI fails loudly if called, rather than quietly
+                # pretending something was shared.
+                git clone --depth 1 https://github.com/jokajak/hearthai /opt/hearthai ||
+                  echo "warn: hearthai clone failed — shared-memory skill unavailable"
+                exit 0
+        containers:
+          app:
+            image:
+              repository: docker.io/nousresearch/hermes-agent
+              tag: v2026.8.19
+            # s6 supervises the real gateway process behind this; the CMD
+            # itself is a heartbeat, so a crashed gateway is restarted without
+            # losing the container.
+            args: ["gateway", "run"]
+            env:
+              # Who the supervised services run as inside the container.
+              HERMES_UID: "10000"
+              HERMES_GID: "10000"
+              TZ: "${TIMEZONE:=America/New_York}"
+              HERMES_TIMEZONE: "${TIMEZONE:=America/New_York}"
+              # The web dashboard is this household's only surface — no
+              # Telegram/Discord/Signal is available to it.
+              HERMES_DASHBOARD: "1"
+              HERMES_DASHBOARD_HOST: "0.0.0.0"
+              HERMES_DASHBOARD_PORT: "9119"
+              # Declaring the public URL both fixes the OAuth callback behind
+              # the ingress and force-engages the auth gate. The dashboard
+              # fails closed at startup if no auth provider is configured —
+              # that hardening followed a 2026 campaign in which exposed
+              # dashboards were driven into planting SSH backdoors.
+              HERMES_DASHBOARD_PUBLIC_URL: "https://hermes-partner.${SECRET_DOMAIN:=internal}"
+              # Authentik. Note the trailing slash — Authentik's issuer
+              # includes it, and the plugin pins the iss claim to this value.
+              HERMES_DASHBOARD_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hermes-partner/"
+              # hearthai shared memory. The service is not deployed yet (no
+              # published image), so calls fail loudly until it is.
+              HEARTHMEM_URL: "http://hearthmem.ai.svc.cluster.local"
+              HEARTHMEM_AUTHOR: "partner"
+              # Keep the store address book on the data volume so it is backed
+              # up with everything else, rather than in the tool-subprocess HOME.
+              HEARTHMEM_HOME: "/opt/data/hearthmem"
+            envFrom:
+              - secretRef:
+                  name: hermes-partner-secret
+              - secretRef:
+                  name: hermes-partner-oidc-secret
+            probes:
+              # TCP rather than HTTP: every dashboard route is behind the auth
+              # gate, so a probe's status code depends on redirect behaviour.
+              # "Is it listening" is the question a probe should be asking.
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: &probe
+                    port: 9119
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: *probe
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket: *probe
+                  # First boot builds the profile tree on an empty volume.
+                  initialDelaySeconds: 20
+                  periodSeconds: 10
+                  failureThreshold: 60
+            resources:
+              requests:
+                cpu: 200m
+                memory: 1Gi
+              limits:
+                memory: 3Gi
+    service:
+      app:
+        controller: hermes-partner
+        ports:
+          http:
+            port: 9119
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:robot-happy-outline
+        hosts:
+          # Flat hostname, not partner.hermes.${SECRET_DOMAIN}: the cluster's
+          # wildcard certificate is single-label (*.${SECRET_DOMAIN}) and would
+          # not cover a second level.
+          - host: &host "hermes-partner.${SECRET_DOMAIN:=internal}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+    persistence:
+      data:
+        existingClaim: hermes-partner-data
+        advancedMounts:
+          hermes-partner:
+            01-seed-config:
+              - path: /opt/data
+            app:
+              - path: /opt/data
+      bootstrap:
+        type: configMap
+        name: hermes-partner-config
+        advancedMounts:
+          hermes-partner:
+            01-seed-config:
+              - path: /seed/config.yaml
+                subPath: config.yaml
+                readOnly: true
+      hearthai:
+        type: emptyDir
+        advancedMounts:
+          hermes-partner:
+            02-fetch-skills:
+              - path: /opt/hearthai
+            app:
+              # Read-only is what makes external_dirs an actual boundary:
+              # upstream warns they are not write-protected by themselves, and
+              # the agent's autonomous skill curator would otherwise be free to
+              # rewrite the shared-memory contract.
+              - path: /opt/hearthai
+                readOnly: true

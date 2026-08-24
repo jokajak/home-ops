@@ -1,0 +1,33 @@
+---
+# The dashboard bounces an unauthenticated caller to /login, which serves the
+# login page itself — so /login is the endpoint that answers 200 without a
+# session. (The shared templates/gatus/guarded ConfigMap probes / and asserts
+# 200, which the auth gate's redirect would fail.)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hermes-josh-gatus-ep
+  namespace: ai
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "hermes-josh Exposure"
+        group: internal-guarded
+        url: 1.1.1.1
+        interval: 1m
+        ui:
+          hide-hostname: true
+          hide-url: true
+        dns:
+          query-name: "hermes.${SECRET_DOMAIN:=internal}"
+          query-type: A
+        conditions:
+          - "len([BODY]) == 0"
+      - name: "hermes-josh"
+        group: internal
+        url: "https://hermes.${SECRET_DOMAIN:=internal}/login"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"

@@ -31,6 +31,10 @@ locals {
     "Grafana Admins"  = authentik_group.grafana_admin.id
     "Grafana Editors" = authentik_group.grafana_editors.id
     "Grafana Viewers" = authentik_group.grafana_viewers.id
+    # One member each — these groups are the access boundary on the household
+    # agents' dashboards (see application_hermes.tf).
+    "Hermes Josh"    = authentik_group.hermes_josh.id
+    "Hermes Partner" = authentik_group.hermes_partner.id
   }
 
   # .raw is the decrypted file (may also carry a `sops` metadata key); `users` is a list.

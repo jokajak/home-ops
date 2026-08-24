@@ -1,0 +1,47 @@
+---
+# The router's model catalogue. Adding a model — including a locally served one,
+# when this cluster can host one — is an edit here and nothing else: neither
+# agent's manifest names a provider or an upstream key.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: ai
+data:
+  config.yaml: |
+    model_list:
+      # Main conversational model for both household agents.
+      - model_name: claude-opus-5
+        litellm_params:
+          model: anthropic/claude-opus-5
+          api_key: os.environ/ANTHROPIC_API_KEY
+      # Cheaper workhorse; either agent can switch with /model.
+      - model_name: claude-sonnet-5
+        litellm_params:
+          model: anthropic/claude-sonnet-5
+          api_key: os.environ/ANTHROPIC_API_KEY
+      # Auxiliary tasks — summarisation, context compression, title generation.
+      - model_name: claude-haiku-4-5
+        litellm_params:
+          model: anthropic/claude-haiku-4-5
+          api_key: os.environ/ANTHROPIC_API_KEY
+
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY
+      # Virtual keys, budgets and spend are managed in the admin UI and stored
+      # in Postgres, so they survive a pod restart and are not config-as-code.
+      # That is deliberate: a per-person budget is an operational dial, not a
+      # deployment concern.
+      store_model_in_db: true
+      # Poll model health in the background rather than on every /health call,
+      # so probing does not bill a real request per scrape.
+      background_health_checks: true
+      health_check_interval: 300
+
+    litellm_settings:
+      # Hermes speaks OpenAI chat-completions; drop OpenAI-only parameters the
+      # Anthropic upstream does not accept instead of failing the request.
+      drop_params: true
+      num_retries: 2
+      # Agent turns with large tool payloads are slow; the default is too tight.
+      request_timeout: 600

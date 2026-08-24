@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+# ReadWriteOnce is a correctness requirement, not a default: each store is a git
+# repository guarded by one in-process writer lock, so exactly one pod may mount
+# it. openebs-hostpath for the same reason the agents use it — git's index and
+# lockfiles are no happier on NFS than SQLite's WAL is. Durability comes from
+# VolSync, not from the storage class.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hearthmem-data
+  namespace: ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: openebs-hostpath

@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# STAGED — not referenced by kubernetes/apps/ai/kustomization.yaml. See README.md.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-hearthmem
+  namespace: flux-system
+spec:
+  targetNamespace: ai
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: hearthmem
+  components:
+    - ../../../../components/volsync
+  interval: 30m
+  timeout: 5m
+  path: "./kubernetes/apps/ai/hearthmem/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  postBuild:
+    substitute:
+      APP: hearthmem
+      VOLSYNC_CLAIM: hearthmem-data
+      VOLSYNC_CAPACITY: 5Gi
+      VOLSYNC_STORAGECLASS: nfs-csi
+      VOLSYNC_PUID: "10001"
+      VOLSYNC_PGID: "10001"
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-external-secrets-bitwarden

@@ -1,0 +1,48 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/postgresql.cnpg.io/cluster_v1.json
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: litellm-database
+  namespace: ai
+spec:
+  instances: 2
+  # Stock CNPG image — LiteLLM's Prisma schema needs no extensions beyond the
+  # defaults, so there is nothing to load in postInitApplicationSQL.
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.0-10
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 5Gi
+    storageClass: openebs-hostpath
+  enableSuperuserAccess: true
+  nodeMaintenanceWindow:
+    inProgress: false
+    reusePVC: true
+  resources:
+    requests:
+      cpu: 50m
+    limits:
+      memory: 512Mi
+  monitoring:
+    enablePodMonitor: true
+    # Ref: https://github.com/cloudnative-pg/cloudnative-pg/issues/2501
+    podMonitorMetricRelabelings:
+      - {
+          sourceLabels: ["cluster"],
+          targetLabel: cnpg_cluster,
+          action: replace,
+        }
+      - { regex: cluster, action: labeldrop }
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: litellm-objectstore
+        serverName: litellm-v1
+  # No managed.roles block: CNPG auto-generates the litellm-database-app secret
+  # (username/password/host/port/dbname/uri) for the bootstrap owner, and the
+  # proxy reads DATABASE_URL straight from its `uri` key.
+  bootstrap:
+    initdb:
+      database: litellm
+      owner: litellm
