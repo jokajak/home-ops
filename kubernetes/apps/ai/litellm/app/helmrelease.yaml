@@ -32,6 +32,18 @@ spec:
       litellm:
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the litellm database and role on the shared cluster if they
+          # are not there yet, then does nothing on every subsequent start. Same
+          # image and same contract authentik uses — see the plan doc for why
+          # this replaced a dedicated CNPG cluster.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: litellm-secret
         containers:
           app:
             # The `-database` variant bundles Prisma and applies its own schema
@@ -41,13 +53,8 @@ spec:
               tag: v1.83.14-stable
             args: ["--config", "/config/config.yaml", "--port", "4000"]
             env:
-              # CNPG mints this secret for the bootstrap owner; `uri` is a
-              # ready-made postgresql:// DSN.
-              DATABASE_URL:
-                valueFrom:
-                  secretKeyRef:
-                    name: litellm-database-app
-                    key: uri
+              # DATABASE_URL is assembled in the ExternalSecret and arrives via
+              # envFrom below, pointing at the shared database/postgres cluster.
               STORE_MODEL_IN_DB: "True"
             envFrom:
               - secretRef:

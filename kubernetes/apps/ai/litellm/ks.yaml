@@ -29,5 +29,6 @@ spec:
   dependsOn:
     - name: cluster-apps-external-secrets
     - name: cluster-apps-external-secrets-bitwarden
-    - name: cluster-apps-cloudnative-pg
-    - name: cluster-apps-cnpg-barman-plugin
+    # The shared cluster, not the operator: litellm has no CNPG resources of its
+    # own, it just needs postgres-rw to be answering before init-db runs.
+    - name: cluster-apps-cloudnative-pg-cluster

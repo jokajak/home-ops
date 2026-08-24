@@ -36,7 +36,7 @@ flowchart TB
         HJ["<b>hermes-josh</b><br/>dashboard :9119<br/>own PVC, own memory"]:::agent
         HP["<b>hermes-partner</b><br/>dashboard :9119<br/>own PVC, own memory"]:::agent
         LL["<b>litellm</b> :4000<br/>one upstream key<br/>virtual key + budget per agent"]:::infra
-        DB[("litellm CNPG<br/>keys · spend")]:::infra
+        DB[("shared postgres<br/><i>database ns</i><br/>keys · spend")]:::infra
         HM["<b>hearthmem</b><br/><i>staged, not deployed</i><br/>shared stores"]:::staged
     end
 
@@ -165,7 +165,7 @@ would drift.
 
 | Path | What |
 |---|---|
-| `kubernetes/apps/ai/litellm/` | LiteLLM proxy + CNPG Postgres (`litellm-database`) + barman/MinIO backups. UI at `llm.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/litellm/` | LiteLLM proxy. Its database is a role on the shared `database/postgres` cluster, not a cluster of its own — see [the consolidation plan](./2026-08-24-cnpg-consolidation.md). UI at `llm.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hermes-josh/` | Josh's agent. `hermes.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hermes-partner/` | Partner's agent. `hermes-partner.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hearthmem/` | **Staged, not wired in** — see below |
@@ -197,6 +197,7 @@ intended failure: an agent that cannot verify who is talking to it should not se
 |---|---|---|
 | `litellm credentials` | `master_key`, `salt_key`, `ui_username`, `ui_password` | LiteLLM proxy + admin UI |
 | `anthropic api` | `api_key` | LiteLLM's only upstream credential |
+| `litellm pgcreds` | login: username + password | LiteLLM's role on the shared Postgres cluster |
 | `hermes josh` | `litellm_api_key` | Josh's agent → LiteLLM virtual key |
 | `hermes partner` | `litellm_api_key` | Partner's agent → LiteLLM virtual key |
 
