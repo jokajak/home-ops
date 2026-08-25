@@ -1,0 +1,134 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: litellm
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 10m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      litellm:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the litellm database and role on the shared cluster if they
+          # are not there yet, then does nothing on every subsequent start. Same
+          # image and same contract authentik uses — see the plan doc for why
+          # this replaced a dedicated CNPG cluster.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: litellm-secret
+        containers:
+          app:
+            # The `-database` variant bundles Prisma and applies its own schema
+            # migrations at startup, so no separate migration Job is needed.
+            image:
+              repository: ghcr.io/berriai/litellm-database
+              tag: v1.83.14-stable
+            args: ["--config", "/config/config.yaml", "--port", "4000"]
+            env:
+              # DATABASE_URL is assembled in the ExternalSecret and arrives via
+              # envFrom below, pointing at the shared database/postgres cluster.
+              STORE_MODEL_IN_DB: "True"
+            envFrom:
+              - secretRef:
+                  name: litellm-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    # Note the spelling — upstream's endpoint is "liveliness".
+                    # Process-only check, no dependency probing.
+                    path: /health/liveliness
+                    port: 4000
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    # Includes database connectivity.
+                    path: /health/readiness
+                    port: 4000
+                  initialDelaySeconds: 10
+                  periodSeconds: 15
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health/liveliness
+                    port: 4000
+                  # First boot runs Prisma migrations against an empty database.
+                  initialDelaySeconds: 15
+                  periodSeconds: 10
+                  failureThreshold: 60
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                memory: 2Gi
+    service:
+      app:
+        controller: litellm
+        ports:
+          http:
+            port: 4000
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:router-network
+        hosts:
+          - host: &host "llm.${SECRET_DOMAIN:=internal}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+    persistence:
+      config:
+        enabled: true
+        type: configMap
+        name: litellm-config
+        globalMounts:
+          - path: /config/config.yaml
+            subPath: config.yaml
+            readOnly: true

@@ -1,0 +1,24 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+# openebs-hostpath, NOT nfs-csi, and the reason is load-bearing: Hermes keeps
+# its sessions, memory and search index in SQLite in WAL mode, and WAL needs
+# shared-memory mapping that NFS does not provide reliably. Upstream's own
+# config reference says to fall back to journal_mode "delete" on NFS/SMB —
+# giving up WAL to sit on a worse filesystem for this workload.
+#
+# The cost of node-local storage is node-local failure: this is the same class
+# whose disk loss destroyed ai/open-webui-data (docs/ISSUES.md #14). The
+# difference is that this claim is enrolled in VolSync from its first commit,
+# so an hourly restic snapshot lives in MinIO, off this node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hermes-josh-data
+  namespace: ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: openebs-hostpath

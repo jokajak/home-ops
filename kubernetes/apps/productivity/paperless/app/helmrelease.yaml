@@ -35,6 +35,16 @@ spec:
         strategy: Recreate
         annotations:
           reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the paperless database and role on the shared cluster if
+          # they are not there yet, then does nothing on every subsequent start.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: paperless-pg-secret
         containers:
           app:
             image:
@@ -48,31 +58,12 @@ spec:
               # shared dragonfly; index 0 is authentik, 1 is immich
               PAPERLESS_REDIS: redis://dragonfly.database.svc.cluster.local.:6379/2
               PAPERLESS_DBENGINE: postgresql
-              PAPERLESS_DBHOST:
-                valueFrom:
-                  secretKeyRef:
-                    name: &dbSecret paperless-database-app
-                    key: host
-              PAPERLESS_DBPORT:
-                valueFrom:
-                  secretKeyRef:
-                    name: *dbSecret
-                    key: port
-              PAPERLESS_DBNAME:
-                valueFrom:
-                  secretKeyRef:
-                    name: *dbSecret
-                    key: dbname
-              PAPERLESS_DBUSER:
-                valueFrom:
-                  secretKeyRef:
-                    name: *dbSecret
-                    key: username
-              PAPERLESS_DBPASS:
-                valueFrom:
-                  secretKeyRef:
-                    name: *dbSecret
-                    key: password
+              # Shared cluster in the database namespace — paperless has its own
+              # database and its own role on it, not its own server. DBUSER and
+              # DBPASS arrive from paperless-pg-secret via envFrom below.
+              PAPERLESS_DBHOST: postgres-rw.database.svc.cluster.local.
+              PAPERLESS_DBPORT: "5432"
+              PAPERLESS_DBNAME: paperless
               # inotify does not work over NFS — poll the consume directory
               PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
@@ -88,6 +79,8 @@ spec:
               PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
             envFrom:
+              - secretRef:
+                  name: paperless-pg-secret
               - secretRef:
                   name: paperless-admin-secret
               - secretRef:

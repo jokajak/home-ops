@@ -1,0 +1,108 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# The hearthai shared-memory service: stores that several people's agents read
+# and write, while each person's private memory stays in their own agent.
+#
+# No ingress, deliberately. A store's token is a bearer capability that cannot
+# be revoked, so the fewer networks it crosses the better — both agents reach
+# this over the cluster network and nothing else needs to.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hearthmem
+  namespace: ai
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      hearthmem:
+        # Recreate, not RollingUpdate: a rolling update briefly runs two pods
+        # against one git repository, which is the failure this whole file is
+        # avoiding.
+        strategy: Recreate
+        pod:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile:
+              type: RuntimeDefault
+        containers:
+          app:
+            image:
+              # PLACEHOLDER — this image does not exist yet. See README.md.
+              repository: ghcr.io/jokajak/hearthmem
+              tag: latest
+            args: ["--root", "/data"]
+            env:
+              HEARTHMEM_HOST: "0.0.0.0"
+              TZ: "${TIMEZONE:=America/New_York}"
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /health
+                    port: 8765
+                  initialDelaySeconds: 10
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  initialDelaySeconds: 2
+                  periodSeconds: 10
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+        # Long enough for an in-flight commit to finish and release the lock.
+        # The service drains on SIGTERM, so this is a ceiling, not a delay.
+        terminationGracePeriodSeconds: 30
+    service:
+      app:
+        controller: hearthmem
+        ports:
+          http:
+            port: 80
+            targetPort: 8765
+    persistence:
+      data:
+        existingClaim: hearthmem-data
+        globalMounts:
+          - path: /data
+      # Only /data and /tmp are writable; the root filesystem is read-only.
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

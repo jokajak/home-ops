@@ -28,6 +28,27 @@ spec:
       retries: 3
   uninstall:
     keepHistory: false
+  postRenderers:
+    # The chart exposes no hook for extra init containers — its `initContainers`
+    # value only carries resource limits — so postgres-init goes in here.
+    # Index 0 puts it ahead of the chart's own `configure-gitea`, which runs
+    # migrations and would otherwise race the database into existence.
+    - kustomize:
+        patches:
+          - target:
+              version: v1
+              kind: Deployment
+              name: forgejo
+            patch: |
+              - op: add
+                path: /spec/template/spec/initContainers/0
+                value:
+                  name: init-db
+                  image: ghcr.io/home-operations/postgres-init:18.6
+                  imagePullPolicy: IfNotPresent
+                  envFrom:
+                    - secretRef:
+                        name: forgejo-pg-secret
   values:
     image:
       # Explicitly `-rootless`, per the chart README: renovate otherwise tracks
@@ -120,11 +141,11 @@ spec:
 
       additionalConfigFromEnvs:
         # env-to-ini: FORGEJO__<section>__<KEY> wins over gitea.config, which
-        # keeps the CNPG-minted credentials out of the rendered app.ini
+        # keeps the database credentials out of the rendered app.ini
         - name: FORGEJO__DATABASE__USER
           valueFrom:
             secretKeyRef:
-              name: &dbSecret forgejo-database-app
+              name: &dbSecret forgejo-pg-secret
               key: username
         - name: FORGEJO__DATABASE__PASSWD
           valueFrom:
@@ -149,8 +170,10 @@ spec:
 
         database:
           DB_TYPE: postgres
-          # USER and PASSWD come from additionalConfigFromEnvs above
-          HOST: forgejo-database-rw.productivity.svc.cluster.local:5432
+          # USER and PASSWD come from additionalConfigFromEnvs above.
+          # Shared cluster in the database namespace — forgejo has its own
+          # database and its own role on it, not its own server.
+          HOST: postgres-rw.database.svc.cluster.local:5432
           NAME: forgejo
           SSL_MODE: require
 

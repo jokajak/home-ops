@@ -31,7 +31,8 @@ spec:
         name: cluster-secrets
   dependsOn:
     - name: cluster-apps-external-secrets
-    - name: cluster-apps-cloudnative-pg
-    - name: cluster-apps-cnpg-barman-plugin
+    # The shared cluster, not the operator: forgejo has no CNPG resources of its
+    # own any more, it just needs postgres-rw answering before init-db runs.
+    - name: cluster-apps-cloudnative-pg-cluster
     - name: dragonfly-cluster
     - name: cluster-apps-csi-driver-nfs
