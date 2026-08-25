@@ -372,8 +372,27 @@ diverged. Renovate follows the registry, which is what actually ships.
 
 ## Deliberately not done
 
+- **A mobile-friendly front end.** The dashboard's Chat tab is the TUI embedded over a WebSocket
+  and rendered with xterm.js — a terminal emulator, which is exactly as pleasant on a phone as
+  that sounds. The community [hermes-webui](https://github.com/nesquena/hermes-webui) is the
+  obvious fix and was built out and then dropped on **supply-chain grounds**: it would run as a
+  sidecar in the agent's own pod, mounting the agent's data volume, holding the gateway API key,
+  and sitting behind the OIDC client that guards one person's private memory. It is not a small
+  side project — 326 contributors, ~1,950 merged PRs, a release most days — but that is the
+  concern rather than the answer to it: nobody is meaningfully reviewing what lands in an image
+  in that position, and it is not published by NousResearch. Revisit if an official front end
+  appears, or if the image can be pinned by digest and vendored through a build we control.
+
+  Worth recording from that exercise, because it constrains any future attempt: **WebUI is
+  single-user by construction.** It mutates process-global env (`HERMES_HOME`,
+  `HERMES_SESSION_KEY`, `TERMINAL_CWD`) per request — upstream's `ARCHITECTURE.md` calls the
+  design *"safe only for single-user, single-concurrent-request use"* — and its Profiles panel
+  switches, creates and deletes profiles for the whole server. One shared instance in front of
+  both agents is never an option; it would be one instance per person or nothing.
+
 - **Messaging surfaces.** Nothing here is "reachable where you already are" yet — that was
-  hearthai's second stated goal and it is unmet. Options when a platform exists: Matrix and
+  hearthai's second stated goal and it is unmet. These are first-party Hermes adapters running
+  inside the agent's own process, so they raise none of the image-trust question above. Options when a platform exists: Matrix and
   Mattermost adapters are built in, as is a Home Assistant one, and HA is already on this cluster.
 - **The TELOS engine.** `docs/ai-platform/00-telos.md` is still a skeleton. Nothing reads it.
   These agents have memory but no reconciliation loop.
