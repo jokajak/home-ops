@@ -43,13 +43,16 @@ That ordering used to be a deadlock. **external-secrets has no per-key "optional
 `data[]` entry cannot resolve, the target Secret is never created at all, so an agent waiting on
 an unmintable key could not even start.
 
-So terraform creates these two items with an **empty** `litellm_api_key`, and
-`lifecycle { ignore_changes = [field] }` means it never looks at the value again. Everything
+So terraform creates these two items with a `replace-me` sentinel in
+`litellm_api_key`, and `lifecycle { ignore_changes = [field] }` means it never looks at the
+value again. Everything
 reconciles from the first apply; the agents run and return auth errors until real keys arrive;
 pasting a key in is permanent.
 
-⚠️ **Edit that field, never delete it.** An empty value resolves fine. A *missing* property fails
-the whole ExternalSecret and takes the agent down with it.
+⚠️ **Edit that field, never delete it.** A *missing* property fails the whole ExternalSecret and
+takes the agent down with it — which is also why the sentinel is a real string. An empty `hidden`
+field is dropped rather than stored, so `""` left the item with no property at all and reproduced
+exactly the failure it was meant to prevent.
 
 Order of operations: `tofu apply` → deploy LiteLLM → log in at `llm.<domain>` → mint a virtual key
 per agent (a monthly budget on each is the point of having two) → paste each into its item. The
