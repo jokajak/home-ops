@@ -228,3 +228,21 @@ spec:
         tls:
           - hosts:
               - *host
+
+    # Router-only: the auth controller has no readOnlyRootFilesystem write
+    # target and no ConfigMap to read, so neither mount belongs there.
+    persistence:
+      config:
+        type: configMap
+        name: hearthai-router
+        advancedMounts:
+          router:
+            app:
+              - path: /config
+                readOnly: true
+      tmp:
+        type: emptyDir
+        advancedMounts:
+          router:
+            app:
+              - path: /tmp
