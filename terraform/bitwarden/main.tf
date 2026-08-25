@@ -282,8 +282,9 @@ resource "bitwarden_item_login" "immich" {
 # paperless-ngx credentials
 ################################################################################
 # Bootstraps the local paperless superuser (the fallback login when Authentik is
-# unavailable) and Django's SECRET_KEY. Postgres credentials are NOT here — the
-# CNPG cluster mints its own `paperless-database-app` secret in the cluster.
+# unavailable) and Django's SECRET_KEY. Postgres credentials live in the separate
+# `paperless pgcreds` item below — paperless moved onto the shared cluster, so the
+# role is ours to generate rather than something a dedicated CNPG cluster mints.
 resource "random_password" "paperless_admin_password" {
   length           = 32
   special          = true
@@ -348,10 +349,11 @@ resource "bitwarden_item_login" "volsync_restic" {
 # forgejo credentials
 ################################################################################
 # Bootstraps the local Forgejo site administrator — the break-glass login when
-# Authentik is unavailable. Postgres credentials are NOT here: the CNPG cluster
-# mints its own `forgejo-database-app` secret in the cluster. The OIDC client
-# credentials are NOT here either: terraform/authentik's oidc_creds module
-# creates them as `authentik-client-forgejo`.
+# Authentik is unavailable. Postgres credentials live in the separate
+# `forgejo pgcreds` item below — forgejo moved onto the shared cluster, so the
+# role is ours to generate rather than something a dedicated CNPG cluster mints.
+# The OIDC client credentials are NOT here: terraform/authentik's oidc_creds
+# module creates them as `authentik-client-forgejo`.
 resource "random_password" "forgejo_admin_password" {
   length           = 32
   special          = true
@@ -374,5 +376,148 @@ resource "bitwarden_item_login" "forgejo" {
   field {
     name    = "terraform managed"
     boolean = true
+  }
+}
+
+################################################################################
+# Roles on the SHARED database/postgres cluster
+################################################################################
+# Every app that moved off its own CNPG cluster needs a role the cluster does not
+# mint for it. Same shape as `authentik pgcreds`, which has always worked this
+# way. postgres-init reads these and reconciles CREATE/ALTER ROLE on every app
+# start, so rotating a password here and re-applying actually takes effect.
+#
+# The usernames are fixed and readable rather than generated: several apps now
+# share one server, and `\du` on it should say who is who.
+#
+# See docs/plans/2026-08-24-cnpg-consolidation.md.
+
+resource "random_password" "forgejo_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "forgejo_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "forgejo pgcreds"
+  username = "forgejo"
+  password = random_password.forgejo_pgpass.result
+
+  notes = "Forgejo's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+resource "random_password" "paperless_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "paperless_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "paperless pgcreds"
+  username = "paperless"
+  password = random_password.paperless_pgpass.result
+
+  notes = "Paperless's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+resource "random_password" "litellm_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "litellm_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "litellm pgcreds"
+  username = "litellm"
+  password = random_password.litellm_pgpass.result
+
+  notes = "LiteLLM's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+################################################################################
+# litellm credentials
+################################################################################
+# The proxy's own secrets. All four are generated — none is issued by anyone
+# else — so none of them belongs in a human's hands.
+#
+# ⚠️ salt_key ENCRYPTS PROVIDER CREDENTIALS STORED IN LITELLM'S DATABASE AND
+# CANNOT BE ROTATED. Tainting `random_password.litellm_salt_key` makes every
+# credential LiteLLM has stored permanently unreadable. If it ever has to
+# change, the recovery is to re-enter the upstream credentials afterwards.
+resource "random_password" "litellm_master_key" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "litellm_salt_key" {
+  length  = 32
+  special = false
+}
+
+resource "random_password" "litellm_ui_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "litellm" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "litellm credentials"
+
+  uri {
+    value = "https://llm.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  # LiteLLM expects the master key to carry an `sk-` prefix.
+  field {
+    name   = "master_key"
+    hidden = "sk-${random_password.litellm_master_key.result}"
+  }
+
+  field {
+    name   = "salt_key"
+    hidden = random_password.litellm_salt_key.result
+  }
+
+  field {
+    name = "ui_username"
+    text = "admin"
+  }
+
+  field {
+    name   = "ui_password"
+    hidden = random_password.litellm_ui_password.result
   }
 }
