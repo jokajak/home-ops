@@ -593,3 +593,72 @@ resource "bitwarden_item_login" "meridian" {
     hidden = random_password.meridian_api_key.result
   }
 }
+
+################################################################################
+# Per-agent LiteLLM virtual keys
+################################################################################
+# These are the one credential in the platform with a genuine chicken-and-egg:
+# LiteLLM mints them, so they cannot exist until LiteLLM is running — but the
+# agents' ExternalSecrets reference them, and ESO has NO per-key "optional".
+# One unresolvable data[] entry and the whole target Secret is never created,
+# so the agents would sit unschedulable waiting for a key that cannot be
+# minted yet.
+#
+# So terraform owns the ITEM and the human owns the VALUE. The item is created
+# with an empty api key, which lets ESO resolve and every workload reconcile;
+# the agents come up and fail at conversation time with an auth error instead
+# of failing to exist. `ignore_changes` is what makes it eventually consistent:
+# paste the real key into Bitwarden and no later apply will revert it.
+#
+# ⚠️ EDIT the litellm_api_key field, never DELETE it. An empty value resolves
+# fine; a missing property fails the whole ExternalSecret and takes the agent
+# down with it.
+#
+# Mint them at https://llm.<domain> once LiteLLM is up — one per person, so
+# spend is attributable and either can be revoked without touching the other.
+
+resource "bitwarden_item_login" "hermes_josh" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "hermes josh"
+  notes = "Josh's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted into litellm_api_key. Empty until then, which is fine — the agent runs and cannot answer."
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "litellm_api_key"
+    hidden = ""
+  }
+
+  lifecycle {
+    # Terraform creates this once and then never looks at the values again,
+    # so a pasted key survives every subsequent apply.
+    ignore_changes = [field]
+  }
+}
+
+resource "bitwarden_item_login" "hermes_partner" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "hermes partner"
+  notes = "The partner's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted into litellm_api_key. Empty until then, which is fine — the agent runs and cannot answer."
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "litellm_api_key"
+    hidden = ""
+  }
+
+  lifecycle {
+    ignore_changes = [field]
+  }
+}

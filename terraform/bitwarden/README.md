@@ -23,8 +23,6 @@ Create these in Bitwarden (same organization + collection as the generated ones)
 
 | Item | Fields the ExternalSecret reads | Consumed by | Issued by |
 |---|---|---|---|
-| `hermes josh` | `litellm_api_key` | `ai/hermes-josh` | the LiteLLM admin UI |
-| `hermes partner` | `litellm_api_key` | `ai/hermes-partner` | the LiteLLM admin UI |
 | `github runner app credentials` | login + fields | `actions-runner-system/actions-runner-controller` | a GitHub App |
 | `home assistant` | fields | `default/home-assistant` | Home Assistant |
 | `maxmind api` | `username`, `password` | `observability/vector` | maxmind.com |
@@ -35,7 +33,24 @@ Two more — `authentik-github-creds` and `authentik-google-creds` — are also 
 `terraform/authentik` through a `data "bitwarden_item_login"` lookup rather than by
 external-secrets.
 
-The **agent virtual keys** are worth a note: `hermes josh` and `hermes partner` cannot exist until
-LiteLLM is running, because LiteLLM mints them. Order is: deploy LiteLLM → log into
-`llm.<domain>` → create a virtual key per agent (a monthly budget on each is the point of having
-two) → paste each into its item. Both agents stay unready until then.
+## Terraform owns the item, you own the value
+
+A third category, for credentials that only a human can produce but that something else *blocks
+on*. `hermes josh` and `hermes partner` hold LiteLLM virtual keys, which cannot exist until
+LiteLLM is running, because LiteLLM mints them.
+
+That ordering used to be a deadlock. **external-secrets has no per-key "optional"**: if a single
+`data[]` entry cannot resolve, the target Secret is never created at all, so an agent waiting on
+an unmintable key could not even start.
+
+So terraform creates these two items with an **empty** `litellm_api_key`, and
+`lifecycle { ignore_changes = [field] }` means it never looks at the value again. Everything
+reconciles from the first apply; the agents run and return auth errors until real keys arrive;
+pasting a key in is permanent.
+
+⚠️ **Edit that field, never delete it.** An empty value resolves fine. A *missing* property fails
+the whole ExternalSecret and takes the agent down with it.
+
+Order of operations: `tofu apply` → deploy LiteLLM → log in at `llm.<domain>` → mint a virtual key
+per agent (a monthly budget on each is the point of having two) → paste each into its item. The
+agents are up and reconciled the whole way through.
