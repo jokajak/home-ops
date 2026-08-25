@@ -205,8 +205,10 @@ Only the two that another party issues have to be entered by hand.
 | `hermes partner` | `litellm_api_key` | **you** | Partner's agent → LiteLLM virtual key |
 
 `anthropic api` is issued by Anthropic and `litellm_api_key` is minted by LiteLLM itself, so
-neither can be generated ahead of time — that is why they are the exceptions rather than an
-oversight.
+neither can be generated ahead of time. They follow this repo's existing convention for
+externally-issued secrets — hand-made in Bitwarden and only *read* by external-secrets, the same
+as `maxmind api` and `vpn-gateway-secrets`. The full list lives in
+[`terraform/bitwarden/README.md`](../../terraform/bitwarden/README.md#what-is-not-managed-here).
 
 ⚠️ **`salt_key` can never be rotated.** It encrypts provider credentials in LiteLLM's database, so
 tainting `random_password.litellm_salt_key` makes every stored credential permanently unreadable.
