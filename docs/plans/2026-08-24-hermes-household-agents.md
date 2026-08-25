@@ -112,23 +112,48 @@ Chat Completions onto it. And it **rejects** `max_tokens`, `max_output_tokens`,
 `max_completion_tokens` and `metadata` — Hermes sends some of those, so `drop_params: true` is
 required for requests to succeed at all, not just good hygiene.
 
-### D3 — `openebs-hostpath` + VolSync, **never NFS**, for agent state
+### D3 — `nfs-csi` everywhere, so no pod is welded to a node
 
-Hermes keeps its sessions, memory, and search index in **SQLite in WAL mode**
-(`$HERMES_HOME/state.db`). WAL needs shared-memory mapping of the `-shm` file, which NFS does not
-provide reliably — upstream's own config reference says as much, offering
-`database.journal_mode: "delete"` as the escape hatch for "deployments whose backing filesystem is
-not WAL crash-safe, such as ... NFS". Taking the escape hatch would mean giving up WAL's
-concurrency and crash-safety to sit on a filesystem that is worse for this workload anyway.
+Hermes keeps its sessions, memory and search index in **SQLite**, whose default WAL mode needs
+shared-memory mapping that NFS does not provide. The first cut took that at face value and put
+agent state on `openebs-hostpath` — node-local disk — with VolSync shipping hourly restic
+snapshots to MinIO for durability.
 
-So agent state lives on `openebs-hostpath` (node-local disk, WAL-safe). That is the same storage
-class whose failure killed `ai/open-webui-data` when `basement-dell-sff`'s disk died
-(`docs/ISSUES.md` #14) — **the difference is that these PVCs are enrolled in VolSync from the
-first commit**, with hourly restic snapshots to MinIO. Node-local speed, off-node durability.
+That got the trade backwards. `openebs-hostpath` is `WaitForFirstConsumer` with node affinity, so
+the pod is pinned to whichever node first bound the claim, permanently. Losing that node does not
+reschedule the agent; it means restoring from backup to get it back at all. On a five-node cluster
+where two nodes are Raspberry Pis and LiteLLM is separately pinned to `amd64`, that is a lot of
+rigidity bought for one filesystem feature.
 
-Consequence to accept: `openebs-hostpath` is `WaitForFirstConsumer` with node affinity, so each
-agent pod is pinned to whichever node first schedules it. For a single-replica personal agent
-that is fine; recovery from node loss is a VolSync restore, not a reschedule.
+Upstream sells the other side of the trade directly:
+
+> Set this to `"delete"` explicitly for deployments whose backing filesystem is not WAL
+> crash-safe, such as Linux containers bind-mounted through macOS virtiofs, **NFS**, or SMB.
+> — Hermes' `cli-config.yaml.example`
+
+So every volume in the namespace is `nfs-csi`, and the agents' seeded config sets
+`database.journal_mode: "delete"`. DELETE journalling uses POSIX locks rather than shared memory.
+The cost is WAL's concurrency and some of its crash-safety; for a single-writer personal agent
+that is a modest price for a pod that can be rescheduled anywhere.
+
+**The two settings are a pair.** `nfs-csi` with WAL still enabled risks database *corruption*,
+not merely slowness — if any of these ever moves back to a node-local class, `journal_mode` has to
+move back with it. Both files say so.
+
+One ordering detail: Hermes "will not live-downgrade a database already open in WAL", so the
+journal mode has to be correct before the first boot that creates `state.db`. Changing storage
+class recreates the volume empty, which is precisely when that holds.
+
+What this also retires: VolSync over `openebs-hostpath` was flagged as unproven here, because
+`copyMethod: Direct` pins the mover to the node holding an RWO source while the cache PV cannot
+follow. On `nfs-csi` that concern disappears — the component's own comment notes that `nfs-csi`
+binds `Immediate` with no node affinity, so the mover schedules anywhere. The agents stay enrolled
+in VolSync; the NAS is RAID 1, but a snapshot history off the NAS is still worth having.
+
+Two small volumes hold only regenerable credentials — LiteLLM's ChatGPT OAuth token and
+meridian's Claude login — and are `nfs-csi` for the same mobility reason, but are deliberately
+**not** VolSync-enrolled: losing them costs a two-minute login, and replicating live credentials
+to MinIO buys nothing.
 
 ### D4 — One door, routed by identity
 
@@ -367,7 +392,7 @@ diverged. Renovate follows the registry, which is what actually ships.
 
 | Risk | Why it matters | Mitigation |
 |---|---|---|
-| Node loss takes an agent's memory | `openebs-hostpath` is node-local; this already happened once (#14) | VolSync hourly → MinIO from day one; restore is documented in the VolSync plan |
+| Node loss takes an agent's memory | Was the case on `openebs-hostpath`; this already happened once (#14) | Resolved by D3 — every volume is `nfs-csi`, so a lost node reschedules rather than restores. VolSync hourly → MinIO still runs for history |
 | `LITELLM_SALT_KEY` lost or rotated | Every stored provider credential becomes unreadable | Bitwarden item, flagged above and in the ExternalSecret |
 | Authentik group misassignment | One household member reads the other's private memory | Single-member groups, reviewed in Git |
 | Identity header spoofed or router reached directly | Same: one member reads the other's memory | `auth-response-headers` makes ingress-nginx overwrite client-supplied values; CiliumNetworkPolicy admits only the ingress controller. **Both are required** — either alone is insufficient |

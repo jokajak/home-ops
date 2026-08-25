@@ -1,8 +1,17 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
-# Holds the Claude Code credentials meridian authenticates with. Same shape as
-# the LiteLLM token volume: small, and its contents are re-obtainable by
-# logging in again, so it is deliberately not enrolled in VolSync.
+# Holds the Claude Code credentials meridian authenticates with. Same shape and
+# same reasoning as the LiteLLM token volume: credential files rather than a
+# database, so nfs-csi is safe, keeps the pod free to reschedule, and survives
+# losing a node.
+#
+# Checked rather than assumed: meridian bundles libsql, but its telemetry
+# database lives at ~/.config/meridian/telemetry.db — the container's own
+# filesystem, not this mount — so nothing puts SQLite on NFS here. (That DB is
+# therefore ephemeral across restarts, which is fine for telemetry.)
+#
+# Not enrolled in VolSync, for the same reason as LiteLLM's: re-obtainable by
+# logging in again.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -14,4 +23,4 @@ spec:
   resources:
     requests:
       storage: 64Mi
-  storageClassName: openebs-hostpath
+  storageClassName: nfs-csi

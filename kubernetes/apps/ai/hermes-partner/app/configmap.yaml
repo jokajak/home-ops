@@ -32,9 +32,12 @@ data:
         default_model: "gpt-5.4"
 
     database:
-      # Valid because this volume is openebs-hostpath (local disk). Were it ever
-      # moved to NFS this would have to become "delete" — see pvc.yaml.
-      journal_mode: "wal"
+      # "delete", not the default "wal", because this agent's volume is nfs-csi
+      # so that the pod is not welded to a node. WAL needs shared-memory mapping
+      # that NFS does not provide; DELETE uses POSIX locks and is what upstream
+      # prescribes for exactly this case. Paired with pvc.yaml — moving back to
+      # a node-local class means putting "wal" back here at the same time.
+      journal_mode: "delete"
 
     skills:
       # hearthai's shared-memory skill, cloned at boot and mounted read-only.
