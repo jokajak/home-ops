@@ -141,6 +141,35 @@ spec:
           - hosts:
               - *host
 
+      # Deliberately un-gated, and deliberately its own Ingress: the auth
+      # annotations above apply to a whole Ingress, not to a path, so the only
+      # way to exempt one path is to give it a separate object.
+      #
+      # /favicon.ico must never trigger authentication. The browser fetches the
+      # tab icon for whatever page it is showing on this host — including the
+      # outpost's sign-in and error pages — and behind the gate that fetch
+      # carries no session, so ingress-nginx starts a second, concurrent
+      # authorization for it. That flow overwrites the redirect target the real
+      # login stored, and the sign-in dies on an invalid_request whose state
+      # tail is /favicon.ico. The router answers 204 here and no flow begins.
+      #
+      # Nothing is exposed: 204 is a constant, reachable without a session by
+      # design, and every other path stays on the gated Ingress above.
+      favicon:
+        enabled: true
+        className: internal
+        hosts:
+          - host: *host
+            paths:
+              - path: /favicon.ico
+                pathType: Exact
+                service:
+                  identifier: router
+                  port: http
+        tls:
+          - hosts:
+              - *host
+
     # The router reads its generated nginx configuration from the ConfigMap
     # and writes runtime files to the emptyDir while its root stays read-only.
     persistence:

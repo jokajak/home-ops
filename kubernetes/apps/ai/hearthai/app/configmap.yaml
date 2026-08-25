@@ -79,6 +79,21 @@ data:
           return 200 "ok\n";
         }
 
+        # Answered here, and un-gated at the ingress (see the `favicon`
+        # ingress in helmrelease.yaml). A browser fetches the tab icon for
+        # whatever page it is showing — including the outpost's own error and
+        # sign-in pages served on this host. Behind the auth gate that fetch
+        # has no session, so ingress-nginx bounces it into its own
+        # authorization; that second, concurrent flow overwrites the redirect
+        # target the real login stored, and the browser lands on an
+        # invalid_request whose state tail is /favicon.ico instead of
+        # finishing the sign-in. 204 is all a favicon needs, and it starts no
+        # flow.
+        location = /favicon.ico {
+          access_log off;
+          return 204;
+        }
+
         location / {
           # Authenticated, but in neither household group: say so plainly
           # rather than silently handing them somebody's agent.
