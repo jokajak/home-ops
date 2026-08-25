@@ -1,25 +1,17 @@
-# hearthmem — staged, not deployed
+# hearthmem
 
-These manifests are complete and reviewed but **deliberately not referenced** from
-`kubernetes/apps/ai/kustomization.yaml`, because the image they name does not exist yet:
-[`jokajak/hearthai`](https://github.com/jokajak/hearthai) ships `service/Dockerfile` but has no
-CI that builds or publishes it, so `ghcr.io/jokajak/hearthmem` is empty.
+[`jokajak/hearthai`](https://github.com/jokajak/hearthai) `v0.1.0` published
+`ghcr.io/jokajak/hearthmem:0.1.0` and its Helm chart, so this is wired into
+`kubernetes/apps/ai/kustomization.yaml` and deployed like any other app here.
 
-## To bring it up
+## Bootstrapping the household store
 
-1. Publish an image — add a build workflow to `jokajak/hearthai` (preferred: the image then
-   tracks its own source and Renovate can follow it here) or build and push one by hand.
-2. Pin the real tag in `app/helmrelease.yaml`, replacing the placeholder.
-3. Add `- ./hearthmem/ks.yaml` to `kubernetes/apps/ai/kustomization.yaml`.
-4. Create the household store once it is running, from either agent:
-   `hearthmem create family "shared household memory"` — then give the token it prints to the
-   other person so their agent can `hearthmem add family <token>`.
+The service itself has no built-in stores. Once the pod is up, create the shared one from
+either agent: `hearthmem create family "shared household memory"` — then give the token it
+prints to the other person so their agent can `hearthmem add family <token>`.
 
-## Until then
-
-Both agents already carry the `shared-memory` skill and point `HEARTHMEM_URL` at this service.
-Calls fail loudly rather than silently succeeding, which is the failure mode we want: nothing is
-shared, and nobody is under the impression that it was.
+Renovate tracks `ghcr.io/jokajak/hearthmem` tags for future bumps the same as any other image
+in this repo.
 
 ## What is load-bearing here
 

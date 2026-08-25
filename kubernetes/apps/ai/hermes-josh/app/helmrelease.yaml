@@ -135,8 +135,7 @@ spec:
               # Authentik. Note the trailing slash — Authentik's issuer
               # includes it, and the plugin pins the iss claim to this value.
               HERMES_DASHBOARD_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hermes-josh/"
-              # hearthai shared memory. The service is not deployed yet (no
-              # published image), so calls fail loudly until it is.
+              # hearthai shared memory. See kubernetes/apps/ai/hearthmem.
               HEARTHMEM_URL: "http://hearthmem.ai.svc.cluster.local"
               HEARTHMEM_AUTHOR: "josh"
               # Keep the store address book on the data volume so it is backed

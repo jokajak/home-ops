@@ -15,5 +15,6 @@ resources:
   - ./hearthai/ks.yaml
   # Claude-subscription bridge. Inert until logged in; see its HelmRelease.
   - ./meridian/ks.yaml
-  # ./hearthmem/ks.yaml is intentionally absent: its image is not published yet.
-  # See ./hearthmem/README.md.
+  # The shared-memory store both agents read and write. Was staged pending an
+  # image; jokajak/hearthai v0.1.0 published ghcr.io/jokajak/hearthmem.
+  - ./hearthmem/ks.yaml

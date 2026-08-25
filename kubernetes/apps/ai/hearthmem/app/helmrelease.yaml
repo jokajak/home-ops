@@ -52,9 +52,8 @@ spec:
         containers:
           app:
             image:
-              # PLACEHOLDER — this image does not exist yet. See README.md.
               repository: ghcr.io/jokajak/hearthmem
-              tag: latest
+              tag: "0.1.0"
             args: ["--root", "/data"]
             env:
               HEARTHMEM_HOST: "0.0.0.0"
