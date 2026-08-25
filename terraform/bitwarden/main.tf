@@ -561,3 +561,35 @@ resource "bitwarden_item_login" "hearthai" {
     hidden = random_password.hearthai_cookie_secret.result
   }
 }
+
+################################################################################
+# meridian credentials
+################################################################################
+# Gates meridian's proxy. Its API-key check is opt-in — unset means no gate at
+# all — and behind that proxy sits a Claude subscription, so an unauthenticated
+# listener on a cluster network is somebody else's quota to spend.
+#
+# Safe to rotate: it authenticates callers to meridian, and nothing durable is
+# encrypted with it.
+resource "random_password" "meridian_api_key" {
+  length  = 48
+  special = false
+}
+
+resource "bitwarden_item_login" "meridian" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "meridian credentials"
+  notes = "API key callers must present to meridian. Not the Claude credential — that is a login stored on the meridian-auth volume."
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "api_key"
+    hidden = random_password.meridian_api_key.result
+  }
+}

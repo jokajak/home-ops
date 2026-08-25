@@ -1,0 +1,22 @@
+---
+# Defence in depth behind the API key: only LiteLLM has any business talking to
+# meridian, since routing Claude models through the household router is the
+# whole reason it is in-cluster. Everything else is denied at the network.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: meridian-litellm-only
+  namespace: ai
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: meridian
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: litellm
+            k8s:io.kubernetes.pod.namespace: ai
+    # kubelet probes arrive from the node, not from an endpoint.
+    - fromEntities:
+        - host
+        - remote-node

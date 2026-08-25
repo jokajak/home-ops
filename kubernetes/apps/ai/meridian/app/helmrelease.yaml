@@ -64,6 +64,17 @@ spec:
               # Reachable from other pods rather than container-loopback only.
               HOST: 0.0.0.0
               PORT: "3456"
+              # Removes the one piece of unsolicited egress a source review
+              # turned up: a daily version check against registry.npmjs.org.
+              # Benign, but a household assistant should not phone anywhere
+              # it was not asked to.
+              NO_UPDATE_CHECK: "1"
+            envFrom:
+              # MERIDIAN_API_KEY. Its auth check is opt-in — no key, no gate —
+              # so this is what stops any pod that can reach :3456 from
+              # spending the subscription anonymously.
+              - secretRef:
+                  name: meridian-secret
             probes:
               liveness: &probe
                 enabled: true
