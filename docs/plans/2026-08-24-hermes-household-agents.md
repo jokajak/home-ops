@@ -90,13 +90,24 @@ is a hosted API either way. LiteLLM makes that a **routing decision instead of a
 This is also what hearthai's own architecture calls for ("Inference engine — model access behind
 one interface, so which model answers is a routing decision. LiteLLM probably.").
 
-Models exposed on day one, all `anthropic/*` upstream:
+Models exposed on day one, all `chatgpt/*` upstream — a **ChatGPT subscription**, not a metered
+API key. LiteLLM's first-party `chatgpt/` provider authenticates over OAuth device code and caches
+the token, which is what makes **one subscription serve both agents**: LiteLLM holds the single
+token, and each agent authenticates to LiteLLM with its own virtual key instead of holding a
+credential of its own.
 
 | Alias | Upstream | Role |
 |---|---|---|
-| `claude-opus-5` | `anthropic/claude-opus-5` | main conversational model |
-| `claude-sonnet-5` | `anthropic/claude-sonnet-5` | cheaper workhorse |
-| `claude-haiku-4-5` | `anthropic/claude-haiku-4-5` | auxiliary tasks (summarisation, compression) |
+| `gpt-5.4` | `chatgpt/gpt-5.4` | main conversational model |
+| `gpt-5.4-pro` | `chatgpt/gpt-5.4-pro` | deeper reasoning when it is worth the wait |
+| `gpt-5.3-instant` | `chatgpt/gpt-5.3-instant` | auxiliary tasks (summarisation, compression, titles) |
+| `gpt-5.3-codex` | `chatgpt/gpt-5.3-codex` | tool-heavy and code-shaped work |
+
+Two constraints of that backend are load-bearing rather than incidental. It is native to the
+**Responses API**, so each entry carries `model_info.mode: responses` and LiteLLM bridges Hermes'
+Chat Completions onto it. And it **rejects** `max_tokens`, `max_output_tokens`,
+`max_completion_tokens` and `metadata` — Hermes sends some of those, so `drop_params: true` is
+required for requests to succeed at all, not just good hygiene.
 
 ### D3 — `openebs-hostpath` + VolSync, **never NFS**, for agent state
 
@@ -200,12 +211,10 @@ Only the two that another party issues have to be entered by hand.
 |---|---|---|---|
 | `litellm credentials` | `master_key`, `salt_key`, `ui_username`, `ui_password` | `tofu apply` | LiteLLM proxy + admin UI |
 | `litellm pgcreds` | login: username + password | `tofu apply` | LiteLLM's role on the shared Postgres cluster |
-| `anthropic api` | `api_key` | **you** | LiteLLM's only upstream credential |
 | `hermes josh` | `litellm_api_key` | **you** | Josh's agent → LiteLLM virtual key |
 | `hermes partner` | `litellm_api_key` | **you** | Partner's agent → LiteLLM virtual key |
 
-`anthropic api` is issued by Anthropic and `litellm_api_key` is minted by LiteLLM itself, so
-neither can be generated ahead of time. They follow this repo's existing convention for
+`litellm_api_key` is minted by LiteLLM itself, so it cannot be generated ahead of time. They follow this repo's existing convention for
 externally-issued secrets — hand-made in Bitwarden and only *read* by external-secrets, the same
 as `maxmind api` and `vpn-gateway-secrets`. The full list lives in
 [`terraform/bitwarden/README.md`](../../terraform/bitwarden/README.md#what-is-not-managed-here).
@@ -219,12 +228,29 @@ LiteLLM up → log into `llm.${SECRET_DOMAIN}` as `ui_username` → create a vir
 (suggest a monthly budget on each) → put each in its Bitwarden item → the agents pick them up on
 the next `refreshInterval`.
 
-### 2. `tofu apply` in `terraform/authentik`
+### 2. Log LiteLLM into the ChatGPT subscription (one-time, interactive)
+
+The `chatgpt/` provider mints its token through an OAuth **device code** flow, which is the one
+thing here that cannot be declared in Git. Once the pod is running:
+
+```sh
+kubectl -n ai exec -it deploy/litellm -- litellm-proxy auth login   # prints a code + URL
+```
+
+Approve it in a browser on any device. The token lands in `CHATGPT_TOKEN_DIR=/token`, which is the
+`litellm-token` PVC, so it survives restarts and reschedules. It is not enrolled in VolSync on
+purpose — losing it costs another two-minute login, and replicating a live credential to MinIO
+buys nothing.
+
+⚠️ **One subscription, two people.** This is the arrangement that makes the household work on a
+single plan, and it is also the part worth checking against OpenAI's terms before relying on it.
+
+### 3. `tofu apply` in `terraform/authentik`
 
 Creates the two OIDC applications, their Bitwarden client-id items, and the groups
 `Hermes Josh` / `Hermes Partner`.
 
-### 3. Add each person to their group
+### 4. Add each person to their group
 
 `terraform/authentik/users.sops.yaml` is encrypted and not readable from here, so this step is
 yours: add `Hermes Josh` to Josh's `groups` list and `Hermes Partner` to the partner's. The group
@@ -233,7 +259,7 @@ names are already registered in `users.tf`'s `group_ids_by_name`.
 **Membership is the whole access boundary.** Anyone in `Hermes Josh` can read everything Josh's
 agent remembers.
 
-### 4. Create the partner's Authentik user, if they do not have one
+### 5. Create the partner's Authentik user, if they do not have one
 
 They need an account before they can be put in a group. Existing users log in through GitHub, so
 their `email` must match their GitHub primary email.

@@ -56,6 +56,9 @@ spec:
               # DATABASE_URL is assembled in the ExternalSecret and arrives via
               # envFrom below, pointing at the shared database/postgres cluster.
               STORE_MODEL_IN_DB: "True"
+              # Where the chatgpt/ provider caches its OAuth token. Points at
+              # the PVC so the one-time device-code login survives restarts.
+              CHATGPT_TOKEN_DIR: /token
             envFrom:
               - secretRef:
                   name: litellm-secret
@@ -132,3 +135,7 @@ spec:
           - path: /config/config.yaml
             subPath: config.yaml
             readOnly: true
+      token:
+        existingClaim: litellm-token
+        globalMounts:
+          - path: /token
