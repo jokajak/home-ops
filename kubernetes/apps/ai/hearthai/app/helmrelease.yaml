@@ -132,8 +132,9 @@ spec:
                   echo "no nameserver in /etc/resolv.conf; cannot resolve agents" >&2
                   exit 1
                 fi
-                # $$ escapes this from Flux's postBuild.substitute — it must reach
-                # the container as a literal ${RESOLVER} for the shell to expand.
+                # $$ below escapes it from Flux's postBuild.substitute, which
+                # scans this whole script as text — it must reach the container
+                # as a literal dollar-brace RESOLVER for the shell to expand.
                 sed "s|__RESOLVER__|$${RESOLVER}|" /config/nginx.conf.tmpl > /tmp/nginx.conf
                 exec nginx -c /tmp/nginx.conf -g 'daemon off;'
             probes:
