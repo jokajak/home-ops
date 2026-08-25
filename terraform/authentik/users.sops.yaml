@@ -20,6 +20,8 @@ users:
         - ENC[AES256_GCM,data:1QMjfi8=,iv:cLp2O6XoQ56cBceAd5/4EMKaxgbrRmALWxkQGxuzcWE=,tag:FxxEs3SF0zItnKtcu1RVSQ==,type:str]
         - ENC[AES256_GCM,data:z2yren4EHL4SF9PPkSsP,iv:Yur8rt6+BpB+Yc80krzRnFAiuuYAYA5r6dgMX8CprlU=,tag:zgnv87A9K94Mt9bHEoev6Q==,type:comment]
         - ENC[AES256_GCM,data:+g1Tj+xgXw==,iv:741i8He21ITJljQn9QwHkArWTd0nx4hq3GGt2cTxvLg=,tag:99l/vXQJ9kKnd7kSOEFmgw==,type:str]
+        - ENC[AES256_GCM,data:cg3sQV4I9l+OMXrJ,iv:Xd4BPTFa/YE3zqTd9m+n4zB0q8RSoAiw0PtpB849TQ0=,tag:Uq1XjmR0YpedK+WxH/VI4w==,type:comment]
+        - ENC[AES256_GCM,data:R1mhk2Lke+b/1p4=,iv:OziOZ7/aEVt2sx9ePTdpg3kfzpiFID71g2HId6XX5Vw=,tag:nkp/176JlwP/bRHOyuBVzA==,type:str]
 sops:
     age:
         - recipient: age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68
@@ -31,7 +33,7 @@ sops:
             ODRLQStGdlpDUnBtQi92V1pOSFRBY2sKz4A75a42cff8QdEqqmvGTFmcAxzyferO
             Qchtozt5UA3hN+BbD5WKVfoMGRtLGrWbW5XOnzgcEsj/cuLNg+OCJw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-06-15T01:30:47Z"
-    mac: ENC[AES256_GCM,data:hxlX+m5Hr+fQFaW/fwUhcAWGNgCgrZqzJmSY3UEd8rGNb2CCiDIVwIgHEogeI6N0Gct0tT9aW5mn7h3ER3eHjMEL0AwJTjHkhUgFJkOSOJlQ18xMKCBHxvg+Fvoc4IASfWJH46s9yB3P5UXJvd3e1RBgBhAX02U0LML00661jfE=,iv:+DWkKIheWRQaOm2LoUFQknUAhPPCGjzkInshbjxck6E=,tag:DWv44Pvrdfmj8IkEbT9ZLw==,type:str]
+    lastmodified: "2026-08-25T16:08:35Z"
+    mac: ENC[AES256_GCM,data:Bzi/UbaPap9vEKCnYMoA84n8Hr2vXmv31162tF4UG+rQODbbeAn8A40fsPsyOXygDrvj68rcIfA7lHY3X2+sV/Bz3NglJAeNIsn1dJ5e+pGRIeAbE6w7r8alRt7j2oFPAaiT5Y/7fT1G4sq0WQl2hVIaoF6pvM569ZBJkn1iveE=,iv:z6NYP253RUXVg6mdbuGle6qlTVWkjKKM/6Q/E2bJzv8=,tag:UYh+Ac/nG2xT0fv1PpNJhA==,type:str]
     unencrypted_suffix: _unencrypted
     version: 3.12.2
