@@ -1,6 +1,6 @@
 # Collapsing the per-app CNPG clusters
 
-> Status: **LITELLM + FORGEJO DONE · PAPERLESS AND HOME-ASSISTANT NEXT** · 2026-08-24 ·
+> Status: **LITELLM + FORGEJO + PAPERLESS DONE · HOME-ASSISTANT LAST** · 2026-08-24 ·
 > Owner: Josh · Author: Claude
 >
 > Six Postgres clusters and fourteen pods to serve six apps, on five small nodes. This collapses
@@ -21,11 +21,11 @@ Where that left us:
 | `immich-database` | `default` | 3 | **Stays separate** — see below |
 | `home-assistant-db` | `default` | 2 | Collapsible, last |
 | `forgejo-database` | `productivity` | 2 | **Collapsed** (stood up 2026-08-22, no data yet) |
-| `paperless-database` | `productivity` | 2 | Collapsible, next |
+| `paperless-database` | `productivity` | 2 | **Collapsed** (no documents ingested yet) |
 | `litellm-database` | `ai` | 2 | **Collapsed** (never deployed, so free) |
 
-Fourteen pods → eight once forgejo and litellm are done, six if paperless and home-assistant
-follow.
+Fourteen pods → **eight** with litellm, forgejo and paperless collapsed; **six** if
+home-assistant follows.
 
 ## Why immich stays separate
 
@@ -114,9 +114,27 @@ That is the intent here. Note only that Forgejo's *repository* tree is separate 
 new empty database has no record of them. Fresh install, nothing to reconcile; worth knowing only
 because the two halves of Forgejo's state are on different storage with different lifecycles.
 
+## Done: paperless
+
+Same again — no documents have been ingested, so there is nothing to move. Paperless uses
+`app-template`, which takes init containers natively, so `postgres-init` goes straight into the
+controller with no post-renderer.
+
+Its five database environment variables used to be `secretKeyRef`s into the CNPG-minted
+`paperless-database-app`. Host, port and name are not secret, so they are now plain values in the
+HelmRelease and only the credential comes from `paperless-pg-secret`. That reads better and makes
+the connection target reviewable in Git.
+
+Needs one new Bitwarden item: **`paperless pgcreds`** (login: username + password), before this
+reaches `main`, for the same reason as forgejo — no secret, no pod.
+
+Two things stay where they are, and neither is affected by the database move: the document tree
+on the `nfs-paperless` PV, and the VolSync enrolment that backs it up.
+
 ## Migrating an app that *does* have data
 
-Neither app above needed this. Paperless and home-assistant will. The ordering is the whole
+None of the three above needed this — all were converted before they had anything to lose.
+Home-assistant will. The ordering is the whole
 procedure — get it wrong and the app migrates a fresh schema into an empty database while the old
 one is being pruned out from under it.
 
@@ -197,21 +215,21 @@ Revert the merge. The old `Cluster` comes back from Git, but **its PVCs do not**
 provisions empty ones and bootstraps a new empty database. Recovery is the dump from step 4, or
 the barman lineage. This is why step 4 is not optional.
 
-## Next: paperless, then home-assistant
+## Last: home-assistant
 
-Same shape, in this order:
+`home-assistant-db`, 2 instances, and the only one left that is worth thinking about rather than
+just doing.
 
-- **paperless** — `paperless-database`, 2 instances, small, and it **does** have documents, so
-  this is the first one that needs the migration procedure above. Its chart is `app-template`,
-  which takes init containers natively, so no post-renderer needed. Use `documents_document` as
-  the row-count check in step 5.
-- **home-assistant** — `home-assistant-db`, 2 instances. Deliberately last: the recorder is the
-  only genuinely write-heavy workload in the collapsible set, and it is the one that could make
-  the shared cluster a noisy-neighbour problem. Do it once forgejo and paperless have been on
-  the shared cluster long enough to see whether the write load is boring. Its recorder history
-  is real data, so the migration procedure applies here too. If HA's recorder turns
-  out to dominate, leaving it on its own cluster is a legitimate final answer rather than a
-  failure.
+It is deliberately last for two reasons. Its recorder is the only genuinely write-heavy workload
+in the collapsible set — everything else here is holding configuration — so it is the one that
+could turn the shared cluster into a noisy-neighbour problem. And its recorder history is **real
+data**, so it is the first of these that actually needs the migration procedure above (`states`
+or `events` is the row-count check for step 5).
+
+Do it once litellm, forgejo and paperless have been on the shared cluster long enough to show
+whether the write load is boring. If HA's recorder turns out to dominate, leaving it on its own
+cluster is a legitimate final answer rather than a failure — and at that point the shared cluster
+would be carrying four apps rather than one, which is most of the win already.
 
 ## Open
 
