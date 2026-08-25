@@ -28,6 +28,22 @@ spec:
   uninstall:
     keepHistory: false
   values:
+    defaultPodOptions:
+      # amd64 only. The registry manifest for this tag ADVERTISES linux/arm64,
+      # so the pull succeeds and then the binary will not run:
+      #
+      #   app  exec docker/prod_entrypoint.sh: exec format error
+      #
+      # That is a broken multi-arch manifest, not a missing image — which is
+      # exactly why this pin has to stay. Anyone checking `docker manifest
+      # inspect` later will see arm64 listed and conclude the selector is
+      # redundant. It is not; this cluster has arm64 nodes (two RPi4s) and the
+      # scheduler will happily place it there again.
+      #
+      # Pinned at pod level rather than per-container so the init container is
+      # covered too, regardless of which image turns out to be at fault.
+      nodeSelector:
+        kubernetes.io/arch: amd64
     controllers:
       litellm:
         annotations:

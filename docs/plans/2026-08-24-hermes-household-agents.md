@@ -43,7 +43,7 @@ flowchart TB
 
     ANTH["Anthropic API"]:::ext
 
-    J & P -->|"https://hearthai.DOMAIN"| DOOR
+    J & P -->|"https://chat.DOMAIN"| DOOR
     DOOR --> AUTH
     AUTH -.->|"X-Auth-Request-Groups"| DOOR
     DOOR -->|"Hermes Josh"| HJ
@@ -141,7 +141,7 @@ single-member group deciding who could reach it. That worked, and it was boring 
 was Authentik's, per host. It also meant every person had to know and type a hostname encoding
 which agent was theirs, which is a strange thing to ask of a household.
 
-So: **`hearthai.${SECRET_DOMAIN}` is the only hostname.** You log in once, and you land on your
+So: **`chat.${SECRET_DOMAIN}` is the only hostname.** You log in once, and you land on your
 own agent. Neither agent has an ingress any more; both are ClusterIP-only.
 
 ```
@@ -230,7 +230,7 @@ would drift.
 | Path | What |
 |---|---|
 | `kubernetes/apps/ai/litellm/` | LiteLLM proxy. Its database is a role on the shared `database/postgres` cluster, not a cluster of its own — see [the consolidation plan](./2026-08-24-cnpg-consolidation.md). UI at `llm.${SECRET_DOMAIN}` |
-| `kubernetes/apps/ai/hearthai/` | The door: oauth2-proxy + identity router + NetworkPolicy. `hearthai.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/hearthai/` | The door: oauth2-proxy + identity router + NetworkPolicy. `chat.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hermes-josh/` | Josh's agent. ClusterIP only |
 | `kubernetes/apps/ai/hermes-partner/` | Partner's agent. ClusterIP only |
 | `kubernetes/apps/ai/meridian/` | Claude-subscription → Anthropic API bridge. **Inert until logged in** |

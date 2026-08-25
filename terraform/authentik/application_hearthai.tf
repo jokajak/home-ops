@@ -2,7 +2,7 @@
 ## Authentik Application - hearthai (the household door)
 ##
 ## One hostname for the whole household. oauth2-proxy sits behind
-## https://hearthai.<domain>, authenticates every request against this
+## https://chat.<domain>, authenticates every request against this
 ## application, and hands ingress-nginx the caller's group list; a small nginx
 ## then routes to that person's agent.
 ##
@@ -44,7 +44,7 @@ resource "authentik_provider_oauth2" "hearthai" {
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://hearthai.${var.domain}/oauth2/callback"
+      url               = "https://chat.${var.domain}/oauth2/callback"
     }
   ]
 }
@@ -54,7 +54,7 @@ resource "authentik_application" "hearthai" {
   slug               = "hearthai"
   protocol_provider  = authentik_provider_oauth2.hearthai.id
   group              = authentik_group.home.name
-  meta_launch_url    = "https://hearthai.${var.domain}"
+  meta_launch_url    = "https://chat.${var.domain}"
   meta_description   = "The household assistant. You get your own agent, with your own memory."
   policy_engine_mode = "any"
 }

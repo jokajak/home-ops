@@ -547,7 +547,7 @@ resource "bitwarden_item_login" "hearthai" {
   notes = "Session cookie key for the household door (oauth2-proxy). Rotating it just logs everyone out."
 
   uri {
-    value = "https://hearthai.${local.domain}"
+    value = "https://chat.${local.domain}"
     match = "host"
   }
 
