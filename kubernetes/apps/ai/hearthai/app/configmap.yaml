@@ -2,8 +2,9 @@
 # The identity router.
 #
 # One hostname, two agents. ingress-nginx authenticates every request against
-# oauth2-proxy first and copies the resulting identity onto the request as
-# X-Auth-Request-Groups; this nginx reads that header and picks the backend.
+# the Authentik proxy outpost first and copies the resulting identity onto the
+# request as X-Authentik-Groups; this nginx reads that header and picks the
+# backend.
 #
 # ── The security model, in one paragraph ────────────────────────────────────
 # That header IS the access boundary. It replaces the per-hostname Authentik
@@ -54,11 +55,11 @@ data:
       # so routing on the same groups keeps one source of truth rather than
       # inventing a second. Group names are not secret; usernames are, and
       # live encrypted in users.sops.yaml — which is the other reason to match
-      # on groups and not on X-Auth-Request-User.
+      # on groups and not on X-Authentik-Username.
       #
-      # oauth2-proxy joins groups with commas; the alternation also accepts
-      # pipes so the map survives a change in that formatting.
-      map $http_x_auth_request_groups $hearthai_backend {
+      # Authentik joins groups with pipes; commas are accepted as well to keep
+      # the match tolerant of serialization changes.
+      map $http_x_authentik_groups $hearthai_backend {
         default                                       "";
         "~(^|[,|])\s*Hermes Josh\s*([,|]|$)"          "hermes-josh.ai.svc.cluster.local:9119";
         "~(^|[,|])\s*Hermes Partner\s*([,|]|$)"       "hermes-partner.ai.svc.cluster.local:9119";
