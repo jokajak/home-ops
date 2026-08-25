@@ -2,9 +2,13 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
 # ReadWriteOnce is a correctness requirement, not a default: each store is a git
 # repository guarded by one in-process writer lock, so exactly one pod may mount
-# it. openebs-hostpath for the same reason the agents use it — git's index and
-# lockfiles are no happier on NFS than SQLite's WAL is. Durability comes from
-# VolSync, not from the storage class.
+# it.
+#
+# nfs-csi so the pod is not pinned to a node, matching the rest of the
+# namespace. Git on NFS is tolerable precisely because of that single-writer
+# lock — the failure mode people hit with git over NFS is concurrent access,
+# which this service structurally prevents. Worth re-checking against real use
+# if index.lock contention ever shows up.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -16,4 +20,4 @@ spec:
   resources:
     requests:
       storage: 5Gi
-  storageClassName: openebs-hostpath
+  storageClassName: nfs-csi
