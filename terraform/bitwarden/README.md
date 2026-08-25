@@ -23,7 +23,6 @@ Create these in Bitwarden (same organization + collection as the generated ones)
 
 | Item | Fields the ExternalSecret reads | Consumed by | Issued by |
 |---|---|---|---|
-| `anthropic api` | `api_key` | `ai/litellm` | console.anthropic.com |
 | `hermes josh` | `litellm_api_key` | `ai/hermes-josh` | the LiteLLM admin UI |
 | `hermes partner` | `litellm_api_key` | `ai/hermes-partner` | the LiteLLM admin UI |
 | `github runner app credentials` | login + fields | `actions-runner-system/actions-runner-controller` | a GitHub App |

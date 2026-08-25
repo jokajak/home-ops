@@ -31,7 +31,7 @@ resource "authentik_group" "hermes_partner" {
 }
 
 ## ------------------------------------------
-## Josh's agent — https://hermes.<domain>
+## Josh's agent — behind https://hearthai.<domain>
 ## ------------------------------------------
 module "hermes_josh_oidc_creds" {
   source          = "./oidc_creds"
@@ -55,13 +55,15 @@ resource "authentik_provider_oauth2" "hermes_josh" {
 
   access_token_validity = "hours=8"
 
-  # <dashboard public URL>/auth/callback. The public URL is pinned in the
-  # HelmRelease as HERMES_DASHBOARD_PUBLIC_URL; the two must agree exactly.
+  # <dashboard public URL>/auth/callback. Both agents now advertise the SAME
+  # public URL — the shared hearthai door — so both register the same redirect.
+  # That is fine: they are separate OIDC clients, and the router sends the
+  # callback back to whichever agent the caller's group maps to.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://hermes.${var.domain}/auth/callback"
+      url               = "https://hearthai.${var.domain}/auth/callback"
     }
   ]
 }
@@ -75,7 +77,7 @@ resource "authentik_application" "hermes_josh" {
   protocol_provider  = authentik_provider_oauth2.hermes_josh.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://hermes.${var.domain}"
+  meta_launch_url    = "https://hearthai.${var.domain}"
   policy_engine_mode = "any"
 }
 
@@ -86,10 +88,7 @@ resource "authentik_policy_binding" "hermes_josh" {
 }
 
 ## ------------------------------------------
-## Partner's agent — https://hermes-partner.<domain>
-##
-## Flat hostname rather than a second label: the cluster's wildcard certificate
-## is *.<domain>, which does not cover partner.hermes.<domain>.
+## Partner's agent — also behind https://hearthai.<domain>
 ## ------------------------------------------
 module "hermes_partner_oidc_creds" {
   source          = "./oidc_creds"
@@ -116,7 +115,7 @@ resource "authentik_provider_oauth2" "hermes_partner" {
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://hermes-partner.${var.domain}/auth/callback"
+      url               = "https://hearthai.${var.domain}/auth/callback"
     }
   ]
 }
@@ -127,7 +126,7 @@ resource "authentik_application" "hermes_partner" {
   protocol_provider  = authentik_provider_oauth2.hermes_partner.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://hermes-partner.${var.domain}"
+  meta_launch_url    = "https://hearthai.${var.domain}"
   policy_engine_mode = "any"
 }
 

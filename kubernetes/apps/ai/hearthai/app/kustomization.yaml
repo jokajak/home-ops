@@ -5,7 +5,7 @@ kind: Kustomization
 namespace: ai
 resources:
   - ./externalsecret.yaml
-  - ./pvc.yaml
   - ./configmap.yaml
   - ./helmrelease.yaml
+  - ./networkpolicy.yaml
   - ./gatus.yaml

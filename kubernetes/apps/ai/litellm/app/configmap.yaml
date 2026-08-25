@@ -1,7 +1,14 @@
 ---
-# The router's model catalogue. Adding a model — including a locally served one,
-# when this cluster can host one — is an edit here and nothing else: neither
-# agent's manifest names a provider or an upstream key.
+# The router's model catalogue.
+#
+# Backed by a ChatGPT subscription rather than a metered API key: LiteLLM's
+# first-party `chatgpt/` provider authenticates over OAuth device code and
+# reuses the token from CHATGPT_TOKEN_DIR. This is the piece that lets ONE
+# subscription serve both agents — LiteLLM holds the single OAuth token, and
+# each agent authenticates to LiteLLM with its own virtual key instead.
+#
+# Adding a model — including a locally served one, or a metered API key later —
+# is an edit here and nothing else: neither agent's manifest names a provider.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,38 +16,64 @@ metadata:
   namespace: ai
 data:
   config.yaml: |
+    # WHY 5.4 AND NOT 5.6: GPT-5.6 (Sol/Terra/Luna) is in the ChatGPT app on a
+    # paid plan, and LiteLLM supports it on the metered routes — openai/, azure/,
+    # bedrock_mantle/ all carry the family. The `chatgpt/` subscription-OAuth
+    # route does not: its price/context map has ten entries and stops at
+    # gpt-5.4-pro, on main as well as on the pinned release. Whether that is
+    # LiteLLM lagging or the OAuth backend not serving 5.6 is not visible from
+    # here; the app's model picker and the subscription API expose different
+    # sets. Re-check after a Renovate bump with:
+    #
+    #   python3 -c "import json,urllib.request as u; \
+    #     d=json.load(u.urlopen('https://raw.githubusercontent.com/BerriAI/litellm/main/litellm/model_prices_and_context_window_backup.json')); \
+    #     print(sorted(k for k in d if k.startswith('chatgpt/')))"
+    #
+    # When a 5.6 entry appears there, swap the gpt-5.4 alias below to it.
     model_list:
       # Main conversational model for both household agents.
-      - model_name: claude-opus-5
+      - model_name: gpt-5.4
+        model_info:
+          # The subscription backend is native to the Responses API; LiteLLM
+          # bridges Chat Completions onto it, which is what Hermes speaks.
+          mode: responses
         litellm_params:
-          model: anthropic/claude-opus-5
-          api_key: os.environ/ANTHROPIC_API_KEY
-      # Cheaper workhorse; either agent can switch with /model.
-      - model_name: claude-sonnet-5
+          model: chatgpt/gpt-5.4
+      # Deeper reasoning, when an answer is worth waiting for.
+      - model_name: gpt-5.4-pro
+        model_info:
+          mode: responses
         litellm_params:
-          model: anthropic/claude-sonnet-5
-          api_key: os.environ/ANTHROPIC_API_KEY
-      # Auxiliary tasks — summarisation, context compression, title generation.
-      - model_name: claude-haiku-4-5
+          model: chatgpt/gpt-5.4-pro
+      # Fast and cheap — auxiliary tasks: summarisation, context compression,
+      # session titles.
+      - model_name: gpt-5.3-instant
+        model_info:
+          mode: responses
         litellm_params:
-          model: anthropic/claude-haiku-4-5
-          api_key: os.environ/ANTHROPIC_API_KEY
+          model: chatgpt/gpt-5.3-instant
+      # Codex-tuned, for the agent's own tool-heavy and code-shaped work.
+      - model_name: gpt-5.3-codex
+        model_info:
+          mode: responses
+        litellm_params:
+          model: chatgpt/gpt-5.3-codex
 
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
-      # Virtual keys, budgets and spend are managed in the admin UI and stored
-      # in Postgres, so they survive a pod restart and are not config-as-code.
-      # That is deliberate: a per-person budget is an operational dial, not a
-      # deployment concern.
+      # Virtual keys, budgets and spend live in Postgres, so they survive a pod
+      # restart and are not config-as-code. Deliberate: a per-person budget is
+      # an operational dial, not a deployment concern.
       store_model_in_db: true
       # Poll model health in the background rather than on every /health call,
-      # so probing does not bill a real request per scrape.
+      # so probing does not spend subscription quota per scrape.
       background_health_checks: true
       health_check_interval: 300
 
     litellm_settings:
-      # Hermes speaks OpenAI chat-completions; drop OpenAI-only parameters the
-      # Anthropic upstream does not accept instead of failing the request.
+      # Load-bearing here, not just tidiness: the ChatGPT subscription backend
+      # REJECTS max_tokens / max_output_tokens / max_completion_tokens and
+      # metadata. Hermes sends some of those, so without this the requests fail.
       drop_params: true
       num_retries: 2
       # Agent turns with large tool payloads are slow; the default is too tight.

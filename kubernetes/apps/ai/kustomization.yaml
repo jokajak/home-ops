@@ -4,11 +4,16 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - ./namespace.yaml
-  # The household's inference router: one upstream credential, one virtual key
-  # per agent. Both agents depend on it.
+  # The household's inference router: one subscription, one virtual key per
+  # agent. Both agents depend on it.
   - ./litellm/ks.yaml
   # One agent per person — separate process, separate volume, separate memory.
+  # Neither has a hostname of its own; both sit behind hearthai.
   - ./hermes-josh/ks.yaml
   - ./hermes-partner/ks.yaml
+  # The household door: one URL, routed to your agent by who you logged in as.
+  - ./hearthai/ks.yaml
+  # Claude-subscription bridge. Inert until logged in; see its HelmRelease.
+  - ./meridian/ks.yaml
   # ./hearthmem/ks.yaml is intentionally absent: its image is not published yet.
   # See ./hearthmem/README.md.
