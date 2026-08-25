@@ -121,11 +121,15 @@ resource "authentik_provider_oauth2" "hermes_partner" {
 
   access_token_validity = "hours=8"
 
+  # Temporary: Partner's agent moved to its own host (partner-chat) to
+  # sidestep the same hermes-agent double-token-exchange bug as hermes_josh —
+  # see the matching comment in
+  # kubernetes/apps/ai/hermes-partner/app/helmrelease.yaml.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://chat.${var.domain}/auth/callback"
+      url               = "https://partner-chat.${var.domain}/auth/callback"
     }
   ]
 }

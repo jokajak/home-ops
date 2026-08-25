@@ -123,8 +123,10 @@ spec:
               # Pointing Josh directly at his own host removes the outpost layer
               # for this path, leaving hermes-agent's own OIDC as the only gate
               # (still access-controlled: Authentik only issues tokens for this
-              # application to the "Hermes Josh" group). chat.<domain> is left
-              # in place for hearthai/hermes-partner.
+              # application to the "Hermes Josh" group). hermes-partner gets the
+              # same treatment at partner-chat.<domain>. hearthai/chat.<domain>
+              # stays — it still exists for the shared memory store (HEARTHMEM),
+              # just not as the login path for either agent anymore.
               # Declaring the public URL also force-engages the auth gate. The dashboard
               # fails closed at startup if no auth provider is configured —
               # that hardening followed a 2026 campaign in which exposed
