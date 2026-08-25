@@ -521,3 +521,43 @@ resource "bitwarden_item_login" "litellm" {
     hidden = random_password.litellm_ui_password.result
   }
 }
+
+################################################################################
+# hearthai credentials
+################################################################################
+# Signs oauth2-proxy's session cookie at the household door. Generated, not
+# issued by anyone, so it belongs here rather than in a human's hands.
+#
+# Safe to rotate, unlike LiteLLM's salt key: changing it invalidates every live
+# session and logs the household out, and nothing worse.
+#
+# 32 characters with no punctuation — oauth2-proxy requires the raw secret to
+# be exactly 16, 24 or 32 bytes, and special characters here have historically
+# tripped up its base64 handling.
+resource "random_password" "hearthai_cookie_secret" {
+  length  = 32
+  special = false
+}
+
+resource "bitwarden_item_login" "hearthai" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "hearthai credentials"
+  notes = "Session cookie key for the household door (oauth2-proxy). Rotating it just logs everyone out."
+
+  uri {
+    value = "https://hearthai.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "cookie_secret"
+    hidden = random_password.hearthai_cookie_secret.result
+  }
+}

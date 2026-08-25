@@ -1,0 +1,103 @@
+---
+# The identity router.
+#
+# One hostname, two agents. ingress-nginx authenticates every request against
+# oauth2-proxy first and copies the resulting identity onto the request as
+# X-Auth-Request-Groups; this nginx reads that header and picks the backend.
+#
+# ── The security model, in one paragraph ────────────────────────────────────
+# That header IS the access boundary. It replaces the per-hostname Authentik
+# application binding that used to do the job, so it must be impossible for a
+# caller to supply their own. Two things enforce that: ingress-nginx *sets*
+# these headers from the auth subrequest (overwriting anything the client
+# sent), and the NetworkPolicy beside this file means nothing but the ingress
+# controller can open a connection to this pod in the first place. Remove
+# either and one household member can read the other's private memory by
+# typing a header.
+#
+# An unrecognised or absent identity gets 403 rather than a default backend —
+# failing closed is the whole point.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hearthai-router
+  namespace: ai
+data:
+  nginx.conf.tmpl: |
+    worker_processes auto;
+    error_log /dev/stderr warn;
+    pid /tmp/nginx.pid;
+    events { worker_connections 1024; }
+
+    http {
+      access_log /dev/stdout;
+      # Read-only root filesystem: everything nginx writes goes to the tmp
+      # emptyDir.
+      client_body_temp_path /tmp/client_temp;
+      proxy_temp_path       /tmp/proxy_temp;
+      fastcgi_temp_path     /tmp/fastcgi_temp;
+      uwsgi_temp_path       /tmp/uwsgi_temp;
+      scgi_temp_path        /tmp/scgi_temp;
+
+      # Substituted at container start from /etc/resolv.conf, so no cluster IP
+      # is ever written into this repo.
+      resolver __RESOLVER__ valid=30s ipv6=off;
+
+      # WebSocket upgrade passthrough — the Hermes dashboard streams over it.
+      map $http_upgrade $connection_upgrade {
+        default upgrade;
+        ''      close;
+      }
+
+      # Identity -> backend. Authentik group membership is already the access
+      # boundary for these agents (terraform/authentik/application_hermes.tf),
+      # so routing on the same groups keeps one source of truth rather than
+      # inventing a second. Group names are not secret; usernames are, and
+      # live encrypted in users.sops.yaml — which is the other reason to match
+      # on groups and not on X-Auth-Request-User.
+      #
+      # oauth2-proxy joins groups with commas; the alternation also accepts
+      # pipes so the map survives a change in that formatting.
+      map $http_x_auth_request_groups $hearthai_backend {
+        default                                       "";
+        "~(^|[,|])\s*Hermes Josh\s*([,|]|$)"          "hermes-josh.ai.svc.cluster.local:9119";
+        "~(^|[,|])\s*Hermes Partner\s*([,|]|$)"       "hermes-partner.ai.svc.cluster.local:9119";
+      }
+
+      server {
+        listen 8080;
+        server_name _;
+
+        # Agent turns are long and the dashboard holds a stream open.
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        client_max_body_size 0;
+
+        location = /healthz {
+          access_log off;
+          return 200 "ok\n";
+        }
+
+        location / {
+          # Authenticated, but in neither household group: say so plainly
+          # rather than silently handing them somebody's agent.
+          if ($hearthai_backend = "") {
+            add_header Content-Type text/plain always;
+            return 403 "No household agent is mapped to your account.\n";
+          }
+
+          proxy_pass http://$hearthai_backend;
+          proxy_http_version 1.1;
+          proxy_set_header Upgrade            $http_upgrade;
+          proxy_set_header Connection         $connection_upgrade;
+          proxy_set_header Host               $host;
+          proxy_set_header X-Real-IP          $remote_addr;
+          proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto  $http_x_forwarded_proto;
+          proxy_set_header X-Forwarded-Host   $host;
+          # The agent behind this does its own OIDC round-trip; buffering the
+          # response would stall the dashboard's event stream.
+          proxy_buffering off;
+        }
+      }
+    }

@@ -32,9 +32,10 @@ flowchart TB
 
     subgraph CLUSTER["home-kubernetes · namespace: ai"]
         direction TB
-        AUTH["<b>Authentik</b><br/>one OIDC app per agent<br/><i>group binding = who may log in</i>"]:::auth
-        HJ["<b>hermes-josh</b><br/>dashboard :9119<br/>own PVC, own memory"]:::agent
-        HP["<b>hermes-partner</b><br/>dashboard :9119<br/>own PVC, own memory"]:::agent
+        DOOR["<b>hearthai</b> — one door<br/>oauth2-proxy + nginx router<br/><i>routes on group, not hostname</i>"]:::door
+        AUTH["<b>Authentik</b>"]:::auth
+        HJ["<b>hermes-josh</b><br/>:9119, ClusterIP only<br/>own PVC, own memory"]:::agent
+        HP["<b>hermes-partner</b><br/>:9119, ClusterIP only<br/>own PVC, own memory"]:::agent
         LL["<b>litellm</b> :4000<br/>one upstream key<br/>virtual key + budget per agent"]:::infra
         DB[("shared postgres<br/><i>database ns</i><br/>keys · spend")]:::infra
         HM["<b>hearthmem</b><br/><i>staged, not deployed</i><br/>shared stores"]:::staged
@@ -42,10 +43,11 @@ flowchart TB
 
     ANTH["Anthropic API"]:::ext
 
-    J -->|"https://hermes.DOMAIN"| AUTH
-    P -->|"https://hermes-partner.DOMAIN"| AUTH
-    AUTH --> HJ
-    AUTH --> HP
+    J & P -->|"https://hearthai.DOMAIN"| DOOR
+    DOOR --> AUTH
+    AUTH -.->|"X-Auth-Request-Groups"| DOOR
+    DOOR -->|"Hermes Josh"| HJ
+    DOOR -->|"Hermes Partner"| HP
     HJ --> LL
     HP --> LL
     LL <--> DB
@@ -56,6 +58,7 @@ flowchart TB
     classDef person fill:#e8ddf5,stroke:#6b46a8,stroke-width:2px,color:#1a1a1a
     classDef agent fill:#fff3bf,stroke:#a68b00,stroke-width:3px,color:#1a1a1a
     classDef infra fill:#d6e9fb,stroke:#2a6fb0,stroke-width:2px,color:#1a1a1a
+    classDef door fill:#f5d9c0,stroke:#a8541f,stroke-width:3px,color:#1a1a1a
     classDef auth fill:#c9e8d4,stroke:#1f6b41,stroke-width:2px,color:#1a1a1a
     classDef staged fill:#eeeeee,stroke:#999999,stroke-width:2px,stroke-dasharray:5 4,color:#1a1a1a
     classDef ext fill:#f4f4f4,stroke:#888888,stroke-width:2px,color:#1a1a1a
@@ -127,21 +130,71 @@ Consequence to accept: `openebs-hostpath` is `WaitForFirstConsumer` with node af
 agent pod is pinned to whichever node first schedules it. For a single-replica personal agent
 that is fine; recovery from node loss is a VolSync restore, not a reschedule.
 
-### D4 — The web dashboard is the surface, gated by Authentik
+### D4 — One door, routed by identity
 
-No Telegram/Discord/Signal is available to this household, so Hermes' built-in web dashboard is
-the interaction surface. It refuses to serve a non-loopback bind without an auth provider
-(fail-closed, after the June 2026 campaign where exposed dashboards were driven into planting SSH
-backdoors), and it supports **self-hosted OIDC** with Authentik named explicitly.
+No Telegram/Discord/Signal is available to this household, so Hermes' web dashboard is the
+surface. It refuses to serve a non-loopback bind without an auth provider (fail-closed, after the
+June 2026 campaign in which exposed dashboards were driven into planting SSH backdoors).
 
-Access control is Authentik's, not Hermes': **the dashboard verifies any ID token issued for its
-`client_id`, so the thing that keeps Josh's agent Josh's is the Authentik application binding.**
-Each agent gets its own OIDC application bound to its own single-member group. A public PKCE
-client, no client secret.
+The first cut gave each agent its own hostname, with an Authentik application bound to a
+single-member group deciding who could reach it. That worked, and it was boring — the boundary
+was Authentik's, per host. It also meant every person had to know and type a hostname encoding
+which agent was theirs, which is a strange thing to ask of a household.
 
-Hostnames are flat — `hermes.${SECRET_DOMAIN}` and `hermes-partner.${SECRET_DOMAIN}` — because the
-cluster's wildcard certificate is `*.${SECRET_DOMAIN}`, which is single-label. `partner.hermes.…`
-would not be covered by it.
+So: **`hearthai.${SECRET_DOMAIN}` is the only hostname.** You log in once, and you land on your
+own agent. Neither agent has an ingress any more; both are ClusterIP-only.
+
+```
+browser → ingress-nginx ──auth_request──→ oauth2-proxy ──OIDC──→ Authentik
+              │                                │
+              │←────── X-Auth-Request-Groups ──┘
+              ↓
+        hearthai-router (nginx)
+              ├── "Hermes Josh"    → hermes-josh:9119
+              ├── "Hermes Partner" → hermes-partner:9119
+              └── neither          → 403
+```
+
+**Routing is on groups, not usernames**, for two reasons. The groups are already the access
+boundary for these agents, so there is one source of truth rather than two that can drift. And
+usernames are sensitive here — `users.sops.yaml` is encrypted precisely so they stay out of the
+repo — whereas the group names are plain text in `application_hermes.tf` already.
+
+#### The part that has to be right
+
+**That header is the access boundary.** It replaces a per-hostname Authentik binding with a
+string in a request, so a caller must never be able to supply their own. Two things enforce it,
+and both are required:
+
+1. **ingress-nginx sets the `X-Auth-Request-*` headers from the auth subrequest**, overwriting
+   whatever the client sent. This is what `auth-response-headers` does.
+2. **A CiliumNetworkPolicy** means nothing but the ingress controller can open a connection to
+   the router at all. Without it, any pod in the cluster could talk to the router directly and
+   name its own identity.
+
+Delete either one and one household member can read the other's private memory by typing a
+header. The router also fails closed: an unrecognised or absent group gets 403, never a default
+backend.
+
+Worth stating the trade honestly: two hostnames with Authentik bindings was the more robust
+design, because the boundary was enforced by the IdP rather than by a header plus a network
+policy. One door is materially nicer to live with and materially more delicate. That is a real
+cost, accepted deliberately.
+
+#### Two auth layers, one login
+
+Both agents keep their own dashboard OIDC gate — it cannot be turned off on a non-loopback bind,
+and they bind `0.0.0.0` because the router is in another pod. So a request authenticates twice:
+once at oauth2-proxy, once at the dashboard. In practice the second is a silent redirect, because
+Authentik already has the session.
+
+Both agents now advertise the **same** `HERMES_DASHBOARD_PUBLIC_URL`, so both register the same
+redirect URI. That is fine: they are separate OIDC clients, and the callback routes back to
+whichever agent the caller's group maps to — identity is stable across the round-trip.
+
+The sign-in flow lives on its **own un-gated Ingress** for `/oauth2`. ingress-nginx applies auth
+annotations per-Ingress rather than per-path, so a gated `/oauth2` is an infinite redirect loop
+back to itself.
 
 ### D5 — Config is seeded, not enforced
 
@@ -177,10 +230,13 @@ would drift.
 | Path | What |
 |---|---|
 | `kubernetes/apps/ai/litellm/` | LiteLLM proxy. Its database is a role on the shared `database/postgres` cluster, not a cluster of its own — see [the consolidation plan](./2026-08-24-cnpg-consolidation.md). UI at `llm.${SECRET_DOMAIN}` |
-| `kubernetes/apps/ai/hermes-josh/` | Josh's agent. `hermes.${SECRET_DOMAIN}` |
-| `kubernetes/apps/ai/hermes-partner/` | Partner's agent. `hermes-partner.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/hearthai/` | The door: oauth2-proxy + identity router + NetworkPolicy. `hearthai.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/hermes-josh/` | Josh's agent. ClusterIP only |
+| `kubernetes/apps/ai/hermes-partner/` | Partner's agent. ClusterIP only |
+| `kubernetes/apps/ai/meridian/` | Claude-subscription → Anthropic API bridge. **Inert until logged in** |
 | `kubernetes/apps/ai/hearthmem/` | **Staged, not wired in** — see below |
 | `terraform/authentik/application_hermes.tf` | Two OIDC applications + two single-member groups |
+| `terraform/authentik/application_hearthai.tf` | The door's confidential OIDC client, bound to `users` |
 
 ### hearthmem is staged, deliberately
 
@@ -211,6 +267,8 @@ Only the two that another party issues have to be entered by hand.
 |---|---|---|---|
 | `litellm credentials` | `master_key`, `salt_key`, `ui_username`, `ui_password` | `tofu apply` | LiteLLM proxy + admin UI |
 | `litellm pgcreds` | login: username + password | `tofu apply` | LiteLLM's role on the shared Postgres cluster |
+| `hearthai credentials` | `cookie_secret` | `tofu apply` | Signs the door's session cookie |
+| `authentik-client-hearthai` | login: id + secret | `tofu apply` (authentik) | oauth2-proxy's OIDC client |
 | `hermes josh` | `litellm_api_key` | **you** | Josh's agent → LiteLLM virtual key |
 | `hermes partner` | `litellm_api_key` | **you** | Partner's agent → LiteLLM virtual key |
 
@@ -264,6 +322,24 @@ agent remembers.
 They need an account before they can be put in a group. Existing users log in through GitHub, so
 their `email` must match their GitHub primary email.
 
+## meridian, deployed but inert
+
+`ghcr.io/rynfar/meridian` bridges the Claude Agent SDK to a standard Anthropic API endpoint — the
+Claude-side twin of what LiteLLM's `chatgpt/` provider does for OpenAI. It is deployed and it
+starts, but **the household has no Claude subscription, so it can do nothing yet**. It
+authenticates by holding Claude Code credentials on its PVC; there is no key this repo can inject.
+
+Two notes for when that changes. Log it in by getting a `~/.claude/.credentials.json` from a host
+where `claude login` has run, and `kubectl cp` it onto the `meridian-auth` volume. And the point
+of having it in-cluster is LiteLLM: add an `anthropic/` model whose `api_base` points at
+`http://meridian.ai.svc.cluster.local:3456`, and both agents can reach Claude models through the
+same router and the same virtual keys, without either holding a credential. That entry is
+deliberately **not** in LiteLLM's config yet — a model that always 401s would be probed every
+300s by background health checks.
+
+Its image tags are worth a glance: the GHCR series (1.62.x) and the repo's git tags (v1.29.x) have
+diverged. Renovate follows the registry, which is what actually ships.
+
 ## Deliberately not done
 
 - **Messaging surfaces.** Nothing here is "reachable where you already are" yet — that was
@@ -277,6 +353,8 @@ their `email` must match their GitHub primary email.
 - **LiteLLM UI via SSO.** The admin UI uses its own username/password rather than Authentik. It is
   internal-only and single-admin; wiring `GENERIC_*` OIDC env is a follow-up.
 - **Per-agent egress policy.** Both agents can reach the internet as broadly as any pod here can.
+  The new NetworkPolicy covers *ingress to the router* only — it is an access-control boundary,
+  not an egress one.
   hearthai lists tool isolation and agent isolation as the two pieces that would make it safe to
   let an agent read the web and touch real services. Neither exists yet, in hearthai or here.
 
@@ -286,7 +364,9 @@ their `email` must match their GitHub primary email.
 |---|---|---|
 | Node loss takes an agent's memory | `openebs-hostpath` is node-local; this already happened once (#14) | VolSync hourly → MinIO from day one; restore is documented in the VolSync plan |
 | `LITELLM_SALT_KEY` lost or rotated | Every stored provider credential becomes unreadable | Bitwarden item, flagged above and in the ExternalSecret |
-| Authentik group misassignment | One household member reads the other's private memory | Single-member groups; the binding is the boundary and is reviewed in Git |
+| Authentik group misassignment | One household member reads the other's private memory | Single-member groups, reviewed in Git |
+| Identity header spoofed or router reached directly | Same: one member reads the other's memory | `auth-response-headers` makes ingress-nginx overwrite client-supplied values; CiliumNetworkPolicy admits only the ingress controller. **Both are required** — either alone is insufficient |
+| A person in `users` but neither Hermes group | Authenticates at the door, then goes nowhere | Router returns 403 with a plain-language message rather than a default backend |
 | Agent runs away with tokens | Unattended gateway loops cost real money | LiteLLM virtual-key budgets; `tool_loop_guardrails.hard_stop_enabled: true` in the seeded config, which upstream recommends for unattended deployments |
 | Seeded config drifts from reality | Git stops describing what runs | Named in D5 as unresolved |
 | VolSync over `openebs-hostpath` is unproven here | Every existing enrolled app backs up an `nfs-csi` claim; these are the first node-local sources | The shape should hold — `copyMethod: Direct` pins the mover to the node holding the RWO source, and the cache stays on `nfs-csi` so it follows — but **verify the first snapshot actually lands** rather than assuming it |

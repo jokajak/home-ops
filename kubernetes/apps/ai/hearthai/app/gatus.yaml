@@ -1,0 +1,31 @@
+---
+# /oauth2/start is the one path that answers without a session — everything
+# else correctly bounces an unauthenticated prober to Authentik.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hearthai-gatus-ep
+  namespace: ai
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "hearthai Exposure"
+        group: internal-guarded
+        url: 1.1.1.1
+        interval: 1m
+        ui:
+          hide-hostname: true
+          hide-url: true
+        dns:
+          query-name: "hearthai.${SECRET_DOMAIN:=internal}"
+          query-type: A
+        conditions:
+          - "len([BODY]) == 0"
+      - name: "hearthai"
+        group: internal
+        url: "https://hearthai.${SECRET_DOMAIN:=internal}/oauth2/start"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"

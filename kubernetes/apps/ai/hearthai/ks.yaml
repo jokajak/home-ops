@@ -1,0 +1,35 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-hearthai
+  namespace: flux-system
+spec:
+  targetNamespace: ai
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: hearthai
+  interval: 30m
+  timeout: 5m
+  path: "./kubernetes/apps/ai/hearthai/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  postBuild:
+    substitute:
+      APP: hearthai
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-external-secrets-bitwarden
+    # The agents are the backends; without them the router has nowhere to send
+    # anyone. wait:false on those, so this is ordering rather than a gate.
+    - name: cluster-apps-hermes-josh
+    - name: cluster-apps-hermes-partner

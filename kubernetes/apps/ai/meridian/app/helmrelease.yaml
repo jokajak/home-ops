@@ -1,0 +1,107 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# meridian — the Claude-side twin of what LiteLLM's `chatgpt/` provider does
+# for OpenAI. It bridges the Claude Agent SDK to a standard Anthropic API
+# endpoint, so a Claude subscription can back tools that expect an API.
+#
+# ⚠️ THIS IS INERT UNTIL SOMEONE LOGS IT IN, AND THE HOUSEHOLD HAS NO CLAUDE
+# SUBSCRIPTION TODAY. It authenticates by holding Claude Code credentials in
+# /home/claude/.claude — there is no API key to inject and nothing this repo
+# can hand it. Deployed now because it was asked for and because it is
+# harmless while unauthenticated: it starts, serves /health, and returns auth
+# errors on anything real.
+#
+# ClusterIP only, no ingress. It is an API endpoint for other cluster
+# workloads, not a surface for a person. The intended consumer is LiteLLM: add
+# it as an anthropic/ model whose api_base points here, and both agents can
+# reach Claude models through the same router and the same virtual keys —
+# without either agent holding a credential. That wiring is deliberately NOT
+# in litellm's config yet, because a model entry that always 401s would be
+# probed every 300s by background health checks.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: meridian
+  namespace: ai
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      meridian:
+        # Single writer against the credentials volume, and the SDK keeps
+        # session state in-process.
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              # NOTE: the GHCR tags and the repo's git tags use different
+              # series — git is on v1.29.x while the registry is on 1.62.x.
+              # Renovate follows the registry, which is what actually ships.
+              repository: ghcr.io/rynfar/meridian
+              tag: 1.62.7
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              # Reachable from other pods rather than container-loopback only.
+              HOST: 0.0.0.0
+              PORT: "3456"
+            probes:
+              liveness: &probe
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: 3456
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+              readiness: *probe
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 1Gi
+        pod:
+          securityContext:
+            # The image ships USER claude (uid 1000) and expects to own its
+            # credentials directory; fsGroup makes the PVC writable to it
+            # without an init container doing a chown.
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+            seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: meridian
+        ports:
+          http:
+            port: 3456
+    persistence:
+      auth:
+        existingClaim: meridian-auth
+        globalMounts:
+          - path: /home/claude/.claude
