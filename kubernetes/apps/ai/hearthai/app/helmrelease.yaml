@@ -115,7 +115,15 @@ spec:
           # what makes ingress-nginx *overwrite* any same-named header the
           # client tried to set.
           nginx.ingress.kubernetes.io/auth-url: "http://hearthai-outpost.ai.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx"
-          nginx.ingress.kubernetes.io/auth-signin: "https://chat.${SECRET_DOMAIN:=internal}/outpost.goauthentik.io/start?rd=$${scheme}://$${http_host}$${escaped_request_uri}"
+          # ingress-nginx's annotation validator rejects auth-signin values that
+          # hand-build a redirect target out of ${scheme}/${http_host}/${...}
+          # braces concatenated into the query string — it silently drops the
+          # whole annotation rather than failing admission, so no error_page
+          # redirect ever gets rendered and unauthenticated requests just see a
+          # bare 401. auth-signin-redirect-param lets ingress-nginx append the
+          # rd= param itself with a value it already considers safe.
+          nginx.ingress.kubernetes.io/auth-signin: "https://chat.${SECRET_DOMAIN:=internal}/outpost.goauthentik.io/start"
+          nginx.ingress.kubernetes.io/auth-signin-redirect-param: "rd"
           nginx.ingress.kubernetes.io/auth-response-headers: "Set-Cookie,X-Authentik-Username,X-Authentik-Groups,X-Authentik-Email,X-Authentik-Name,X-Authentik-Uid"
           # Agent turns run long and the dashboard holds an event stream open.
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
