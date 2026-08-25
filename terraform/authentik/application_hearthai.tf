@@ -13,11 +13,11 @@
 ## gets a 403 from the router, which is the intended outcome.
 ## -----------------------------------------------------------------------------
 resource "authentik_provider_proxy" "hearthai" {
-  name = "hearthai-provider"
+  name               = "hearthai-provider"
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
   invalidation_flow  = resource.authentik_flow.invalidation.uuid
-  external_host       = "https://chat.${var.domain}"
-  mode                = "forward_single"
+  external_host      = "https://chat.${var.domain}"
+  mode               = "forward_single"
 }
 
 resource "authentik_application" "hearthai" {
@@ -37,8 +37,17 @@ resource "authentik_outpost" "hearthai" {
   type               = "proxy"
   protocol_providers = [authentik_provider_proxy.hearthai.id]
   service_connection = authentik_service_connection_kubernetes.local.id
+
+  # A proxy provider does not have a usable OAuth client until it belongs to
+  # an application. Without this edge OpenTofu may create the outpost and the
+  # application concurrently, leaving the first outpost configuration with an
+  # empty client_id until it happens to reconcile again.
+  depends_on = [authentik_application.hearthai]
+
   config = jsonencode({
-    kubernetes_namespace = "security"
+    kubernetes_namespace   = "security"
+    authentik_host         = "http://authentik-server.security.svc.cluster.local:80"
+    authentik_host_browser = "https://auth.${var.domain}"
   })
 }
 
