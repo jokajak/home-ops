@@ -605,14 +605,15 @@ resource "bitwarden_item_login" "meridian" {
 # minted yet.
 #
 # So terraform owns the ITEM and the human owns the VALUE. The item is created
-# with an empty api key, which lets ESO resolve and every workload reconcile;
+# with a `replace-me` sentinel, which lets ESO resolve and every workload
+# reconcile;
 # the agents come up and fail at conversation time with an auth error instead
 # of failing to exist. `ignore_changes` is what makes it eventually consistent:
 # paste the real key into Bitwarden and no later apply will revert it.
 #
-# ⚠️ EDIT the litellm_api_key field, never DELETE it. An empty value resolves
-# fine; a missing property fails the whole ExternalSecret and takes the agent
-# down with it.
+# ⚠️ EDIT the litellm_api_key field, never DELETE it. A missing property fails
+# the whole ExternalSecret and takes the agent down with it — which is also why
+# the sentinel is a real string rather than "".
 #
 # Mint them at https://llm.<domain> once LiteLLM is up — one per person, so
 # spend is attributable and either can be revoked without touching the other.
@@ -622,16 +623,17 @@ resource "bitwarden_item_login" "hermes_josh" {
   collection_ids  = [var.collection_id]
 
   name  = "hermes josh"
-  notes = "Josh's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted into litellm_api_key. Empty until then, which is fine — the agent runs and cannot answer."
+  notes = "Josh's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted over the replace-me sentinel in litellm_api_key."
 
   field {
-    name    = "terraform managed"
-    boolean = true
-  }
-
-  field {
-    name   = "litellm_api_key"
-    hidden = ""
+    name = "litellm_api_key"
+    # NOT empty. An empty hidden field is dropped rather than stored, which
+    # left the item with no litellm_api_key property at all — and a MISSING
+    # property fails the whole ExternalSecret, the exact blocking failure this
+    # resource exists to avoid. A sentinel value persists, so ESO always
+    # resolves and the agent starts; LiteLLM rejects it as an unknown key, so
+    # the agent runs and cannot answer until a real key replaces it.
+    hidden = "replace-me"
   }
 
   lifecycle {
@@ -646,16 +648,17 @@ resource "bitwarden_item_login" "hermes_partner" {
   collection_ids  = [var.collection_id]
 
   name  = "hermes partner"
-  notes = "The partner's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted into litellm_api_key. Empty until then, which is fine — the agent runs and cannot answer."
+  notes = "The partner's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted over the replace-me sentinel in litellm_api_key."
 
   field {
-    name    = "terraform managed"
-    boolean = true
-  }
-
-  field {
-    name   = "litellm_api_key"
-    hidden = ""
+    name = "litellm_api_key"
+    # NOT empty. An empty hidden field is dropped rather than stored, which
+    # left the item with no litellm_api_key property at all — and a MISSING
+    # property fails the whole ExternalSecret, the exact blocking failure this
+    # resource exists to avoid. A sentinel value persists, so ESO always
+    # resolves and the agent starts; LiteLLM rejects it as an unknown key, so
+    # the agent runs and cannot answer until a real key replaces it.
+    hidden = "replace-me"
   }
 
   lifecycle {
