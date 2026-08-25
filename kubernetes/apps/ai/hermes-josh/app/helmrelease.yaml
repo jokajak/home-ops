@@ -113,17 +113,23 @@ spec:
               HERMES_DASHBOARD: "1"
               HERMES_DASHBOARD_HOST: "0.0.0.0"
               HERMES_DASHBOARD_PORT: "9119"
-              # Both agents advertise the SAME public URL: the household has
-              # one door, and which agent is behind it is decided by who
-              # logged in (see kubernetes/apps/ai/hearthai). The OAuth
-              # callback therefore lands on hearthai too, and the router
-              # sends it back to whichever agent started the flow — the
-              # identity is stable across the round-trip, so it lands right.
+              # Temporary bypass of the shared hearthai door: hermes-agent's own
+              # dashboard OIDC gate cannot be disabled on a non-loopback bind
+              # (docs/plans/2026-08-24-hermes-household-agents.md), so a login
+              # through chat.<domain> authenticates twice — once at the outpost,
+              # once at the dashboard — and hermes-agent's callback handler has
+              # a bug where it POSTs the same authorization code to /token
+              # twice, so the second exchange fails with "Code does not exist".
+              # Pointing Josh directly at his own host removes the outpost layer
+              # for this path, leaving hermes-agent's own OIDC as the only gate
+              # (still access-controlled: Authentik only issues tokens for this
+              # application to the "Hermes Josh" group). chat.<domain> is left
+              # in place for hearthai/hermes-partner.
               # Declaring the public URL also force-engages the auth gate. The dashboard
               # fails closed at startup if no auth provider is configured —
               # that hardening followed a 2026 campaign in which exposed
               # dashboards were driven into planting SSH backdoors.
-              HERMES_DASHBOARD_PUBLIC_URL: "https://chat.${SECRET_DOMAIN:=internal}"
+              HERMES_DASHBOARD_PUBLIC_URL: "https://josh-chat.${SECRET_DOMAIN:=internal}"
               # Authentik. Note the trailing slash — Authentik's issuer
               # includes it, and the plugin pins the iss claim to this value.
               HERMES_DASHBOARD_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hermes-josh/"
@@ -181,6 +187,27 @@ spec:
         ports:
           http:
             port: 9119
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:home-heart
+          # Agent turns run long and the dashboard holds an event stream open.
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        hosts:
+          - host: &host "josh-chat.${SECRET_DOMAIN:=internal}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
     persistence:
       data:
         existingClaim: hermes-josh-data

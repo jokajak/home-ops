@@ -61,15 +61,16 @@ resource "authentik_provider_oauth2" "hermes_josh" {
 
   access_token_validity = "hours=8"
 
-  # <dashboard public URL>/auth/callback. Both agents now advertise the SAME
-  # public URL — the shared hearthai door — so both register the same redirect.
-  # That is fine: they are separate OIDC clients, and the router sends the
-  # callback back to whichever agent the caller's group maps to.
+  # Temporary: Josh's agent moved to its own host (josh-chat) to sidestep a
+  # hermes-agent bug where its dashboard OIDC callback double-POSTs the same
+  # authorization code — see the matching comment in
+  # kubernetes/apps/ai/hermes-josh/app/helmrelease.yaml. hermes-partner is
+  # unaffected and still uses the shared hearthai door.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://chat.${var.domain}/auth/callback"
+      url               = "https://josh-chat.${var.domain}/auth/callback"
     }
   ]
 }
