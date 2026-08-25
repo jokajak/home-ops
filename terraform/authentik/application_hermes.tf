@@ -48,6 +48,12 @@ resource "authentik_provider_oauth2" "hermes_josh" {
   # PKCE, no secret on the wire. The dashboard plugin is a browser SPA flow.
   client_type = "public"
 
+  # grant_types has no useful default (Authentik's OAuth2Provider model
+  # defaults it to an empty list), so an /authorize request with response_type
+  # code fails check_grant() with "invalid_request" / "Invalid grant_type for
+  # provider" unless this is set explicitly.
+  grant_types = ["authorization_code", "refresh_token"]
+
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
   invalidation_flow  = resource.authentik_flow.invalidation.uuid
 
@@ -103,6 +109,9 @@ resource "authentik_provider_oauth2" "hermes_partner" {
   client_id     = module.hermes_partner_oidc_creds.client_id
   client_secret = module.hermes_partner_oidc_creds.client_secret
   client_type   = "public"
+
+  # See the matching comment on hermes_josh above.
+  grant_types = ["authorization_code", "refresh_token"]
 
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
   invalidation_flow  = resource.authentik_flow.invalidation.uuid
