@@ -41,6 +41,9 @@ spec:
         # avoiding.
         strategy: Recreate
         pod:
+          # Long enough for an in-flight commit to finish and release the lock.
+          # The service drains on SIGTERM, so this is a ceiling, not a delay.
+          terminationGracePeriodSeconds: 30
           securityContext:
             runAsNonRoot: true
             runAsUser: 10001
@@ -85,9 +88,6 @@ spec:
                 memory: 64Mi
               limits:
                 memory: 256Mi
-        # Long enough for an in-flight commit to finish and release the lock.
-        # The service drains on SIGTERM, so this is a ceiling, not a delay.
-        terminationGracePeriodSeconds: 30
     service:
       app:
         controller: hearthmem
