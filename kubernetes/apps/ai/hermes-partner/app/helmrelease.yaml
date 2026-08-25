@@ -123,7 +123,7 @@ spec:
               # fails closed at startup if no auth provider is configured —
               # that hardening followed a 2026 campaign in which exposed
               # dashboards were driven into planting SSH backdoors.
-              HERMES_DASHBOARD_PUBLIC_URL: "https://hearthai.${SECRET_DOMAIN:=internal}"
+              HERMES_DASHBOARD_PUBLIC_URL: "https://chat.${SECRET_DOMAIN:=internal}"
               # Authentik. Note the trailing slash — Authentik's issuer
               # includes it, and the plugin pins the iss claim to this value.
               HERMES_DASHBOARD_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hermes-partner/"

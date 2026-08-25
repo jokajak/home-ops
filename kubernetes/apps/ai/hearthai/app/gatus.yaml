@@ -19,13 +19,13 @@ data:
           hide-hostname: true
           hide-url: true
         dns:
-          query-name: "hearthai.${SECRET_DOMAIN:=internal}"
+          query-name: "chat.${SECRET_DOMAIN:=internal}"
           query-type: A
         conditions:
           - "len([BODY]) == 0"
       - name: "hearthai"
         group: internal
-        url: "https://hearthai.${SECRET_DOMAIN:=internal}/oauth2/start"
+        url: "https://chat.${SECRET_DOMAIN:=internal}/oauth2/start"
         interval: 1m
         conditions:
           - "[STATUS] < 400"

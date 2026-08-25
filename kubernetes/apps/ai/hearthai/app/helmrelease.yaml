@@ -1,9 +1,14 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
 #
-# hearthai — one door for the household.
+# hearthai — one door for the household, reachable at https://chat.<domain>.
 #
-# https://hearthai.<domain> authenticates once against Authentik and lands each
+# The app is named for the project it implements; the hostname is what the
+# household actually types. Keeping them different is deliberate — the
+# Authentik slug, the Kubernetes resources and the service DNS all stay
+# `hearthai`, so renaming the door again is an ingress change and nothing else.
+#
+# It authenticates once against Authentik and lands each
 # person on their own agent. Nobody types a hostname that encodes which agent
 # is theirs; the routing follows the login.
 #
@@ -52,7 +57,7 @@ spec:
               OAUTH2_PROXY_PROVIDER: oidc
               OAUTH2_PROXY_PROVIDER_DISPLAY_NAME: Authentik
               OAUTH2_PROXY_OIDC_ISSUER_URL: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hearthai/"
-              OAUTH2_PROXY_REDIRECT_URL: "https://hearthai.${SECRET_DOMAIN:=internal}/oauth2/callback"
+              OAUTH2_PROXY_REDIRECT_URL: "https://chat.${SECRET_DOMAIN:=internal}/oauth2/callback"
               OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
               # Emit X-Auth-Request-User / -Email / -Groups from /oauth2/auth.
               # The router keys off Groups; without this it gets nothing and
@@ -69,8 +74,8 @@ spec:
               OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
               OAUTH2_PROXY_REVERSE_PROXY: "true"
               OAUTH2_PROXY_COOKIE_SECURE: "true"
-              OAUTH2_PROXY_COOKIE_DOMAINS: "hearthai.${SECRET_DOMAIN:=internal}"
-              OAUTH2_PROXY_WHITELIST_DOMAINS: "hearthai.${SECRET_DOMAIN:=internal}"
+              OAUTH2_PROXY_COOKIE_DOMAINS: "chat.${SECRET_DOMAIN:=internal}"
+              OAUTH2_PROXY_WHITELIST_DOMAINS: "chat.${SECRET_DOMAIN:=internal}"
               # Nothing is proxied through oauth2-proxy itself — ingress-nginx
               # only ever calls it as an auth subrequest, and the router does
               # the actual proxying.
@@ -179,7 +184,7 @@ spec:
         enabled: true
         className: internal
         hosts:
-          - host: &host "hearthai.${SECRET_DOMAIN:=internal}"
+          - host: &host "chat.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /oauth2
                 pathType: Prefix
@@ -203,7 +208,7 @@ spec:
           # No ?rd= here on purpose: ingress-nginx appends the redirect param
           # itself. Writing $escaped_request_uri by hand would not survive Flux
           # postBuild, which substitutes bare $VAR and would blank it.
-          nginx.ingress.kubernetes.io/auth-signin: "https://hearthai.${SECRET_DOMAIN:=internal}/oauth2/start"
+          nginx.ingress.kubernetes.io/auth-signin: "https://chat.${SECRET_DOMAIN:=internal}/oauth2/start"
           nginx.ingress.kubernetes.io/auth-response-headers: "X-Auth-Request-User,X-Auth-Request-Email,X-Auth-Request-Groups"
           # Agent turns run long and the dashboard holds an event stream open.
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
