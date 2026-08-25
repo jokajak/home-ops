@@ -16,6 +16,20 @@ metadata:
   namespace: ai
 data:
   config.yaml: |
+    # WHY 5.4 AND NOT 5.6: GPT-5.6 (Sol/Terra/Luna) is in the ChatGPT app on a
+    # paid plan, and LiteLLM supports it on the metered routes — openai/, azure/,
+    # bedrock_mantle/ all carry the family. The `chatgpt/` subscription-OAuth
+    # route does not: its price/context map has ten entries and stops at
+    # gpt-5.4-pro, on main as well as on the pinned release. Whether that is
+    # LiteLLM lagging or the OAuth backend not serving 5.6 is not visible from
+    # here; the app's model picker and the subscription API expose different
+    # sets. Re-check after a Renovate bump with:
+    #
+    #   python3 -c "import json,urllib.request as u; \
+    #     d=json.load(u.urlopen('https://raw.githubusercontent.com/BerriAI/litellm/main/litellm/model_prices_and_context_window_backup.json')); \
+    #     print(sorted(k for k in d if k.startswith('chatgpt/')))"
+    #
+    # When a 5.6 entry appears there, swap the gpt-5.4 alias below to it.
     model_list:
       # Main conversational model for both household agents.
       - model_name: gpt-5.4
