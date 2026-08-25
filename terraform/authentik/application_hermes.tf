@@ -17,6 +17,16 @@
 ## it, and nothing should start to.
 ## -----------------------------------------------------------------------------
 
+## Providers default to signing_key = null, which Authentik signs as HS256 —
+## legitimately no public key to publish, so /jwks/ returns {}. hermes-agent's
+## OIDC client fetches JWKS unconditionally and errors ("JWK Set did not
+## contain any keys") rather than falling back to HS256 verification, so these
+## two providers need an explicit (RS256) signing key. Other providers in this
+## repo (e.g. grafana) are left alone — their clients tolerate the HS256 default.
+data "authentik_certificate_key_pair" "default_signing" {
+  name = "authentik Self-signed Certificate"
+}
+
 ## ------------------------------------------
 ## Groups — one member each, the access boundary
 ## ------------------------------------------
@@ -48,6 +58,9 @@ resource "authentik_provider_oauth2" "hermes_josh" {
   # PKCE, no secret on the wire. The dashboard plugin is a browser SPA flow.
   client_type = "public"
 
+  # See the data source comment above: hermes-agent needs a real JWKS.
+  signing_key = data.authentik_certificate_key_pair.default_signing.id
+
   # grant_types has no useful default (Authentik's OAuth2Provider model
   # defaults it to an empty list), so an /authorize request with response_type
   # code fails check_grant() with "invalid_request" / "Invalid grant_type for
@@ -64,8 +77,8 @@ resource "authentik_provider_oauth2" "hermes_josh" {
   # Temporary: Josh's agent moved to its own host (josh-chat) to sidestep a
   # hermes-agent bug where its dashboard OIDC callback double-POSTs the same
   # authorization code — see the matching comment in
-  # kubernetes/apps/ai/hermes-josh/app/helmrelease.yaml. hermes-partner is
-  # unaffected and still uses the shared hearthai door.
+  # kubernetes/apps/ai/hermes-josh/app/helmrelease.yaml. hermes-partner gets
+  # the same treatment, on partner-chat.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
@@ -84,7 +97,7 @@ resource "authentik_application" "hermes_josh" {
   protocol_provider  = authentik_provider_oauth2.hermes_josh.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://chat.${var.domain}"
+  meta_launch_url    = "https://josh-chat.${var.domain}"
   policy_engine_mode = "any"
 }
 
@@ -112,6 +125,7 @@ resource "authentik_provider_oauth2" "hermes_partner" {
   client_type   = "public"
 
   # See the matching comment on hermes_josh above.
+  signing_key = data.authentik_certificate_key_pair.default_signing.id
   grant_types = ["authorization_code", "refresh_token"]
 
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
@@ -140,7 +154,7 @@ resource "authentik_application" "hermes_partner" {
   protocol_provider  = authentik_provider_oauth2.hermes_partner.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://chat.${var.domain}"
+  meta_launch_url    = "https://partner-chat.${var.domain}"
   policy_engine_mode = "any"
 }
 
