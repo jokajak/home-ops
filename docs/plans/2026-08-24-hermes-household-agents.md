@@ -269,10 +269,15 @@ Only the two that another party issues have to be entered by hand.
 | `litellm pgcreds` | login: username + password | `tofu apply` | LiteLLM's role on the shared Postgres cluster |
 | `hearthai credentials` | `cookie_secret` | `tofu apply` | Signs the door's session cookie |
 | `authentik-client-hearthai` | login: id + secret | `tofu apply` (authentik) | oauth2-proxy's OIDC client |
-| `hermes josh` | `litellm_api_key` | **you** | Josh's agent → LiteLLM virtual key |
-| `hermes partner` | `litellm_api_key` | **you** | Partner's agent → LiteLLM virtual key |
+| `hermes josh` | `litellm_api_key` | `tofu apply` creates it **empty**; you paste the value | Josh's agent → LiteLLM virtual key |
+| `hermes partner` | `litellm_api_key` | `tofu apply` creates it **empty**; you paste the value | Partner's agent → LiteLLM virtual key |
 
-`litellm_api_key` is minted by LiteLLM itself, so it cannot be generated ahead of time. They follow this repo's existing convention for
+`litellm_api_key` is minted by LiteLLM itself, so it cannot be generated ahead of time — and
+that used to be a deadlock, because **external-secrets has no per-key "optional"**: one
+unresolvable entry means the target Secret is never created, so an agent waiting on an unmintable
+key could not start. Terraform now creates both items with an empty key and never touches the
+value again, so the whole platform reconciles from the first apply and the agents come up unable
+to answer rather than unable to exist. Paste the real keys in whenever LiteLLM is up. They follow this repo's existing convention for
 externally-issued secrets — hand-made in Bitwarden and only *read* by external-secrets, the same
 as `maxmind api` and `vpn-gateway-secrets`. The full list lives in
 [`terraform/bitwarden/README.md`](../../terraform/bitwarden/README.md#what-is-not-managed-here).
