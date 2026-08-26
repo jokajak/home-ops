@@ -15,6 +15,9 @@ resources:
   - ./hearthai/ks.yaml
   # Claude-subscription bridge. Inert until logged in; see its HelmRelease.
   - ./meridian/ks.yaml
+  # A chat front end onto Josh's agent, at josh-chat. A TRIAL, wired to one
+  # agent only — see its HelmRelease for why it is not in front of both.
+  - ./open-webui/ks.yaml
   # The shared-memory store both agents read and write. Was staged pending an
   # image; jokajak/hearthai v0.1.0 published ghcr.io/jokajak/hearthmem.
   - ./hearthmem/ks.yaml

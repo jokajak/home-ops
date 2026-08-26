@@ -150,6 +150,20 @@ spec:
               # Keep the store address book on the data volume so it is backed
               # up with everything else, rather than in the tool-subprocess HOME.
               HEARTHMEM_HOME: "/opt/data/hearthmem"
+              # Hermes' OpenAI-compatible API server, which is what Open WebUI
+              # talks to. Upstream is explicit that this is "a Hermes agent
+              # runtime, not a pure LLM proxy" — each request spawns a
+              # server-side AIAgent, so a chat through it is a real session
+              # with this agent's memory and skills, not a bare model call.
+              #
+              # 0.0.0.0 because the caller is in another pod. That makes the
+              # port reachable by anything in the cluster, so networkpolicy.yaml
+              # is not optional here — it is the other half of this setting.
+              # The listener also refuses to open unless API_SERVER_KEY is at
+              # least 16 characters; it arrives via envFrom from Bitwarden.
+              API_SERVER_ENABLED: "true"
+              API_SERVER_HOST: "0.0.0.0"
+              API_SERVER_PORT: "8642"
             envFrom:
               - secretRef:
                   name: hermes-josh-secret
@@ -197,6 +211,8 @@ spec:
         ports:
           http:
             port: 9119
+          api:
+            port: 8642
     ingress:
       app:
         enabled: true

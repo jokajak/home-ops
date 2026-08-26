@@ -626,3 +626,74 @@ resource "bitwarden_item_login" "hermes_partner" {
     ignore_changes = [field]
   }
 }
+
+## -----------------------------------------------------------------------------
+## Hermes gateway API key + Open WebUI session key
+##
+## Open WebUI talks to Josh's agent through Hermes' OpenAI-compatible API
+## server. That listener does not open at all unless API_SERVER_KEY is at least
+## 16 characters, so this is a real gate rather than a formality — and since the
+## bearer token is the only thing between a caller and a full agent session with
+## Josh's private memory, it is generated rather than typed. A
+## CiliumNetworkPolicy restricts who can reach the port at all; see
+## kubernetes/apps/ai/hermes-josh/app/networkpolicy.yaml.
+##
+## Both sides read the SAME Bitwarden field — the agent as API_SERVER_KEY, Open
+## WebUI as OPENAI_API_KEY — so they cannot drift apart.
+##
+## A separate item rather than a new field on "hermes josh": that one carries
+## lifecycle { ignore_changes = [field] } so a hand-pasted LiteLLM key survives
+## every apply, which also means a field added to it now would never be written.
+## -----------------------------------------------------------------------------
+
+resource "random_password" "hermes_josh_api_server_key" {
+  length  = 48
+  special = false
+}
+
+resource "bitwarden_item_login" "hermes_josh_gateway" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "hermes josh gateway"
+  notes = "Bearer token for Josh's Hermes API server, shared with Open WebUI. Rotating it is safe: both consumers read this field and restart on change."
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "api_server_key"
+    hidden = random_password.hermes_josh_api_server_key.result
+  }
+}
+
+resource "random_password" "open_webui_secret_key" {
+  length           = 48
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "open_webui" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "open-webui credentials"
+  notes = "Signs Open WebUI session cookies. Rotating it logs everyone out and destroys nothing."
+
+  uri {
+    value = "https://josh-chat.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "webui_secret_key"
+    hidden = random_password.open_webui_secret_key.result
+  }
+}
