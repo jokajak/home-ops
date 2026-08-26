@@ -76,6 +76,13 @@ spec:
               # The agent is the backend. /v1 on Hermes' API server is
               # OpenAI-compatible, so no adapter is needed.
               OPENAI_API_BASE_URL: "http://hermes-josh.ai.svc.cluster.local:8642/v1"
+              # This agent runs under the named profile "josh", so /v1/models
+              # advertises "josh" rather than the default "hermes-agent" alias.
+              # That is what will keep the two agents distinguishable if the
+              # partner's is ever added as a second connection: Open WebUI
+              # collapses one model id from two connections into a single
+              # entry, and prefix_id — its own fix for that — cannot be set
+              # from the environment (open-webui#19017, closed as not planned).
               # Nothing here speaks Ollama; leaving it on costs a failing health
               # check every refresh.
               ENABLE_OLLAMA_API: "false"
