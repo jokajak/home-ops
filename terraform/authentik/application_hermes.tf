@@ -74,16 +74,16 @@ resource "authentik_provider_oauth2" "hermes_josh" {
 
   access_token_validity = "hours=8"
 
-  # Temporary: Josh's agent moved to its own host (josh-chat) to sidestep a
+  # Temporary: Josh's agent moved to its own host (josh-hermes) to sidestep a
   # hermes-agent bug where its dashboard OIDC callback double-POSTs the same
   # authorization code — see the matching comment in
   # kubernetes/apps/ai/hermes-josh/app/helmrelease.yaml. hermes-partner gets
-  # the same treatment, on partner-chat.
+  # the same treatment, on partner-hermes.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://josh-chat.${var.domain}/auth/callback"
+      url               = "https://josh-hermes.${var.domain}/auth/callback"
     }
   ]
 }
@@ -97,7 +97,7 @@ resource "authentik_application" "hermes_josh" {
   protocol_provider  = authentik_provider_oauth2.hermes_josh.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://josh-chat.${var.domain}"
+  meta_launch_url    = "https://josh-hermes.${var.domain}"
   policy_engine_mode = "any"
 }
 
@@ -135,7 +135,7 @@ resource "authentik_provider_oauth2" "hermes_partner" {
 
   access_token_validity = "hours=8"
 
-  # Temporary: Partner's agent moved to its own host (partner-chat) to
+  # Temporary: Partner's agent moved to its own host (partner-hermes) to
   # sidestep the same hermes-agent double-token-exchange bug as hermes_josh —
   # see the matching comment in
   # kubernetes/apps/ai/hermes-partner/app/helmrelease.yaml.
@@ -143,7 +143,7 @@ resource "authentik_provider_oauth2" "hermes_partner" {
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://partner-chat.${var.domain}/auth/callback"
+      url               = "https://partner-hermes.${var.domain}/auth/callback"
     }
   ]
 }
@@ -154,7 +154,7 @@ resource "authentik_application" "hermes_partner" {
   protocol_provider  = authentik_provider_oauth2.hermes_partner.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://partner-chat.${var.domain}"
+  meta_launch_url    = "https://partner-hermes.${var.domain}"
   policy_engine_mode = "any"
 }
 

@@ -1,0 +1,20 @@
+---
+# HTTP rather than TCP: /health is outside Open WebUI's auth gate and does not
+# care which Host header it arrives with, so an in-cluster probe gets a straight
+# answer.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: open-webui-gatus-ep
+  namespace: ai
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "open-webui"
+        group: internal
+        url: "http://open-webui.ai.svc.cluster.local:8080/health"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"

@@ -169,6 +169,19 @@ which agent was theirs, which is a strange thing to ask of a household.
 So: **`chat.${SECRET_DOMAIN}` is the only hostname.** You log in once, and you land on your
 own agent. Neither agent has an ingress any more; both are ClusterIP-only.
 
+> **Superseded in practice.** hermes-agent's dashboard OIDC callback double-POSTs the same
+> authorization code, which fails through the outpost, so each agent went back to its own
+> Ingress — **`josh-hermes.${SECRET_DOMAIN}`** and **`partner-hermes.${SECRET_DOMAIN}`**, with
+> the dashboard's own Authentik gate as the boundary. `chat.${SECRET_DOMAIN}` remains hearthai's
+> door for the shared memory store, not a login path for either agent. The one-door design
+> below is still what we want; it is blocked on that upstream bug.
+>
+> The hosts are `*-hermes` rather than `*-chat` deliberately. This surface is the Hermes
+> dashboard, and its Chat tab is the TUI embedded over a WebSocket and rendered with xterm.js —
+> a terminal in a browser. "chat" promised a smooth messenger it does not try to be, and the
+> name should set the expectation the surface actually meets. `*-chat` stays free for a
+> lightweight front end if one ever lands.
+
 ```
 browser → ingress-nginx ──auth_request──→ oauth2-proxy ──OIDC──→ Authentik
               │                                │
@@ -256,8 +269,8 @@ would drift.
 |---|---|
 | `kubernetes/apps/ai/litellm/` | LiteLLM proxy. Its database is a role on the shared `database/postgres` cluster, not a cluster of its own — see [the consolidation plan](./2026-08-24-cnpg-consolidation.md). UI at `llm.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hearthai/` | The door: oauth2-proxy + identity router + NetworkPolicy. `chat.${SECRET_DOMAIN}` |
-| `kubernetes/apps/ai/hermes-josh/` | Josh's agent. ClusterIP only |
-| `kubernetes/apps/ai/hermes-partner/` | Partner's agent. ClusterIP only |
+| `kubernetes/apps/ai/hermes-josh/` | Josh's agent + dashboard. `josh-hermes.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/hermes-partner/` | Partner's agent + dashboard. `partner-hermes.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/meridian/` | Claude-subscription → Anthropic API bridge. **Inert until logged in** |
 | `kubernetes/apps/ai/hearthmem/` | **Staged, not wired in** — see below |
 | `terraform/authentik/application_hermes.tf` | Two OIDC applications + two single-member groups |
@@ -372,8 +385,27 @@ diverged. Renovate follows the registry, which is what actually ships.
 
 ## Deliberately not done
 
+- **A mobile-friendly front end.** The dashboard's Chat tab is the TUI embedded over a WebSocket
+  and rendered with xterm.js — a terminal emulator, which is exactly as pleasant on a phone as
+  that sounds. The community [hermes-webui](https://github.com/nesquena/hermes-webui) is the
+  obvious fix and was built out and then dropped on **supply-chain grounds**: it would run as a
+  sidecar in the agent's own pod, mounting the agent's data volume, holding the gateway API key,
+  and sitting behind the OIDC client that guards one person's private memory. It is not a small
+  side project — 326 contributors, ~1,950 merged PRs, a release most days — but that is the
+  concern rather than the answer to it: nobody is meaningfully reviewing what lands in an image
+  in that position, and it is not published by NousResearch. Revisit if an official front end
+  appears, or if the image can be pinned by digest and vendored through a build we control.
+
+  Worth recording from that exercise, because it constrains any future attempt: **WebUI is
+  single-user by construction.** It mutates process-global env (`HERMES_HOME`,
+  `HERMES_SESSION_KEY`, `TERMINAL_CWD`) per request — upstream's `ARCHITECTURE.md` calls the
+  design *"safe only for single-user, single-concurrent-request use"* — and its Profiles panel
+  switches, creates and deletes profiles for the whole server. One shared instance in front of
+  both agents is never an option; it would be one instance per person or nothing.
+
 - **Messaging surfaces.** Nothing here is "reachable where you already are" yet — that was
-  hearthai's second stated goal and it is unmet. Options when a platform exists: Matrix and
+  hearthai's second stated goal and it is unmet. These are first-party Hermes adapters running
+  inside the agent's own process, so they raise none of the image-trust question above. Options when a platform exists: Matrix and
   Mattermost adapters are built in, as is a Home Assistant one, and HA is already on this cluster.
 - **The TELOS engine.** `docs/ai-platform/00-telos.md` is still a skeleton. Nothing reads it.
   These agents have memory but no reconciliation loop.

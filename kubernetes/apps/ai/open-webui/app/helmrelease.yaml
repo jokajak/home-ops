@@ -1,0 +1,189 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# Open WebUI as a phone-friendly front end onto Josh's Hermes agent.
+#
+# ⚠️ THIS IS A TRIAL. It is wired to ONE agent on purpose. Hermes' dashboard at
+# josh-hermes.<domain> is unchanged and remains the reference surface; the
+# partner is untouched and is not able to log in here. Pointing one front end
+# at one agent means there is no cross-person boundary to get wrong yet: the
+# question of whether both agents can safely appear as models in one Open WebUI
+# is a real one, and it is deliberately not being answered by this deployment.
+#
+# The backend is the AGENT, not litellm. Hermes' API server is "a Hermes agent
+# runtime, not a pure LLM proxy" — each request spawns a server-side AIAgent, so
+# a chat here gets the same memory, skills and background learning the dashboard
+# gets. Pointing this at litellm instead would produce a chat UI with no session
+# and no memory, which is a different product.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: open-webui
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 10m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    defaultPodOptions:
+      # Same reasoning as litellm: this cluster has two RPi4s, and Open WebUI
+      # pulls a sentence-transformers embedding model on first boot and runs it
+      # on CPU. Scheduling that onto a Pi is not a good day for anyone.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+    controllers:
+      open-webui:
+        # SQLite on a single RWO volume: one writer, so no rolling update.
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: ghcr.io/open-webui/open-webui
+              tag: v0.11.1
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              # ⚠️ LOAD-BEARING FOR GITOPS. Most of the settings below are
+              # "PersistentConfig" variables: Open WebUI copies them into its
+              # database on first boot and from then on ignores the environment
+              # entirely. Left at the default, this file would describe the
+              # first boot and nothing after it — the exact drift D5 already
+              # flags for the agents' seeded config, except here there is no
+              # reason to accept it. False keeps the environment authoritative.
+              ENABLE_PERSISTENT_CONFIG: "false"
+              # Required before OAuth will engage, and used to build callback
+              # URLs.
+              WEBUI_URL: "https://josh-chat.${SECRET_DOMAIN:=internal}"
+              # The agent is the backend. /v1 on Hermes' API server is
+              # OpenAI-compatible, so no adapter is needed.
+              OPENAI_API_BASE_URL: "http://hermes-josh.ai.svc.cluster.local:8642/v1"
+              # This agent runs under the named profile "josh", so /v1/models
+              # advertises "josh" rather than the default "hermes-agent" alias.
+              # That is what will keep the two agents distinguishable if the
+              # partner's is ever added as a second connection: Open WebUI
+              # collapses one model id from two connections into a single
+              # entry, and prefix_id — its own fix for that — cannot be set
+              # from the environment (open-webui#19017, closed as not planned).
+              # Nothing here speaks Ollama; leaving it on costs a failing health
+              # check every refresh.
+              ENABLE_OLLAMA_API: "false"
+              # Authentik is the only way in. No local password accounts exist
+              # to fall back on, which is the point: the Authentik application's
+              # policy binding to the "Hermes Josh" group is the access
+              # boundary, exactly as it is for the dashboard.
+              ENABLE_SIGNUP: "false"
+              # Set now, while there is one user and nothing to read. An Open
+              # WebUI admin can otherwise browse, export and delete every
+              # user's chat history from the admin panel — a role that has no
+              # equivalent in the current design, where nobody can reach
+              # another person's agent at all. If this instance ever fronts
+              # both agents, this is the difference between "the other person's
+              # chats are private" and "private unless the admin looks".
+              ENABLE_ADMIN_CHAT_ACCESS: "false"
+              ENABLE_LOGIN_FORM: "false"
+              ENABLE_OAUTH_SIGNUP: "true"
+              OAUTH_PROVIDER_NAME: "Authentik"
+              OAUTH_SCOPES: "openid email profile"
+              OPENID_PROVIDER_URL: "https://auth.${SECRET_DOMAIN:=internal}/application/o/open-webui/.well-known/openid-configuration"
+              OPENID_REDIRECT_URI: "https://josh-chat.${SECRET_DOMAIN:=internal}/oauth/oidc/callback"
+              # Group/role sync (ENABLE_OAUTH_GROUP_MANAGEMENT, OAUTH_GROUP_CLAIM)
+              # is deliberately NOT set. With one agent and one permitted user
+              # there is nothing for it to decide, and it is the first thing to
+              # turn on if the partner's agent is ever added here — that is the
+              # point at which an in-app ACL starts carrying real weight.
+            envFrom:
+              - secretRef:
+                  name: open-webui-secret
+              - secretRef:
+                  name: open-webui-oidc-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /health
+                    port: 8080
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  # First boot downloads the embedding model before it serves.
+                  initialDelaySeconds: 30
+                  periodSeconds: 10
+                  failureThreshold: 90
+            resources:
+              requests:
+                cpu: 200m
+                memory: 1Gi
+              limits:
+                # The local embedding model is the reason this is not smaller.
+                memory: 4Gi
+    service:
+      app:
+        controller: open-webui
+        ports:
+          http:
+            port: 8080
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:message-text
+          # Agent turns run long and responses stream. Without these the
+          # connection is cut mid-answer.
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          nginx.ingress.kubernetes.io/proxy-buffering: "off"
+        hosts:
+          # The name freed up when the dashboard moved to josh-hermes. The split
+          # is now legible from the URL: chat is the chat app, hermes is the
+          # agent's own console.
+          - host: &host "josh-chat.${SECRET_DOMAIN:=internal}"
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+    persistence:
+      data:
+        existingClaim: open-webui-data
+        globalMounts:
+          - path: /app/backend/data

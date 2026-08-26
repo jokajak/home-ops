@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+# Open WebUI's own state: its SQLite database (users, chats, settings) and the
+# RAG embedding model it downloads on first boot.
+#
+# SQLite rather than a role on the shared Postgres, deliberately. This is a
+# trial — if it does not earn its place, deleting this claim deletes the whole
+# thing, with nothing left behind in the household database. If it stays, move
+# it to CNPG the way litellm did; see the consolidation plan.
+#
+# nfs-csi for the same reason every volume in this namespace is: no pod welded
+# to a node. Open WebUI is a single-writer app, so the concurrency this costs
+# does not matter here.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: open-webui-data
+  namespace: ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: nfs-csi

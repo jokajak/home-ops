@@ -53,6 +53,42 @@ spec:
             # an arbitrary non-root UID, so runAsNonRoot is not available here.
             runAsUser: 0
         initContainers:
+          # Guard for the hand-done profile rename. It moves NOTHING.
+          #
+          # HERMES_HOME below points at a named profile so this agent advertises
+          # a distinct model id on /v1/models — two agents on the default
+          # profile both advertise "hermes-agent", and Open WebUI given one id
+          # from two connections shows a single entry with no way to see which
+          # backend answers. That failure is silent, which is why it is worth
+          # a guard.
+          #
+          # The manifest and the rename have to land together. If this
+          # reconciles first, the agent would come up on an empty profile with
+          # its real state sitting unread one directory up — working, amnesiac,
+          # and not obviously wrong. Blocking startup makes that state loud
+          # instead. Delete this container once the rename has landed, or leave
+          # it: after migration it is a no-op.
+          00-check-profile:
+            image:
+              repository: docker.io/library/busybox
+              tag: 1.37.0
+            command:
+              - /bin/sh
+              - -c
+              - |
+                set -eu
+                if [ -f "/opt/data/profiles/partner/config.yaml" ]; then
+                  echo "on the named profile — ok"
+                  exit 0
+                fi
+                if [ -f /opt/data/config.yaml ]; then
+                  echo "FATAL: state is still on the DEFAULT profile (/opt/data)"
+                  echo "but HERMES_HOME is /opt/data/profiles/partner."
+                  echo "Starting now would give an agent with no memory."
+                  echo "Do the profile rename, then restart this pod."
+                  exit 1
+                fi
+                echo "empty volume — the seeder will populate the profile"
           # Seed config.yaml on first boot only; afterwards the agent owns it.
           01-seed-config:
             image:
@@ -62,17 +98,18 @@ spec:
               - /bin/sh
               - -c
               - |
-                if [ -f /opt/data/config.yaml ]; then
+                if [ -f /opt/data/profiles/partner/config.yaml ]; then
                   echo "config.yaml already present — leaving it alone"
                   exit 0
                 fi
-                cp /seed/config.yaml /opt/data/config.yaml
+                mkdir -p /opt/data/profiles/partner
+                cp /seed/config.yaml /opt/data/profiles/partner/config.yaml
                 # The image's boot-time chown is targeted: it fixes the data
                 # directory itself and a fixed list of subdirectories, not
                 # arbitrary files at the top level. A root-owned config.yaml
                 # would survive that and the agent could never rewrite it.
-                chown 10000:10000 /opt/data/config.yaml
-                chmod 0644 /opt/data/config.yaml
+                chown -R 10000:10000 /opt/data/profiles
+                chmod 0644 /opt/data/profiles/partner/config.yaml
                 echo "seeded config.yaml"
           # hearthai's shared-memory skill, fetched fresh each start so it
           # tracks upstream rather than being vendored (and drifting) here.
@@ -104,6 +141,14 @@ spec:
             args: ["gateway", "run"]
             env:
               # Who the supervised services run as inside the container.
+              # ⚠️ MUST MATCH THE PROFILE CREATED BY HAND. Hermes resolves every
+              # path through get_hermes_home(), so a HERMES_HOME of
+              # <base>/profiles/<name> is what makes the active profile
+              # "partner" — and that name is the model id this agent
+              # advertises. Upstream has no command to promote the default
+              # profile, so the move itself is a manual step; this line is the
+              # half of it that lives in Git.
+              HERMES_HOME: "/opt/data/profiles/partner"
               HERMES_UID: "10000"
               HERMES_GID: "10000"
               TZ: "${TIMEZONE:=America/New_York}"
@@ -126,11 +171,14 @@ spec:
               # this application to the "Hermes Partner" group). chat.<domain>
               # is left in place — hearthai still exists for the shared memory
               # store (HEARTHMEM), just not as the login path for either agent.
+              #
+              # The host is partner-hermes, NOT partner-chat — see the matching
+              # comment in hermes-josh's HelmRelease for why the name matters.
               # Declaring the public URL also force-engages the auth gate. The dashboard
               # fails closed at startup if no auth provider is configured —
               # that hardening followed a 2026 campaign in which exposed
               # dashboards were driven into planting SSH backdoors.
-              HERMES_DASHBOARD_PUBLIC_URL: "https://partner-chat.${SECRET_DOMAIN:=internal}"
+              HERMES_DASHBOARD_PUBLIC_URL: "https://partner-hermes.${SECRET_DOMAIN:=internal}"
               # Authentik. Note the trailing slash — Authentik's issuer
               # includes it, and the plugin pins the iss claim to this value.
               HERMES_DASHBOARD_OIDC_ISSUER: "https://auth.${SECRET_DOMAIN:=internal}/application/o/hermes-partner/"
@@ -139,7 +187,7 @@ spec:
               HEARTHMEM_AUTHOR: "partner"
               # Keep the store address book on the data volume so it is backed
               # up with everything else, rather than in the tool-subprocess HOME.
-              HEARTHMEM_HOME: "/opt/data/hearthmem"
+              HEARTHMEM_HOME: "/opt/data/profiles/partner/hearthmem"
             envFrom:
               - secretRef:
                   name: hermes-partner-secret
@@ -198,7 +246,7 @@ spec:
           nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
         hosts:
-          - host: &host "partner-chat.${SECRET_DOMAIN:=internal}"
+          - host: &host "partner-hermes.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 pathType: Prefix
@@ -213,6 +261,8 @@ spec:
         existingClaim: hermes-partner-data
         advancedMounts:
           hermes-partner:
+            00-check-profile:
+              - path: /opt/data
             01-seed-config:
               - path: /opt/data
             app:
