@@ -1,14 +1,15 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
 #
-# Open WebUI as a phone-friendly front end onto Josh's Hermes agent.
+# Open WebUI as a phone-friendly front end onto both household Hermes agents —
+# the "one door" at chat.<domain> (docs/plans/2026-08-24-hermes-household-agents.md).
+# Each agent's own dashboard at josh-hermes.<domain> / partner-hermes.<domain>
+# remains available too; this is just a second, nicer surface onto the same
+# agents.
 #
-# ⚠️ THIS IS A TRIAL. It is wired to ONE agent on purpose. Hermes' dashboard at
-# josh-hermes.<domain> is unchanged and remains the reference surface; the
-# partner is untouched and is not able to log in here. Pointing one front end
-# at one agent means there is no cross-person boundary to get wrong yet: the
-# question of whether both agents can safely appear as models in one Open WebUI
-# is a real one, and it is deliberately not being answered by this deployment.
+# Both agents appear as separate models (OPENAI_API_BASE_URLS below); who can
+# see which model is a manual grant in Open WebUI's own admin UI (Workspace >
+# Models > Visibility), not something wired through Authentik group claims.
 #
 # The backend is the AGENT, not litellm. Hermes' API server is "a Hermes agent
 # runtime, not a pure LLM proxy" — each request spawns a server-side AIAgent, so
@@ -72,44 +73,30 @@ spec:
               ENABLE_PERSISTENT_CONFIG: "false"
               # Required before OAuth will engage, and used to build callback
               # URLs.
-              WEBUI_URL: "https://josh-chat.${SECRET_DOMAIN:=internal}"
-              # The agent is the backend. /v1 on Hermes' API server is
-              # OpenAI-compatible, so no adapter is needed.
-              OPENAI_API_BASE_URL: "http://hermes-josh.ai.svc.cluster.local:8642/v1"
-              # This agent runs under the named profile "josh", so /v1/models
-              # advertises "josh" rather than the default "hermes-agent" alias.
-              # That is what will keep the two agents distinguishable if the
-              # partner's is ever added as a second connection: Open WebUI
-              # collapses one model id from two connections into a single
-              # entry, and prefix_id — its own fix for that — cannot be set
-              # from the environment (open-webui#19017, closed as not planned).
+              WEBUI_URL: "https://chat.${SECRET_DOMAIN:=internal}"
+              # The agents are the backend. /v1 on each Hermes API server is
+              # OpenAI-compatible, so no adapter is needed. Order here MUST
+              # match OPENAI_API_KEYS' order in open-webui-secret.
+              OPENAI_API_BASE_URLS: "http://hermes-josh.ai.svc.cluster.local:8642/v1;http://hermes-partner.ai.svc.cluster.local:8642/v1"
+              # Each agent runs under its own named profile, so /v1/models
+              # advertises "josh" / "partner" rather than the default
+              # "hermes-agent" alias — that is what keeps the two distinct in
+              # the model picker.
               # Nothing here speaks Ollama; leaving it on costs a failing health
               # check every refresh.
               ENABLE_OLLAMA_API: "false"
               # Authentik is the only way in. No local password accounts exist
-              # to fall back on, which is the point: the Authentik application's
-              # policy binding to the "Hermes Josh" group is the access
-              # boundary, exactly as it is for the dashboard.
+              # to fall back on — the Authentik application's policy binding
+              # (to the household group) decides who can sign in at all; which
+              # model(s) a signed-in user can then see is a separate, manual
+              # grant in Open WebUI's own admin UI.
               ENABLE_SIGNUP: "false"
-              # Set now, while there is one user and nothing to read. An Open
-              # WebUI admin can otherwise browse, export and delete every
-              # user's chat history from the admin panel — a role that has no
-              # equivalent in the current design, where nobody can reach
-              # another person's agent at all. If this instance ever fronts
-              # both agents, this is the difference between "the other person's
-              # chats are private" and "private unless the admin looks".
-              ENABLE_ADMIN_CHAT_ACCESS: "false"
               ENABLE_LOGIN_FORM: "false"
               ENABLE_OAUTH_SIGNUP: "true"
               OAUTH_PROVIDER_NAME: "Authentik"
               OAUTH_SCOPES: "openid email profile"
               OPENID_PROVIDER_URL: "https://auth.${SECRET_DOMAIN:=internal}/application/o/open-webui/.well-known/openid-configuration"
-              OPENID_REDIRECT_URI: "https://josh-chat.${SECRET_DOMAIN:=internal}/oauth/oidc/callback"
-              # Group/role sync (ENABLE_OAUTH_GROUP_MANAGEMENT, OAUTH_GROUP_CLAIM)
-              # is deliberately NOT set. With one agent and one permitted user
-              # there is nothing for it to decide, and it is the first thing to
-              # turn on if the partner's agent is ever added here — that is the
-              # point at which an in-app ACL starts carrying real weight.
+              OPENID_REDIRECT_URI: "https://chat.${SECRET_DOMAIN:=internal}/oauth/oidc/callback"
             envFrom:
               - secretRef:
                   name: open-webui-secret
@@ -169,10 +156,12 @@ spec:
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
           nginx.ingress.kubernetes.io/proxy-buffering: "off"
         hosts:
-          # The name freed up when the dashboard moved to josh-hermes. The split
-          # is now legible from the URL: chat is the chat app, hermes is the
-          # agent's own console.
-          - host: &host "josh-chat.${SECRET_DOMAIN:=internal}"
+          # The one door (docs/plans/2026-08-24-hermes-household-agents.md).
+          # hearthai used to own this host as a group-based reverse proxy;
+          # that design hit an upstream OIDC bug and was superseded, and this
+          # ingress replaces it. Each agent's own dashboard stays reachable
+          # separately at josh-hermes.<domain> / partner-hermes.<domain>.
+          - host: &host "chat.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /
                 pathType: Prefix

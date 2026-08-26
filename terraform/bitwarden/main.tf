@@ -669,6 +669,31 @@ resource "bitwarden_item_login" "hermes_josh_gateway" {
   }
 }
 
+## Partner's counterpart to hermes_josh_gateway above — same rationale, same
+## Open WebUI multi-model wiring (kubernetes/apps/ai/open-webui).
+resource "random_password" "hermes_partner_api_server_key" {
+  length  = 48
+  special = false
+}
+
+resource "bitwarden_item_login" "hermes_partner_gateway" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "hermes partner gateway"
+  notes = "Bearer token for Partner's Hermes API server, shared with Open WebUI. Rotating it is safe: both consumers read this field and restart on change."
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "api_server_key"
+    hidden = random_password.hermes_partner_api_server_key.result
+  }
+}
+
 resource "random_password" "open_webui_secret_key" {
   length           = 48
   special          = true

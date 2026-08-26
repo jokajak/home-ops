@@ -1,0 +1,37 @@
+---
+# The other half of API_SERVER_HOST=0.0.0.0. Mirrors hermes-josh's policy —
+# see that file for the full rationale.
+#
+# ⚠️ SELECTING THIS POD DEFAULT-DENIES EVERYTHING NOT LISTED HERE.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: hermes-partner-api-server
+  namespace: ai
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: hermes-partner
+  ingress:
+    # The agent API, for Open WebUI only.
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: open-webui
+            k8s:io.kubernetes.pod.namespace: ai
+      toPorts:
+        - ports:
+            - port: "8642"
+              protocol: TCP
+    # The dashboard, reached through the ingress controller as before.
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: ingress-nginx
+            k8s:io.kubernetes.pod.namespace: networking
+      toPorts:
+        - ports:
+            - port: "9119"
+              protocol: TCP
+    # kubelet probes arrive from the node, not from an endpoint.
+    - fromEntities:
+        - host
+        - remote-node

@@ -8,4 +8,5 @@ resources:
   - ./pvc.yaml
   - ./configmap.yaml
   - ./helmrelease.yaml
+  - ./networkpolicy.yaml
   - ./gatus.yaml

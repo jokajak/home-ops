@@ -105,8 +105,18 @@ spec:
             port: 8080
 
     ingress:
+      # Disabled: chat.<domain> moved to Open WebUI
+      # (kubernetes/apps/ai/open-webui), which does its own OIDC directly
+      # instead of routing through this group-based proxy. This router hit
+      # the same hermes-agent dashboard double-POST OIDC bug documented in
+      # docs/plans/2026-08-24-hermes-household-agents.md ("Superseded in
+      # practice") and, once each agent got its own locked-down
+      # CiliumNetworkPolicy, its direct connection to hermes-*:9119 started
+      # being silently dropped — a 504 with no way to log in either way.
+      # Left defined-but-disabled rather than deleted in case chat.<domain>
+      # ever needs to come back to a group-routed model.
       app:
-        enabled: true
+        enabled: false
         className: internal
         annotations:
           hajimari.io/icon: mdi:home-heart
@@ -156,7 +166,7 @@ spec:
       # Nothing is exposed: 204 is a constant, reachable without a session by
       # design, and every other path stays on the gated Ingress above.
       favicon:
-        enabled: true
+        enabled: false
         className: internal
         hosts:
           - host: *host
