@@ -84,6 +84,14 @@ spec:
               # policy binding to the "Hermes Josh" group is the access
               # boundary, exactly as it is for the dashboard.
               ENABLE_SIGNUP: "false"
+              # Set now, while there is one user and nothing to read. An Open
+              # WebUI admin can otherwise browse, export and delete every
+              # user's chat history from the admin panel — a role that has no
+              # equivalent in the current design, where nobody can reach
+              # another person's agent at all. If this instance ever fronts
+              # both agents, this is the difference between "the other person's
+              # chats are private" and "private unless the admin looks".
+              ENABLE_ADMIN_CHAT_ACCESS: "false"
               ENABLE_LOGIN_FORM: "false"
               ENABLE_OAUTH_SIGNUP: "true"
               OAUTH_PROVIDER_NAME: "Authentik"
