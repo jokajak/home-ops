@@ -53,28 +53,53 @@ spec:
             # an arbitrary non-root UID, so runAsNonRoot is not available here.
             runAsUser: 0
         initContainers:
-          # Seed config.yaml on first boot only; afterwards the agent owns it.
-          01-seed-config:
+          # Register the "partner" profile with the real `hermes profile
+          # create` CLI on first boot only (idempotent — skips if already
+          # registered). HERMES_HOME here is the profile ROOT (/opt/data),
+          # not the profile itself: container_boot.py's boot-time reconciler
+          # (wired in as /etc/cont-init.d/02-reconcile-profiles) walks
+          # $HERMES_HOME/profiles/* to register each one as an s6 gateway
+          # service slot, and only understands HERMES_HOME as the root. A
+          # prior version of this container hand-rolled the profile
+          # directory with mkdir/cp instead of calling `profile create`,
+          # which skipped that registration entirely (and left config.yaml
+          # without a _config_version, which hermes-agent refuses to
+          # auto-migrate) — the app container booted believing profile
+          # "partner" simply didn't exist.
+          01-create-profile:
             image:
-              repository: docker.io/library/busybox
-              tag: 1.37.0
+              repository: docker.io/nousresearch/hermes-agent
+              tag: v2026.8.19
+            env:
+              HERMES_HOME: "/opt/data"
             command:
               - /bin/sh
               - -c
               - |
-                if [ -f /opt/data/profiles/partner/config.yaml ]; then
-                  echo "config.yaml already present — leaving it alone"
+                if [ -d /opt/data/profiles/partner ]; then
+                  echo "profile 'partner' already registered — leaving it alone"
                   exit 0
                 fi
-                mkdir -p /opt/data/profiles/partner
+                # `profile create` drops privilege to the hermes UID before
+                # writing anything (so nothing it creates ends up root-owned),
+                # which means it needs /opt/data itself already writable by
+                # that UID — otherwise it PermissionErrors before creating a
+                # single file, even running as root.
+                chown 10000:10000 /opt/data
+                hermes profile create partner --no-skills
+                # `profile create` scaffolds a generic default config.yaml —
+                # our household settings (LiteLLM router, HEARTHMEM, tool-loop
+                # guardrails) replace it once, here, on the profile's first
+                # boot only. Afterwards the agent owns the file.
                 cp /seed/config.yaml /opt/data/profiles/partner/config.yaml
                 # The image's boot-time chown is targeted: it fixes the data
                 # directory itself and a fixed list of subdirectories, not
-                # arbitrary files at the top level. A root-owned config.yaml
-                # would survive that and the agent could never rewrite it.
+                # arbitrary files at the top level. Root-owned files created
+                # by this init container (which runs as root) would survive
+                # that and the agent could never rewrite them.
                 chown -R 10000:10000 /opt/data/profiles
                 chmod 0644 /opt/data/profiles/partner/config.yaml
-                echo "seeded config.yaml"
+                echo "profile 'partner' created and seeded"
           # hearthai's shared-memory skill, fetched fresh each start so it
           # tracks upstream rather than being vendored (and drifting) here.
           02-fetch-skills:
@@ -101,18 +126,26 @@ spec:
               tag: v2026.8.19
             # s6 supervises the real gateway process behind this; the CMD
             # itself is a heartbeat, so a crashed gateway is restarted without
-            # losing the container.
-            args: ["gateway", "run"]
+            # losing the container. `-p partner` is what selects the profile —
+            # HERMES_HOME below is the profile ROOT, not the profile itself
+            # (see the 01-create-profile init container for why: the image's
+            # own boot-time reconciler only understands HERMES_HOME that way).
+            args: ["-p", "partner", "gateway", "run"]
             env:
-              # Who the supervised services run as inside the container.
-              # ⚠️ MUST MATCH THE PROFILE CREATED BY HAND. Hermes resolves every
-              # path through get_hermes_home(), so a HERMES_HOME of
-              # <base>/profiles/<name> is what makes the active profile
-              # "partner" — and that name is the model id this agent
-              # advertises. Upstream has no command to promote the default
-              # profile, so the move itself is a manual step; this line is the
-              # half of it that lives in Git.
-              HERMES_HOME: "/opt/data/profiles/partner"
+              # HERMES_HOME must be the profile ROOT, never
+              # <root>/profiles/<name> directly — container_boot.py's
+              # boot-time reconciler (/etc/cont-init.d/02-reconcile-profiles)
+              # walks $HERMES_HOME/profiles/* to register each one as an s6
+              # gateway service slot, and only understands HERMES_HOME as the
+              # root. Pointing it straight at profiles/partner (an earlier
+              # version of this file) made the reconciler treat that
+              # directory itself as the root, see no profiles/ subdirectory
+              # inside it, and register nothing named "partner" — the gateway
+              # then failed at startup with "no such gateway 'partner'" even
+              # though the profile's data was right there on disk. Which
+              # profile this container actually runs is selected by
+              # `-p partner` in args above, not by this variable.
+              HERMES_HOME: "/opt/data"
               HERMES_UID: "10000"
               HERMES_GID: "10000"
               TZ: "${TIMEZONE:=America/New_York}"
@@ -225,7 +258,7 @@ spec:
         existingClaim: hermes-partner-data
         advancedMounts:
           hermes-partner:
-            01-seed-config:
+            01-create-profile:
               - path: /opt/data
             app:
               - path: /opt/data
@@ -234,7 +267,7 @@ spec:
         name: hermes-partner-config
         advancedMounts:
           hermes-partner:
-            01-seed-config:
+            01-create-profile:
               - path: /seed/config.yaml
                 subPath: config.yaml
                 readOnly: true

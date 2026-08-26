@@ -53,3 +53,10 @@ data:
       hard_stop_after:
         exact_failure: 5
         idempotent_no_progress: 5
+
+    # Unversioned config.yaml predates hermes-agent's migration tracking and
+    # is refused outright ("can no longer be auto-migrated") rather than
+    # silently misread. 12 is upstream's own documented safe floor for a
+    # hand-authored file — config-migrate carries it forward automatically
+    # from there on the agent's first boot.
+    _config_version: 12
