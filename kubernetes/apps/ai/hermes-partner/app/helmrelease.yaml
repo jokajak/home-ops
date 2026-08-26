@@ -53,42 +53,6 @@ spec:
             # an arbitrary non-root UID, so runAsNonRoot is not available here.
             runAsUser: 0
         initContainers:
-          # Guard for the hand-done profile rename. It moves NOTHING.
-          #
-          # HERMES_HOME below points at a named profile so this agent advertises
-          # a distinct model id on /v1/models — two agents on the default
-          # profile both advertise "hermes-agent", and Open WebUI given one id
-          # from two connections shows a single entry with no way to see which
-          # backend answers. That failure is silent, which is why it is worth
-          # a guard.
-          #
-          # The manifest and the rename have to land together. If this
-          # reconciles first, the agent would come up on an empty profile with
-          # its real state sitting unread one directory up — working, amnesiac,
-          # and not obviously wrong. Blocking startup makes that state loud
-          # instead. Delete this container once the rename has landed, or leave
-          # it: after migration it is a no-op.
-          00-check-profile:
-            image:
-              repository: docker.io/library/busybox
-              tag: 1.37.0
-            command:
-              - /bin/sh
-              - -c
-              - |
-                set -eu
-                if [ -f "/opt/data/profiles/partner/config.yaml" ]; then
-                  echo "on the named profile — ok"
-                  exit 0
-                fi
-                if [ -f /opt/data/config.yaml ]; then
-                  echo "FATAL: state is still on the DEFAULT profile (/opt/data)"
-                  echo "but HERMES_HOME is /opt/data/profiles/partner."
-                  echo "Starting now would give an agent with no memory."
-                  echo "Do the profile rename, then restart this pod."
-                  exit 1
-                fi
-                echo "empty volume — the seeder will populate the profile"
           # Seed config.yaml on first boot only; afterwards the agent owns it.
           01-seed-config:
             image:
@@ -261,8 +225,6 @@ spec:
         existingClaim: hermes-partner-data
         advancedMounts:
           hermes-partner:
-            00-check-profile:
-              - path: /opt/data
             01-seed-config:
               - path: /opt/data
             app:
