@@ -33,6 +33,13 @@ resource "authentik_provider_oauth2" "openwebui" {
   client_secret = module.openwebui_oidc_creds.client_secret
   client_type   = "confidential"
 
+  # Providers default to signing_key = null (HS256, /jwks/ returns {}). Open
+  # WebUI's OAuth client (Authlib) fetches JWKS unconditionally and errors
+  # ("Missing expected key 'keys' in OAuth response") rather than falling
+  # back to HS256 — same failure mode as hermes-agent's OIDC client, same
+  # fix. See application_hermes.tf's data.authentik_certificate_key_pair.
+  signing_key = data.authentik_certificate_key_pair.default_signing.id
+
   # Explicit for the same reason as the Hermes providers: Authentik's model
   # defaults grant_types to an empty list, and an /authorize with response_type
   # code then fails as "Invalid grant_type for provider".
