@@ -123,13 +123,25 @@ spec:
             image:
               repository: docker.io/nousresearch/hermes-agent
               tag: v2026.8.19
-            # s6 supervises the real gateway process behind this; the CMD
-            # itself is a heartbeat, so a crashed gateway is restarted without
-            # losing the container. `-p josh` is what selects the profile —
-            # HERMES_HOME below is the profile ROOT, not the profile itself
-            # (see the 01-create-profile init container for why: the image's
-            # own boot-time reconciler only understands HERMES_HOME that way).
-            args: ["-p", "josh", "gateway", "run"]
+            # The CMD is a pure heartbeat, NOT the gateway invocation — the
+            # real gateway is already running by the time this container's
+            # services start. container_boot.py's boot-time reconciler
+            # (/etc/cont-init.d/02-reconcile-profiles, see the
+            # 01-create-profile init container) auto-starts a dynamically
+            # registered, independently s6-supervised "gateway-josh" slot on
+            # every boot, since the profile's persisted desired_state is
+            # "running". Running `hermes -p josh gateway run` here too, on
+            # top of that, hits an upstream bug in hermes-agent's "attach to
+            # the already-running supervised instance" path: it crashes with
+            # `s6-applyuidgid: fatal: unable to exec -p` regardless of
+            # --no-supervise/--external-supervisor, because a second
+            # dispatcher for the same profile isn't a supported combination.
+            # `sleep infinity` just keeps this s6 "legacy-services" slot (and
+            # therefore the container) alive; killing it tears down the
+            # sibling "dashboard" and "main-hermes" services too (Architecture
+            # B: the container exits when the CMD does), so a crash here still
+            # gets Kubernetes to restart the whole pod as intended.
+            args: ["sleep", "infinity"]
             env:
               # HERMES_HOME must be the profile ROOT, never
               # <root>/profiles/<name> directly — container_boot.py's
@@ -141,9 +153,10 @@ spec:
               # directory itself as the root, see no profiles/ subdirectory
               # inside it, and register nothing named "josh" — the gateway
               # then failed at startup with "no such gateway 'josh'" even
-              # though the profile's data was right there on disk. Which
-              # profile this container actually runs is selected by `-p josh`
-              # in args above, not by this variable.
+              # though the profile's data was right there on disk. This same
+              # cont-init.d script also runs inside THIS container (it's part
+              # of the image's own boot sequence, independent of args above),
+              # which is why it matters here even though the CMD is a no-op.
               HERMES_HOME: "/opt/data"
               HERMES_UID: "10000"
               HERMES_GID: "10000"
