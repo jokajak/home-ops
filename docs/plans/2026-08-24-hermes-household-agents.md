@@ -169,6 +169,19 @@ which agent was theirs, which is a strange thing to ask of a household.
 So: **`chat.${SECRET_DOMAIN}` is the only hostname.** You log in once, and you land on your
 own agent. Neither agent has an ingress any more; both are ClusterIP-only.
 
+> **Superseded in practice.** hermes-agent's dashboard OIDC callback double-POSTs the same
+> authorization code, which fails through the outpost, so each agent went back to its own
+> Ingress — **`josh-hermes.${SECRET_DOMAIN}`** and **`partner-hermes.${SECRET_DOMAIN}`**, with
+> the dashboard's own Authentik gate as the boundary. `chat.${SECRET_DOMAIN}` remains hearthai's
+> door for the shared memory store, not a login path for either agent. The one-door design
+> below is still what we want; it is blocked on that upstream bug.
+>
+> The hosts are `*-hermes` rather than `*-chat` deliberately. This surface is the Hermes
+> dashboard, and its Chat tab is the TUI embedded over a WebSocket and rendered with xterm.js —
+> a terminal in a browser. "chat" promised a smooth messenger it does not try to be, and the
+> name should set the expectation the surface actually meets. `*-chat` stays free for a
+> lightweight front end if one ever lands.
+
 ```
 browser → ingress-nginx ──auth_request──→ oauth2-proxy ──OIDC──→ Authentik
               │                                │
@@ -256,8 +269,8 @@ would drift.
 |---|---|
 | `kubernetes/apps/ai/litellm/` | LiteLLM proxy. Its database is a role on the shared `database/postgres` cluster, not a cluster of its own — see [the consolidation plan](./2026-08-24-cnpg-consolidation.md). UI at `llm.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/hearthai/` | The door: oauth2-proxy + identity router + NetworkPolicy. `chat.${SECRET_DOMAIN}` |
-| `kubernetes/apps/ai/hermes-josh/` | Josh's agent. ClusterIP only |
-| `kubernetes/apps/ai/hermes-partner/` | Partner's agent. ClusterIP only |
+| `kubernetes/apps/ai/hermes-josh/` | Josh's agent + dashboard. `josh-hermes.${SECRET_DOMAIN}` |
+| `kubernetes/apps/ai/hermes-partner/` | Partner's agent + dashboard. `partner-hermes.${SECRET_DOMAIN}` |
 | `kubernetes/apps/ai/meridian/` | Claude-subscription → Anthropic API bridge. **Inert until logged in** |
 | `kubernetes/apps/ai/hearthmem/` | **Staged, not wired in** — see below |
 | `terraform/authentik/application_hermes.tf` | Two OIDC applications + two single-member groups |
