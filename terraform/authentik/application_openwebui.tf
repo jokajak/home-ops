@@ -7,8 +7,13 @@
 ## see is a manual grant in Open WebUI's own admin UI, not an Authentik
 ## concern.
 ##
-## The policy binding below is who may sign in AT ALL — bound to the "Home"
-## group, same as the rest of the household's applications.
+## The policy bindings below are who may sign in AT ALL — bound to each
+## person's own single-member group ("Hermes Josh" / "Hermes Partner"), OR'd
+## together via policy_engine_mode = "any". NOT bound to "Home": that group
+## is a display-only directory label (used elsewhere purely to categorize
+## apps in the launcher UI) and has no actual members, so binding access to
+## it locks everyone out — confirmed the hard way when this bound to "Home"
+## briefly and denied Josh his own login.
 ##
 ## Unlike the agents' dashboards this is a CONFIDENTIAL client: Open WebUI runs
 ## the code exchange server-side, so the secret is used rather than ignored.
@@ -65,6 +70,12 @@ resource "authentik_application" "openwebui" {
 
 resource "authentik_policy_binding" "openwebui_hermes_josh" {
   target = authentik_application.openwebui.uuid
-  group  = authentik_group.home.id
+  group  = authentik_group.hermes_josh.id
   order  = 0
+}
+
+resource "authentik_policy_binding" "openwebui_hermes_partner" {
+  target = authentik_application.openwebui.uuid
+  group  = authentik_group.hermes_partner.id
+  order  = 10
 }
