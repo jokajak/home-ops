@@ -1,90 +1,90 @@
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-talosVersion: v1.13.4
+talosVersion: v1.13.9
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-kubernetesVersion: v1.35.6
+kubernetesVersion: v1.36.4
 clusterName: home-kubernetes
-clusterEndpoint: ENC[AES256_GCM,data:z3EgZ1109k+mkC+bsTeDbEyuhURz9InM2Y6M,iv:T8aOJsNMI9gJNsQ3oVY6VMclp8mqfPgZ+tcAIefxjJc=,tag:k1mDq0KXpyUbg9yjojFbBw==,type:str]
+clusterEndpoint: ENC[AES256_GCM,data:bRcjOo3wZjIWZGvT3J2aRJAR5zQmoH9NqZX7,iv:7SeWETPmZb5+4M8Ig7v7P7tWea15v+TeWtDli1l8sTw=,tag:89H8U6pqoGKd0o/N2CaoZg==,type:str]
 schematicId: '@schematic.yaml.tpl'
 data:
     # Shared network facts. Every address in this repo lives here, encrypted at
     # rest, and is reached from patches via `.Data.*` / `.Node.Data.*`.
-    vip: ENC[AES256_GCM,data:kqzgGpTUaKsrGt5xQ8Q=,iv:5UEvGNbPLEXcsaS2uZJdQOJHjrc6mryOG+6pAKJ69js=,tag:+0jwXRXvZGA4W17LouA2Bg==,type:str]
-    gateway: ENC[AES256_GCM,data:LRrtKczmfAnk/0FqWg==,iv:ZabWJGHWjmUS+SMHPfCXM66OTW/gz8SihgevMg/Uliw=,tag:VAnIP/L0LNW1M+nUJUUqnw==,type:str]
-    apiDNS: ENC[AES256_GCM,data:PioqNgLqmXV1lJ31mUrS9fk=,iv:Ck9cTs6eFyd99PcAOyK8iX2a63btkTXH1Id8+qAFWWs=,tag:uI5iwFZIoHMO8xAh/WMXzA==,type:str]
-    nodeCIDR: ENC[AES256_GCM,data:8pbCcZ4vSpkPXeQ3QFV8aw==,iv:Xf/kDrN+loEdgotiKxCZne/n2j760baWWKibOacnPQ8=,tag:RmigsfVCEYEUY8182M82GA==,type:str]
-    vlanCIDR: ENC[AES256_GCM,data:uON49fuMjzAe0nmXnqU=,iv:8IGFC5IfRsdYql6d/SREdJdtGozFEBnsi4Aei0Xxqpc=,tag:qMbWLc2NfZNRUzerpZZiUQ==,type:str]
+    vip: ENC[AES256_GCM,data:pD6fIxh+bwoEaYRQD90=,iv:q0G1h7df6U745aIN6HAF39guGXijD97ue38LkLpNbAE=,tag:4Ucr0dg3cBkQ/YfYx4Ra8w==,type:str]
+    gateway: ENC[AES256_GCM,data:e1Dz5y7QeDAhjFjvkg==,iv:ZHzkXKrL2764PZEjocCsxAP7OPBg1spr2LBDqplh0uc=,tag:qpO2F3f9HqihYjQzoNntMQ==,type:str]
+    apiDNS: ENC[AES256_GCM,data:EF7bbjzaZ1zRafC2XLCrSXE=,iv:Gty06doEpdL4IYM1t7A+O+Ljhn7IlFbj0HScawH/QFc=,tag:eniRQ8R37+zE+hWZC2RopQ==,type:str]
+    nodeCIDR: ENC[AES256_GCM,data:gOnaci/XQf/wdZde5XwZuQ==,iv:s8VkLLqXw/SFiYyfzf+ChFP5rIu8sOJvJ8HKQUkdYIc=,tag:9LdMgFSyN0xnaKDKd98AZw==,type:str]
+    vlanCIDR: ENC[AES256_GCM,data:dtamwZ3/N66Pv8WiK5U=,iv:kMmeqiYjrx2BjAp+x3XzX/B7YFA7h+9OynpOS/HAXbo=,tag:YTrUCX60DW915DFjzALuYg==,type:str]
     vlanId: 50
     mtu: 1500
     prefix: 24
     nameservers:
-        - ENC[AES256_GCM,data:T5M+fih/Wyhfa/Pr8Vg=,iv:SsLzON6RKigjQFTF6I7ooatdmYHxUONZoPd/zrHn7V4=,tag:WGEHjQSoulq57K3WXmtQ/A==,type:str]
-        - ENC[AES256_GCM,data:On9tUCO9CC9v3c42yg==,iv:TjxkgvRnCFlOLFVbdYvHKs68bYjOpTCUQ9Meq7W7H48=,tag:7mW1apSFAjmyG7mOj5JAFQ==,type:str]
+        - ENC[AES256_GCM,data:cODl7bHH/5luyVgxlKk=,iv:4GmSN/y3HLZDmLsJIZm50BCn9h/54HDPTYINBqk2Sw8=,tag:fQA0HstcEBRw964pWtt8IQ==,type:str]
+        - ENC[AES256_GCM,data:6bCB4DnVEGJzsiZeSQ==,iv:pYz+jTgY1Re+vB62kK0fShG38gvzMZ/9HuSg49c1xFg=,tag:qhBLivh7VwlZTUgO3jecOQ==,type:str]
 nodes:
     - host: foyer-dell-mff
-      ip: ENC[AES256_GCM,data:lIg1m7Oetb3EAiV+yZ0=,iv:yL/jR7P3FtPV7NufhcEhXqjz7ARB52gpML5EsYqCM/k=,tag:jnLaW9hZpoLkytq2FmduMA==,type:str]
+      ip: ENC[AES256_GCM,data:hXw40xE96AX3ly8e7oA=,iv:2ObdgTJRwdpDMIX2nkV2Gx1GPRzNgDKCY+z0hmFK5ro=,tag:husI28TIE+ExRXxkcwAtgw==,type:str]
       role: control-plane
       data:
         busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:8Elf13Tpaaf414dexj8A,iv:TdEz2pha/0WnTgrd/1EiN0eBZ/6w70p1gfy7SBYjUAQ=,tag:wTgjBxmMwsfSi/matHHXoQ==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:eflCylTji2EMsI6cbNT4,iv:ZBi9NBPEftEOfodCDvQnKSnD71uOz5CgLRfK14Oo9pw=,tag:2rg3seivwtiag2LxhBksSA==,type:str]
         installerAnnotation: true
     - host: basement-dell-sff
-      ip: ENC[AES256_GCM,data:pZuZ3sjdkk/73HlPfYA=,iv:PfPhK5oYhxl4IuVEfag4ohkONY7RgtssNW9hk9nHY88=,tag:BtyoReXKM6+2Wghlz1eQAw==,type:str]
+      ip: ENC[AES256_GCM,data:HPvmkgE2kfgomSaSTV4=,iv:xE/pqPIMwThLAuluY6nsNEFwhO8c6AjBMFDJaFbaxic=,tag:S53Ix6VbVGUmrL6cOjwKZQ==,type:str]
       role: worker
       data:
         busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:EqCXONW/9jgRG1KZYzR6,iv:s6Za/42e9xu20h5lbirF4wQHc8+7fr5n7FN79sQHfus=,tag:gYKuKV/f/of5Hd3oesZDtA==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:YDYe984Z6VnKfu24Lq85,iv:ooTI861yEDvHyGxCpGN47Nn6+4Gwnr84FwB8oKTRH7k=,tag:L5bQHksI21SKi7hDnj6qfw==,type:str]
     - host: basement-rpi4-chocolate
-      ip: ENC[AES256_GCM,data:maCEmzbNGoViq7jFxHc=,iv:UyOhYrY9Ar5YKeAyZ+lVPEdM888mSEAf9GOTOnJTMDY=,tag:F9REroVBSL3lY7U+dpTQ0g==,type:str]
+      ip: ENC[AES256_GCM,data:B1IyD9t3Fny/yjoLDsY=,iv:UM8bHHHgfVUUMn1+HopbcpddvDJql0yEOO7gDPzsLkE=,tag:27Grl/gm2ZxZ4DOm0qEc8Q==,type:str]
       role: worker
       # Raspberry Pi 4: different overlay and extension set from the x86 nodes,
       # so it gets its own schematic file rather than schematic.yaml.tpl.
       schematicId: '@schematic-rpi.yaml'
       data:
         busPath: fd*
-        vlanAddress: ENC[AES256_GCM,data:fgVluLdtolXcwMKGMlPN,iv:fDxZ2xvIc/NDWESrX2PmnpPxrZZsrlN0Ful7Qt5myyQ=,tag:+tjJy35LKjCSHpk6ATGBhQ==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:UKM2e7zYmBQw43XadURL,iv:2UO/9ajFQ7GkD8wLfZ+XYsuvH8KklR5BMRmUuPETQAo=,tag:7+wKbAKeSyh2EYd3HLwcbg==,type:str]
     - host: basement-rpi4-peach
-      ip: ENC[AES256_GCM,data:fmozTy+HYQJdmVe5kEU=,iv:XwvLIR3YopHlWc+2AY6SSy2IBNKe7O5VpdtjO5zphZc=,tag:dYVsk/1ZYQa4z1jnKF/MgA==,type:str]
+      ip: ENC[AES256_GCM,data:UjHu2oyVSx0D8HE5664=,iv:XnzPXdfM0hObccaqevsspIgPrsFpSa3Xjoo1Tyu90uU=,tag:FKgCHzCcdpoP/pc1o2z8Nw==,type:str]
       role: worker
       # Raspberry Pi 4: different overlay and extension set from the x86 nodes,
       # so it gets its own schematic file rather than schematic.yaml.tpl.
       schematicId: '@schematic-rpi.yaml'
       data:
         busPath: fd*
-        vlanAddress: ENC[AES256_GCM,data:eGE+IrGGij2rLBu3+Dds,iv:pfXYkaSWmemSWlUlvBJbE2Lvpc7s7GwzPuqBDJQwEt0=,tag:1jnOFHd9ZVDRg7oUHqPv9Q==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:1xl0ORCe37eizgbFqbFu,iv:5AzeDzsuOpoC3PrVMInOvGk7rXVNXXqT2V2ThJU0STM=,tag:ZkMsXrmglRp3BlOVOthYbg==,type:str]
         installerAnnotation: true
     - host: foyer-dell-3040
-      ip: ENC[AES256_GCM,data:B0No1MUzkWQeaLpjflM=,iv:g/CRpiRxNnaF3EQ9RAUtVJU1XA4r8zvraIY2Iy20gBU=,tag:WFsdfEOI2retp70AkrYmbw==,type:str]
+      ip: ENC[AES256_GCM,data:ZE+E0HMWt/T9I2e0cqM=,iv:qRSp8e8jLeilMj0IWtbKrje/gAs3gU3y9JJv64dTjfk=,tag:OejmUeX+RMscQyYTVxg6tg==,type:str]
       role: control-plane
       data:
         busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:nNxApkxi4Ut0+5KGdM8x,iv:be9SxFQ5gAJ7t9+oi/kMuA3uEzrUcFk6ziUFu/9RRPg=,tag:VR1pqy/LZZSNP+jbfy3+Kw==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:rG7FJH7A/RLdAHzsrlFh,iv:0uRoPZ9kzf/jCk4B6YQwFMt/bM25gSqEpO+B+JglmqQ=,tag:PsXKh4ED5zVcIN1nstmG/Q==,type:str]
         installerAnnotation: true
     - host: foyer-hp-800g3
-      ip: ENC[AES256_GCM,data:gZIARjt7Cup10U3N9Dg=,iv:pJX1fpC3DUaCxnTWa2cPJi9pZ0ZMovbZwctGmH5rfBI=,tag:3QsWO3ZU1AQQacMFuoi6yA==,type:str]
+      ip: ENC[AES256_GCM,data:G/G+DYT5qZdLMHJ0DTI=,iv:6DM9gOFB03oqabffRmbcBSx0lXrqOiVytCmjy6yIa6I=,tag:f3wD4IjXFsO1Yrwx+/mzXA==,type:str]
       role: worker
       data:
         busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:OaHpUJpaUzN/abWfYj3v,iv:qCzNUx2c1s2Tm5fu8QoV+HXzNNQhJCIP6JsPrbHtvvE=,tag:xv9XI+hpJGmR9ZT2nPWviQ==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:DjfQbE+LGPTDMC43lRf1,iv:g3ldmqAGw8iOaRu7kOr2EMQjLpNeyMTmwWyH/hJkG8s=,tag:39m+/r82XEuit4jnbCQO1A==,type:str]
         installerAnnotation: true
     - host: basement-lenovo-m910q
-      ip: ENC[AES256_GCM,data:m4RLvvpMtNfzG3von40=,iv:gKI2520UjXU7KG5xN4yXhlRH9Q90Y6pmrW8AO6uje6c=,tag:2s+DZTHpvI0ccgsaR9w1OA==,type:str]
+      ip: ENC[AES256_GCM,data:+ud9TXd67gfSbbIC8fo=,iv:mjBepLgNsrJzOtu/50+HQ67f0ALoqNghu30FYkODMko=,tag:LDCTfuASqkuBQHdRIndE9g==,type:str]
       role: control-plane
       data:
         busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:CsOu8YEkOfE0VFdTFLwO,iv:bPMDEeC4sl99xHwV0nqPutaSme/S9lU59Se/gLmWj4o=,tag:WPcHPRL6zUovzsqG1Cv7lg==,type:str]
+        vlanAddress: ENC[AES256_GCM,data:nCVAR1sqa+hNDTtGok0L,iv:Al2NgeHKY8Py8flEwXewRhjfEt2vjbWPD7xdHfDAN0Y=,tag:t8ESrXYEy50455ZpbgN4sg==,type:str]
         installerAnnotation: true
 sops:
     age:
         - recipient: age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68
           enc: |
             -----BEGIN AGE ENCRYPTED FILE-----
-            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBLaTIxQlppMnlnZTJxSkxn
-            cmFYTk1DWlVzK2xpcVFCM0NTT1lldFUyVEZjCk5DUkJFbU8xRDNkdGtiZVhGMWdj
-            OHRCTVlZM1l1dHZnblBPempwR1lxYVEKLS0tIDR1VzhkVU5oWHBja2FxRC9vOW1t
-            QWIvOS9qeDh3WHhxWE5rQ0QwU1pQNDgKscZBW8niqjKFhNpKpAsA9LBGojXCXxS0
-            EyFjViNiJhKWwG8p5EpzoFmkiei36lj0nKF3f1if+cARAqpbUEg8rQ==
+            YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBPM1BVMmhzc0JLRG9OdDhN
+            ckdqNWVpSHFydm94Mkp4VFFERHpTQ1ZkbGk4CjdEY1Z6clJ2SUVwYjhDMFZPK2sr
+            T1RwT1M3TkFtb05BR3U0SmI5R0ZEZTQKLS0tIFBxa3NXcENRanRTeG1sV1h5UE1i
+            ajNQL3FudkYxZUM4OXdrT1pWR2UyOGcK3HzDzV8hsCLzXLtSvVZSoDNex1E54Hnm
+            bJysLZkR1/DcslkFHouTKoe8EgHoYJbF8vTv8btl7KZSXLO+vYnZEQ==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-08-17T12:48:58Z"
-    mac: ENC[AES256_GCM,data:SlsY6XsRrMlpXby0fG/K+9znFWGizmUh7mPWd5Y5XF8WdT7mtRofaqPi5FzWVEmSq1unupwiGNc58e3QlOGP5j+oqrtIp3aJbjedosNxmgL6xgnZH/pHFm1gDMOj6EbjLFHwztdjEWrrJmX+5S2hdj0Cj4MFkpSqHwOwb85EvOc=,iv:O3wNV5V7gwknO3sfgvFw2g1ViD+yaxehTz7CqnBwmcA=,tag:jlKbLDZGPRkdg9BgsSA5lg==,type:str]
+    lastmodified: "2026-08-27T11:12:10Z"
+    mac: ENC[AES256_GCM,data:VwSg5vcnIySy+os7CJvETQ+9oprPGN2iYu1AMRlg5EwvAgRJVkHzzUhq9+fqMMPUvDOIk9ImFSt1aWazcIVMaMpPbK6XPvf0GBtJ47Aq8Ywy1GCvTyCHri5cyFu1iM5BLCX8CyXA7o1r0P5lMOcKgIlMyejcm6VYCnqJnSJM/NY=,iv:/OhKlTtT2GqejeYJanHGfEApHwy4qB78FLzQ+pQFYcE=,tag:k3pS35AEsr/DBeSN43o3yw==,type:str]
     encrypted_regex: ^(ip|clusterEndpoint|vip|gateway|apiDNS|nodeCIDR|vlanCIDR|nameservers|vlanAddress)$
     version: 3.12.2
