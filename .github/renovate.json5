@@ -371,9 +371,8 @@
       managerFilePatterns: [
         '/(^|/).taskfiles/.+\\.ya?ml$/',
         '/(^|/)kubernetes/.+\\.ya?ml$/',
-        // talos/topf.yaml carries `# renovate:` annotations for talosVersion and
-        // kubernetesVersion but was never in scope, so those two fields silently
-        // stopped tracking upstream while tuppr (under kubernetes/) kept moving.
+        // topf.yaml's SOPS rule authenticates encrypted values only, allowing
+        // these intentionally plaintext version fields to be updated safely.
         '/(^|/)talos/.+\\.ya?ml$/',
         // Workflow env pins (FLUX_VERSION et al). The github-actions manager only
         // handles `uses:` refs, so without this these versions track nothing.
