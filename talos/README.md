@@ -132,5 +132,10 @@ As of 2026-08-16 they match: `talosVersion: v1.13.4` and
 finally moved `foyer-dell-3040` off v1.34.1 — tuppr's `KubernetesUpgrade` had
 been wedged for 49 days, so the kubelet image came from `topf.yaml` instead.
 
+The SOPS creation rule for `topf.yaml` uses `mac_only_encrypted: true`. This
+keeps the encrypted addresses authenticated while allowing Renovate to update
+the intentionally plaintext version fields without breaking the MAC. No
+external value resolver is required.
+
 [plan]: ../docs/plans/2026-08-10-talos-consolidation-and-topf.md
 [sops-partial]: ../.sops.yaml

@@ -11,6 +11,10 @@ creation_rules:
     # parsing, but only when the `sops` binary is on PATH.
     path_regex: talos/topf\.yaml
     encrypted_regex: "^(ip|clusterEndpoint|vip|gateway|apiDNS|nodeCIDR|vlanCIDR|nameservers|vlanAddress)$"
+    # Versions and inventory metadata are intentionally plaintext. Authenticate
+    # only encrypted address values so tools such as Renovate can update those
+    # plaintext fields without invalidating the SOPS MAC.
+    mac_only_encrypted: true
     key_groups:
       - age:
           - "age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68"
