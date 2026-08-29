@@ -1,7 +1,7 @@
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
 talosVersion: v1.13.9
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
-kubernetesVersion: v1.36.4
+kubernetesVersion: v1.37.0
 clusterName: home-kubernetes
 clusterEndpoint: ENC[AES256_GCM,data:0DKrl3q3P4DnTcc5vUgaRt8YdbKBcUuok6v5,iv:KDBqrGoaEXoRQSDoDWTVBhlgAv/plX4iAEgGwFQHm3M=,tag:K7MgqMEW5NFsiWuSHk7mkA==,type:str]
 schematicId: '@schematic.yaml.tpl'
