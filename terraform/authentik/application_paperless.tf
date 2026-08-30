@@ -19,6 +19,13 @@ resource "authentik_provider_oauth2" "paperless_oauth" {
   client_id     = module.paperless_oidc_creds.client_id
   client_secret = module.paperless_oidc_creds.client_secret
 
+  # grant_types has no useful default (Authentik's OAuth2Provider model
+  # defaults it to an empty list), so an /authorize request with response_type
+  # code fails check_grant() with "invalid_request" / "Invalid grant_type for
+  # provider" unless this is set explicitly. Same fix as application_hermes.tf
+  # and application_openwebui.tf.
+  grant_types = ["authorization_code", "refresh_token"]
+
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
   invalidation_flow  = resource.authentik_flow.invalidation.uuid
 
