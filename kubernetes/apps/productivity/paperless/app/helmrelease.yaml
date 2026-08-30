@@ -68,6 +68,16 @@ spec:
               PAPERLESS_CONSUMER_POLLING_INTERVAL: "60"
               PAPERLESS_CONSUMER_RECURSIVE: "true"
               PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "true"
+              # Human-readable on-disk layout, independent of the app/database —
+              # if Paperless is ever gone, the archive on the NFS share is still
+              # self-describing. Folders stop at type/year/month; correspondent
+              # and doc_pk (the document's own always-populated, globally-
+              # incrementing database id, used as the sequence number since it
+              # needs no manual setup, unlike ASN) live in the filename instead
+              # of as further folder levels — a correspondent folder under
+              # month would usually hold just one file anyway. Changing this
+              # later retroactively renames every existing file to match.
+              PAPERLESS_FILENAME_FORMAT: "{{ document_type }}/{{ created_year }}/{{ created_month }}/{{ doc_pk }}-{{ correspondent }}-{{ title }}"
               # Office documents and e-mail are parsed by the sidecar services
               PAPERLESS_TIKA_ENABLED: "1"
               PAPERLESS_TIKA_ENDPOINT: http://paperless-tika.productivity.svc.cluster.local:9998
@@ -77,6 +87,12 @@ spec:
               PAPERLESS_APPS: allauth.socialaccount.providers.openid_connect
               PAPERLESS_ACCOUNT_DEFAULT_HTTP_PROTOCOL: https
               PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+              # No PAPERLESS_SOCIAL_ACCOUNT_DEFAULT_GROUPS: it applies to every new
+              # SSO signup uniformly, so it can't distinguish an adult login from a
+              # kid's. New accounts land with zero Django permissions (a deliberate
+              # fail-closed default — every new person is assigned to the correct
+              # Paperless group by hand in Settings -> Users & Groups after their
+              # first login).
               PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
             envFrom:
               - secretRef:
