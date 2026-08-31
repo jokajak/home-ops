@@ -23,13 +23,13 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 | 2 | `generic-device-plugin` advertises `devic.es/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
 | 3 | `tofu apply` the **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ✅ | applied by owner 2026-08-31 |
 | 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ✅ | `init-passwd` logged `password file built for user iot`; broker up and logging 2026-08-31 |
-| 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | 🟡 | pod `Running`, not `Pending`, on the expected node |
-| 6 | rtl-433 connected to the broker | same | 🟡 | log line `Publishing MQTT data to mosquitto…` |
-| 7 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
+| 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ✅ | pod `Running` and decoding 2026-08-31 — so the device plugin handed over the SDR |
+| 6 | rtl-433 connected to the broker | same | 🟡 | startup log `Publishing MQTT data to mosquitto…`, and a mosquitto line ending `u'iot'` |
+| 7 | Sensors actually decoding | — | ✅ | `Interlogix-Security` decode in rtl-433's stdout 2026-08-31 |
 | 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
 | 9 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
 | 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.yaml` | 🟡 | entity state changes when a sensor is tripped |
-| 11 | Sensor ids collected | — | ⬜ | one id noted per physical sensor |
+| 11 | Sensor ids collected | — | ⬜ | one id noted per physical sensor — **current front line**, walk the house tailing `logs deploy/rtl-433 -f` |
 | 12 | Real `binary_sensor` entities uncommented + deployed | `configmap-rtl433.yaml` | ⬜ | door entity flips `on`/`off` on open/close |
 | 13 | Battery + tamper entities behaving | same | ⬜ | both report, grouped under one HA device |
 
@@ -40,7 +40,11 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
   by a mosquitto log line ending `u'iot'`; `not authorised` there would mean a hash mismatch.
 - Stage 5 was gated on stage 4: `cluster-apps-rtl-433` `dependsOn` mosquitto, whose
   Kustomization has `wait: true`, so rtl-433 is not applied at all until the broker is healthy.
-- Stage 5 may then fail on the DVB kernel driver. See *When it doesn't work*.
+- The DVB-driver risk on stage 5 did not materialise — the dongle was claimed cleanly, so no
+  kernel arg is needed.
+- Note the two log streams are different things: rtl-433's stdout carries the decoded JSON
+  (from `-F json`), mosquitto's carries connections only. Decodes appearing in the former do
+  **not** prove MQTT delivery — that is stage 6, and a separate `-F` output.
 
 ---
 
