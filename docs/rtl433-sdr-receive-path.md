@@ -10,20 +10,21 @@
 
 ## Status at a glance
 
-**Last updated: 2026-08-31** · Merged to `main`; Flux reconciling. Downstream stages are
-unconfirmed — update them as each is verified rather than assuming the merge did it.
+**Last updated: 2026-08-31** · Merged to `main`, and the Bitwarden item is applied. Everything
+from stage 4 on needs eyes on the cluster to confirm — 🟡 means the manifest is on `main`, not
+that it is running. Tick rows off as they are actually observed.
 
-Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, not verified ·
-✅ confirmed working
+Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 deployed, not verified ·
+✅ confirmed
 
 | # | Stage | Where it lives | State | Confirmed by |
 |---|-------|----------------|-------|--------------|
-| 1 | PR merged to `main` | — | 🟡 | PR is green and merged |
+| 1 | PR merged to `main` | — | ✅ | #1224, merged 2026-08-31 |
 | 2 | `generic-device-plugin` advertises `devic.es/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
-| 3 | `tofu apply` the renamed **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ⬜ | item exists in Bitwarden with username `iot` |
-| 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ⬜ | pod `Running`; `init-passwd` logged `password file built for user iot` |
-| 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ⬜ | pod `Running`, not `Pending`, on the expected node |
-| 6 | rtl-433 connected to the broker | same | ⬜ | log line `Publishing MQTT data to mosquitto…` |
+| 3 | `tofu apply` the **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ✅ | applied by owner 2026-08-31 |
+| 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | 🟡 | pod `Running`; `init-passwd` logged `password file built for user iot` — **with a non-empty username** |
+| 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | 🟡 | pod `Running`, not `Pending`, on the expected node |
+| 6 | rtl-433 connected to the broker | same | 🟡 | log line `Publishing MQTT data to mosquitto…` |
 | 7 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
 | 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
 | 9 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
@@ -34,13 +35,13 @@ Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, 
 
 **Known blockers / watch items**
 
-- Stage 3 is the current front line, and it is **yours, not Flux's**: the Bitwarden item is
-  renamed in terraform but only a `tofu apply` creates it, and stage 4 fails without it.
-- Stage 5 may fail on the DVB kernel driver. See *When it doesn't work*.
-
-> The device-plugin image pin and the `squat.ai` → `devic.es` domain move landed separately on
-> `main` (`a31b435`), along with the matching `vpn/gateway` update, so they are no longer stages
-> here. See *The device-plugin domain trap* for why the resource is named what it is.
+- Stage 4 is the current front line. With the Bitwarden item applied, the ExternalSecret should
+  sync and `init-passwd` should run. **Check the username in its log line is not empty** — an
+  empty one would mean a `${VAR}` was eaten by Flux substitution somewhere, which is what
+  `8eb64f8` fixed for the two known cases.
+- Stage 5 is gated on stage 4: `cluster-apps-rtl-433` `dependsOn` mosquitto, whose Kustomization
+  has `wait: true`, so rtl-433 is not applied at all until the broker is healthy.
+- Stage 5 may then fail on the DVB kernel driver. See *When it doesn't work*.
 
 ---
 
