@@ -1,0 +1,38 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: home-automation
+  labels:
+    app.kubernetes.io/name: mosquitto
+data:
+  # Mounted over the image's default config path, /mosquitto/config/mosquitto.conf.
+  mosquitto.conf: |
+    listener 1883
+    protocol mqtt
+
+    # Explicit rather than relying on the compiled-in default. The image sets no
+    # USER, so the broker starts as root and drops to this account itself; its
+    # entrypoint only chowns /mosquitto/data, which is why init-passwd chowns the
+    # password file to the same user rather than expecting the image to do it.
+    user mosquitto
+
+    # Anonymous access off. The password file is built at pod start by the
+    # init-passwd initContainer -- mosquitto 2.x refuses plaintext entries, so it
+    # cannot simply be a mounted Secret.
+    allow_anonymous false
+    password_file /mosquitto/auth/passwd
+
+    # No persistence. Retained messages live only as long as the pod: rtl-433
+    # republishes device state on the next transmission, and Home Assistant
+    # entities carry expire_after anyway. Avoids a PVC that would pin this pod
+    # to a node for data that regenerates itself within the hour.
+    persistence false
+
+    log_dest stdout
+    log_type error
+    log_type warning
+    log_type notice
+    connection_messages true

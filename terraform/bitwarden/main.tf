@@ -184,41 +184,35 @@ resource "bitwarden_item_login" "grafana" {
 
 }
 ################################################################################
-# emqx credentials
+# mqtt credentials
 ################################################################################
-resource "random_password" "emqx_admin_password" {
+# The single MQTT account on the mosquitto broker in home-automation, used by
+# both rtl-433 (publisher) and Home Assistant (subscriber).
+#
+# Replaces the former "emqx credentials" item, which carried a dashboard admin
+# login plus a `user_password` custom field. Mosquitto has no web UI, so there
+# is no admin account to hold -- one plain login item is the whole credential.
+#
+# The character set excludes ":" on purpose: this password is written as
+# "user:password" into mosquitto's password file before being hashed, and a
+# colon in the value would split the field.
+resource "random_password" "mqtt_password" {
   length           = 32
   special          = true
   override_special = "_=+-,~"
 }
 
-resource "random_password" "emqx_user_password" {
-  length           = 16
-  special          = true
-  override_special = "_=+-,~"
-}
-
-resource "bitwarden_item_login" "emqx" {
+resource "bitwarden_item_login" "mqtt" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
 
-  name     = "emqx credentials"
-  username = "admin"
-  password = random_password.emqx_admin_password.result
+  name     = "mqtt credentials"
+  username = "iot"
+  password = random_password.mqtt_password.result
 
   field {
     name = "terraform"
     text = "true"
-  }
-
-  uri {
-    value = "https://emqx.${local.domain}"
-    match = "host"
-  }
-
-  field {
-    name   = "user_password"
-    hidden = random_password.emqx_user_password.result
   }
 
 }

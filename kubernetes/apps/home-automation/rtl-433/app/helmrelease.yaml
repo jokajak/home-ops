@@ -1,0 +1,153 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app rtl-433
+  namespace: home-automation
+spec:
+  interval: 30m
+
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+
+  maxHistory: 2
+
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  uninstall:
+    keepHistory: false
+
+  values:
+    controllers:
+      rtl-433:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        # Exactly one process may hold the SDR. Recreate, never a second pod
+        # alongside the first -- a rolling update would leave the new pod
+        # crash-looping on a busy USB device until the old one went away.
+        strategy: Recreate
+
+        containers:
+          rtl-433:
+            image:
+              repository: docker.io/hertzg/rtl_433
+              tag: 25.12-alpine
+
+            # The image's ENTRYPOINT is rtl_433 itself, so these are its flags.
+            args:
+              # Interlogix/GE/UTC (and Alula/ELK) security sensors transmit here.
+              # Changing bands is a one-line edit -- 345M for Honeywell/2GIG,
+              # 433.92M for DSC. Do not add a second -f: rtl_433 then hops
+              # between frequencies and misses everything transmitted on the
+              # band it is not currently parked on, which for door contacts
+              # means silently dropping events.
+              - -f
+              - 319.5M
+              # Every decoder stays enabled. Tuned to one band the extra CPU is
+              # negligible, and the alternative (-R <n>) pins a protocol *number*
+              # that shifts between rtl_433 releases. Spurious decodes from other
+              # protocols are harmless here: the Home Assistant entities subscribe
+              # to exact per-device topics, so anything else is simply ignored.
+              #
+              # RSSI/SNR on every event, for aiming the dipole.
+              - -M
+              - level
+              - -M
+              - time:iso:local
+              # Decoded events to stdout as JSON as well, so `kubectl logs` is the
+              # tool for discovering a new sensor's id (see the app README).
+              - -F
+              - json
+              # Read-only HTTP API + live event UI on :8433. Not ingressed on
+              # purpose: it is unauthenticated. Reach it with
+              #   kubectl -n home-automation port-forward svc/rtl-433 8433:8433
+              - -F
+              - http
+              # Credentials come from MQTT_USERNAME/MQTT_PASSWORD in the
+              # environment, which rtl_433 reads natively -- keeping them out of
+              # the process's argv (and out of this file).
+              #
+              # Naming `devices` and `events` explicitly suppresses the `states`
+              # topic, which would otherwise duplicate every payload. The
+              # availability topic is a retained MQTT LWT: "online" while this pod
+              # holds the broker connection, "offline" the moment it drops, which
+              # is what backs `availability_topic` on the HA entities.
+              - -F
+              - >-
+                mqtt://mosquitto.home-automation.svc.cluster.local:1883,base=rtl_433,retain=1,devices=rtl_433/devices[/model][/subtype][/id],events=rtl_433/events
+
+            env:
+              TZ: ${TIMEZONE:=America/New_York}
+
+            envFrom:
+              - secretRef:
+                  name: rtl-433-secret
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  tcpSocket:
+                    port: &httpPort 8433
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: false
+
+            securityContext:
+              # Root, but nothing more. The USB character node the device plugin
+              # injects is root-owned, and libusb needs write access to it to
+              # claim the dongle; no capability grants that, so dropping to a
+              # non-root uid here just fails to open the SDR.
+              runAsUser: 0
+              runAsGroup: 0
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 100m
+                memory: 64Mi
+              limits:
+                memory: 256Mi
+                # This is the whole scheduling story. generic-device-plugin only
+                # advertises devic.es/rtl-sdr on the node that physically has the
+                # dongle, so requesting it both pins the pod to that node and
+                # gets /dev/bus/usb/<bus>/<dev> injected -- no node label, no
+                # nodeSelector, and no hostPath to go stale when the kernel
+                # renumbers the bus on replug.
+                devic.es/rtl-sdr: 1
+
+    service:
+      rtl-433:
+        controller: rtl-433
+        ports:
+          http:
+            port: *httpPort
+
+    persistence:
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp
