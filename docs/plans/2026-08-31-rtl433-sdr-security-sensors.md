@@ -30,7 +30,7 @@ Four moving parts, three of them new:
 RTL-SDR v3 (USB 0bda:2838, one node)
      │
      │  generic-device-plugin (existing DaemonSet, kube-system)
-     │  advertises squat.ai/rtl-sdr — only on the node holding the dongle
+     │  advertises devic.es/rtl-sdr — only on the node holding the dongle
      ▼
 rtl-433            (new, home-automation)   decodes 319.5 MHz → JSON
      │  MQTT, user `iot`
@@ -65,22 +65,24 @@ That pattern does not port to an SDR. A Z-Wave stick is a serial device with a s
 `/dev/bus/usb/<bus>/<dev>`, and the kernel renumbers that on every replug and reboot.
 
 `generic-device-plugin` is already deployed and already does this. Adding a `usb` device
-group makes it advertise `squat.ai/rtl-sdr` **on the node that physically has the dongle,
+group makes it advertise `devic.es/rtl-sdr` **on the node that physically has the dongle,
 and nowhere else**, so a single line in the pod's `resources.limits` both pins scheduling to
 that node and injects the current device node. No `NodeFeatureRule`, no `nodeSelector`, no
 `privileged`, and nothing to update when the bus renumbers.
 
-### `--domain squat.ai` is now pinned on the device plugin
+### The device-plugin domain move (found here, fixed on `main`)
 
-Pre-existing latent breakage found on the way past, fixed while in there. The DaemonSet runs
+Pre-existing latent breakage found on the way past. The DaemonSet ran
 `squat/generic-device-plugin` **untagged** (`:latest`), and upstream changed the default
-resource domain from `squat.ai` to `devic.es`. `vpn/gateway` requests `squat.ai/tun`, so it
-works today only because the nodes have an old image cached — the next pull would make the
-VPN gateway unschedulable, for reasons that would look nothing like an image update.
+resource domain from `squat.ai` to `devic.es`. `vpn/gateway` requested `squat.ai/tun`, so it
+worked only because the nodes had an old image cached — the next pull would have made the VPN
+gateway unschedulable, for reasons that would have looked nothing like an image update.
 
-Passing `--domain squat.ai` explicitly makes the resource names deterministic regardless of
-which image a node has. It preserves current behaviour exactly; it does not fix the untagged
-image, which is worth pinning separately.
+This branch originally pinned `--domain squat.ai` to freeze the working behaviour. That was
+superseded: `a31b435` on `main` pins the image to `0.2.0`, sets `--domain devic.es`
+explicitly, and moves `vpn/gateway` to `devic.es/tun` — the better fix, since it pins the
+image as well and follows upstream rather than the legacy name. This branch rebased onto it,
+so the SDR resource is `devic.es/rtl-sdr`.
 
 ### Broker: Mosquitto
 
@@ -159,7 +161,7 @@ unavailable things to clean out of the entity registry later.
 
 | File | Change |
 | --- | --- |
-| `kubernetes/apps/system/generic-device-plugin/app/daemonset.yaml` | `rtl-sdr` USB device group; `--domain squat.ai` pinned |
+| `kubernetes/apps/system/generic-device-plugin/app/daemonset.yaml` | `rtl-sdr` USB device group |
 | `kubernetes/apps/home-automation/mosquitto/**` | new — HelmRelease (+ init-passwd), ConfigMap, ExternalSecret, ks |
 | `kubernetes/apps/home-automation/rtl-433/**` | new — HelmRelease, ExternalSecret, ks |
 | `terraform/bitwarden/main.tf` | "emqx credentials" → "mqtt credentials", simplified to a plain login |
@@ -202,7 +204,7 @@ Nothing in Bitwarden or terraform. Four things, in order:
 ## Verification
 
 - `kubectl -n home-automation get pods` — `rtl-433` should land on the node with the dongle.
-  If it is `Pending` with *Insufficient squat.ai/rtl-sdr*, the device plugin is not seeing
+  If it is `Pending` with *Insufficient devic.es/rtl-sdr*, the device plugin is not seeing
   the dongle: check `kubectl get node <node> -o jsonpath='{.status.allocatable}'`.
 - rtl-433's logs should open with `Publishing MQTT data to mosquitto…` and
   `Publishing device info to MQTT topic "rtl_433/devices…"`.
@@ -232,11 +234,10 @@ Nothing in Bitwarden or terraform. Four things, in order:
   secret, so the missing one falls back. Moot here now that the broker has no ingress at all,
   rather than copy the pattern. Worth cleaning up across the repo separately; nothing is broken
   today, it is just load-bearing coincidence.
-- **`squat/generic-device-plugin` is still untagged.** `--domain` is pinned now, so a surprise
-  pull no longer renames resources, but the image itself should be pinned to a digest.
-- **rtl-433 is a single point of failure by construction.** One dongle, one node, `Recreate`
-  strategy — if that node is down, the sensors are not heard. Inherent to the hardware; worth
-  knowing before these entities back any automation that matters.
+- **rtl-433 is a single point of failure by construction, and that is fine.** One dongle, one
+  node, `Recreate` strategy — if that node is down, the sensors are not heard. Per the home-lab
+  posture in `CLAUDE.md` that is an accepted trade, not something to engineer around. The real
+  caveat is expectation: **this is a sensor feed, not an alarm system.**
 
 ## Possible follow-ups
 
@@ -248,7 +249,6 @@ Nothing in Bitwarden or terraform. Four things, in order:
   to the broker, that is a real change and should land as a set: an L2 `LoadBalancer` Service on
   that address, per-client accounts, a Mosquitto ACL file, and TLS on the listener — not a
   ClusterIP quietly promoted. If it was speculative, drop the variable.
-- Pin the `generic-device-plugin` image.
 - Split `iot` into per-client accounts plus a Mosquitto ACL file, once terraform grows the
   fields for it.
 - If non-security 433.92 MHz devices ever show up (weather stations, TPMS), they want a

@@ -19,26 +19,28 @@ Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, 
 | # | Stage | Where it lives | State | Confirmed by |
 |---|-------|----------------|-------|--------------|
 | 1 | PR merged to `main` | — | 🟡 | PR is green and merged |
-| 2 | `generic-device-plugin` advertises `squat.ai/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
-| 3 | `vpn/gateway` still schedules after the `--domain` pin | `kubernetes/apps/vpn/gateway` | 🟡 | gateway pod stays `Running` (regression check, see below) |
-| 4 | `tofu apply` the renamed **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ⬜ | item exists in Bitwarden with username `iot` |
-| 5 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ⬜ | pod `Running`; `init-passwd` logged `password file built for user iot` |
-| 6 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ⬜ | pod `Running`, not `Pending`, on the expected node |
-| 7 | rtl-433 connected to the broker | same | ⬜ | log line `Publishing MQTT data to mosquitto…` |
-| 8 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
-| 9 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
-| 10 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
-| 11 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.yaml` | 🟡 | entity state changes when a sensor is tripped |
-| 12 | Sensor ids collected | — | ⬜ | one id noted per physical sensor |
-| 13 | Real `binary_sensor` entities uncommented + deployed | `configmap-rtl433.yaml` | ⬜ | door entity flips `on`/`off` on open/close |
-| 14 | Battery + tamper entities behaving | same | ⬜ | both report, grouped under one HA device |
+| 2 | `generic-device-plugin` advertises `devic.es/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
+| 3 | `tofu apply` the renamed **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ⬜ | item exists in Bitwarden with username `iot` |
+| 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ⬜ | pod `Running`; `init-passwd` logged `password file built for user iot` |
+| 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ⬜ | pod `Running`, not `Pending`, on the expected node |
+| 6 | rtl-433 connected to the broker | same | ⬜ | log line `Publishing MQTT data to mosquitto…` |
+| 7 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
+| 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
+| 9 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
+| 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.yaml` | 🟡 | entity state changes when a sensor is tripped |
+| 11 | Sensor ids collected | — | ⬜ | one id noted per physical sensor |
+| 12 | Real `binary_sensor` entities uncommented + deployed | `configmap-rtl433.yaml` | ⬜ | door entity flips `on`/`off` on open/close |
+| 13 | Battery + tamper entities behaving | same | ⬜ | both report, grouped under one HA device |
 
 **Known blockers / watch items**
 
-- Stage 4 is the current front line, and it is **yours, not Flux's**: the Bitwarden item is
-  renamed in terraform but only a `tofu apply` creates it, and stage 5 fails without it.
-- Stage 3 is a regression check, not new work. See *The device-plugin domain trap* below.
-- Stage 6 may fail on the DVB kernel driver. See *When it doesn't work*.
+- Stage 3 is the current front line, and it is **yours, not Flux's**: the Bitwarden item is
+  renamed in terraform but only a `tofu apply` creates it, and stage 4 fails without it.
+- Stage 5 may fail on the DVB kernel driver. See *When it doesn't work*.
+
+> The device-plugin image pin and the `squat.ai` → `devic.es` domain move landed separately on
+> `main` (`a31b435`), along with the matching `vpn/gateway` update, so they are no longer stages
+> here. See *The device-plugin domain trap* for why the resource is named what it is.
 
 ---
 
@@ -115,7 +117,7 @@ The receiver stays locked to 319.5 MHz.
   │  RTL-SDR V3     │  USB 0bda:2838, on exactly one node
   └────────┬────────┘
            │  generic-device-plugin (DaemonSet, kube-system)
-           │  advertises squat.ai/rtl-sdr on that node only
+           │  advertises devic.es/rtl-sdr on that node only
            ▼
   ┌─────────────────┐
   │  rtl-433 pod    │  -f 319.5M, decodes RF → JSON
@@ -166,13 +168,13 @@ vendor and product ID, which is exactly the missing piece:
 ```
 
 The plugin walks `/sys/bus/usb/devices`, finds the dongle, and advertises the extended resource
-`squat.ai/rtl-sdr` — **only from the node that physically has it**. Which means the entire
+`devic.es/rtl-sdr` — **only from the node that physically has it**. Which means the entire
 scheduling and device-access story collapses into one line in the pod spec:
 
 ```yaml
 resources:
   limits:
-    squat.ai/rtl-sdr: 1
+    devic.es/rtl-sdr: 1
 ```
 
 Requesting the resource pins the pod to the right node *and* makes the kubelet inject the
@@ -187,19 +189,20 @@ Root, and nothing more.
 
 #### The device-plugin domain trap
 
-Worth knowing about, because it was one image pull from biting. `generic-device-plugin`
-constructs its resource names as `<domain>/<name>`, and upstream **changed the default domain
-from `squat.ai` to `devic.es`**. The DaemonSet here runs the image untagged (`:latest`), and
-`vpn/gateway` requests `squat.ai/tun`.
+Worth knowing, because it explains why the resource is called what it is — and because it was
+one image pull from biting.
 
-That combination works today only because the nodes have an older image cached. The next time
-that image is pulled, the plugin would start advertising `devic.es/tun`, the VPN gateway's
-request would match nothing, and it would go `Pending` — with a failure that looks nothing like
-"an image changed underneath us".
+`generic-device-plugin` constructs resource names as `<domain>/<name>`, and upstream **changed
+the default domain from `squat.ai` to `devic.es`**. The DaemonSet used to run the image
+untagged (`:latest`) while `vpn/gateway` requested `squat.ai/tun` — a combination that worked
+only because the nodes happened to have an older image cached. The next pull would have started
+advertising `devic.es/tun`, the gateway's request would have matched nothing, and it would have
+gone `Pending` with a failure looking nothing like "an image changed underneath us".
 
-So the DaemonSet now passes `--domain squat.ai` explicitly. It preserves current behaviour
-exactly and makes it deterministic. (Pinning the image itself is still worth doing, separately.)
-**Stage 3 in the status table is the check that the VPN gateway survived this.**
+Surfaced while adding the SDR device, and **fixed separately on `main`**
+(`a31b435`): the image is now pinned to `0.2.0`, `--domain devic.es` is explicit, and
+`vpn/gateway` asks for `devic.es/tun`. This branch follows that, which is why the SDR resource
+is `devic.es/rtl-sdr` rather than the `squat.ai/rtl-sdr` earlier revisions of this doc named.
 
 ### 2. Decoding
 
@@ -393,7 +396,7 @@ purge from the entity registry later.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `rtl-433` pod `Pending`, *Insufficient squat.ai/rtl-sdr* | plugin doesn't see the dongle | check `kubectl get node <node> -o jsonpath='{.status.allocatable}'`; confirm the USB id with `lsusb` — clones may be `0bda:2832` (already matched) or something else entirely |
+| `rtl-433` pod `Pending`, *Insufficient devic.es/rtl-sdr* | plugin doesn't see the dongle | check `kubectl get node <node> -o jsonpath='{.status.allocatable}'`; confirm the USB id with `lsusb` — clones may be `0bda:2832` (already matched) or something else entirely |
 | `usb_claim_interface error -6` | the DVB kernel driver grabbed the dongle first | blacklist it via a kernel arg in `talos/all/00-install.yaml`: `machine.install.extraKernelArgs: [modprobe.blacklist=dvb_usb_rtl28xxu]`. Costs a node reboot, so not applied pre-emptively — Talos's trimmed kernel may not ship the module at all |
 | Pod runs, zero decodes | wrong band, or antenna | confirm the sensors really are Interlogix; check the antenna is **vertical**, not a V, and ~22 cm per element |
 | Decodes appear but no HA entities | MQTT integration not added | stage 10 — it is a UI step, see below |
@@ -425,6 +428,9 @@ Two other things are honest limitations rather than gaps:
 - **MQTT is plaintext on the pod network**, and the broker has no authorization rules — any
   authenticated client can publish anywhere. Fine for a cluster-internal broker with two
   clients; revisit alongside per-client accounts if anything off-cluster ever connects.
-- **rtl-433 is a single point of failure by construction.** One dongle, one node, `Recreate`
-  strategy. If that node is down, the house is not being heard. That is inherent to having one
-  radio, and worth knowing before these entities back an automation that matters.
+- **rtl-433 is a single point of failure by construction, and that is fine.** One dongle, one
+  node, `Recreate` strategy — if that node is down, the house is not being heard. Per the
+  home-lab posture in `CLAUDE.md`, that is an accepted trade rather than something to engineer
+  around: a second radio on a second node would double the hardware to remove an outage nobody
+  is paged for. The real caveat is not availability but expectation — **this is a sensor feed,
+  not an alarm system**, so don't let it back anything life-safety.

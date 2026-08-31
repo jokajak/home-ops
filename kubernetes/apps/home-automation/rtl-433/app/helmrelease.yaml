@@ -132,12 +132,12 @@ spec:
               limits:
                 memory: 256Mi
                 # This is the whole scheduling story. generic-device-plugin only
-                # advertises squat.ai/rtl-sdr on the node that physically has the
+                # advertises devic.es/rtl-sdr on the node that physically has the
                 # dongle, so requesting it both pins the pod to that node and
                 # gets /dev/bus/usb/<bus>/<dev> injected -- no node label, no
                 # nodeSelector, and no hostPath to go stale when the kernel
                 # renumbers the bus on replug.
-                squat.ai/rtl-sdr: 1
+                devic.es/rtl-sdr: 1
 
     service:
       rtl-433:

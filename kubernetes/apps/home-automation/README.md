@@ -14,7 +14,7 @@ live in [`default`](../default/README.md) for now — see the
 
 ```
 RTL-SDR v3 (USB, on one node)
-  └─ generic-device-plugin advertises squat.ai/rtl-sdr on that node only
+  └─ generic-device-plugin advertises devic.es/rtl-sdr on that node only
        └─ rtl-433 pod  ── MQTT ──▶  mosquitto  ── MQTT ──▶  Home Assistant (default ns)
                                                         entities from
                                                         packages/rtl433.yaml
