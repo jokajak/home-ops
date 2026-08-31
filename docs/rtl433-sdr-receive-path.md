@@ -28,10 +28,10 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 | 7 | Sensors actually decoding | — | ✅ | `Interlogix-Security` decode in rtl-433's stdout 2026-08-31 |
 | 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
 | 9 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
-| 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.yaml` | 🟡 | entity state changes when a sensor is tripped |
-| 11 | Sensor ids collected | — | ⬜ | one id noted per physical sensor — **current front line**, walk the house tailing `logs deploy/rtl-433 -f` |
-| 12 | Real `binary_sensor` entities uncommented + deployed | `configmap-rtl433.yaml` | ⬜ | door entity flips `on`/`off` on open/close |
-| 13 | Battery + tamper entities behaving | same | ⬜ | both report, grouped under one HA device |
+| 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.sops.yaml` | 🟡 | entity state changes when a sensor is tripped |
+| 11 | Sensor ids collected | — | ✅ | first real sensor identified and populated 2026-08-31 |
+| 12 | Real `binary_sensor` entities deployed | `configmap-rtl433.sops.yaml` | 🟡 | in git (encrypted); door entity flips `on`/`off` on open/close |
+| 13 | Battery + tamper entities behaving | same | 🟡 | both report, grouped under one HA device |
 
 **Known blockers / watch items**
 
@@ -400,19 +400,42 @@ more useful state than a lie.
 
 ## Adding a sensor
 
-1. Trip it, and read the id from any of:
+The entity definitions live in **`kubernetes/apps/default/home-assistant/app/configmap-rtl433.sops.yaml`**,
+a SOPS-encrypted ConfigMap. That is deliberate: the file maps each sensor id to a physical
+location, which is a list of the house's entry points keyed by the RF identifier that reports
+them. Structure aside, it is exactly the kind of thing that should not sit in a git repo in
+the clear. `.sops.yaml` already covers `kubernetes/.*\.sops\.ya?ml` with
+`encrypted_regex: ^(data|stringData)$`, and every Flux Kustomization has
+`decryption: provider: sops`, so the whole `data` blob is ciphertext in git and decrypted only
+at apply time.
+
+1. Trip the sensor and read its id from any of:
    - `kubectl -n home-automation logs deploy/rtl-433 -f` — one JSON line per decode
    - the `sensor.rtl_433_last_event` entity's attributes in Developer Tools → States
    - `kubectl -n home-automation port-forward svc/rtl-433 8433:8433` for the live UI
-2. Uncomment the example block in
-   `kubernetes/apps/default/home-assistant/app/configmap-rtl433.yaml`, duplicate it, and
-   substitute the real id and a name.
+2. Decrypt, add the entity block, re-encrypt:
+   ```sh
+   sops kubernetes/apps/default/home-assistant/app/configmap-rtl433.sops.yaml   # edits in place
+   # or, if edited some other way:
+   task sops:encrypt
+   ```
+   Keep `metadata.name: home-assistant-rtl433` and the `rtl433.yaml` data key — the HelmRelease
+   mounts them by name with `subPath`.
 3. Pick the `device_class` (`door`, `window`, `motion`, `smoke`, `gas`).
 4. Commit. Flux reconciles, the ConfigMap changes, and Reloader restarts Home Assistant.
 
-The shipped example is **commented out** on purpose: sensor ids are not knowable until the
-receiver has heard the sensors, and live placeholder entities would just be dead things to
-purge from the entity registry later.
+**Never commit this file unencrypted.** `task sops:encrypt` only touches `*.sops.*` files that
+lack an `ENC[AES256_GCM` marker, so it is safe to run repeatedly, and
+`grep -c ENC\[AES256_GCM` on the file is the quick check before pushing.
+
+If entities do not appear after a reconcile, confirm decryption actually happened —
+a failure here is quiet, and Home Assistant will simply be parsing ciphertext:
+
+```sh
+kubectl -n default get cm home-assistant-rtl433 -o jsonpath='{.data.rtl433\.yaml}' | head
+```
+
+That should print YAML. If it prints `ENC[AES256_GCM...`, the Kustomization did not decrypt it.
 
 ## When it doesn't work
 
