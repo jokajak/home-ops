@@ -10,9 +10,9 @@
 
 ## Status at a glance
 
-**Last updated: 2026-08-31** · Merged to `main`, and the Bitwarden item is applied. Everything
-from stage 4 on needs eyes on the cluster to confirm — 🟡 means the manifest is on `main`, not
-that it is running. Tick rows off as they are actually observed.
+**Last updated: 2026-08-31** · **Working end to end** — a sensor reaches Home Assistant as a
+live entity. What remains is polish: antenna placement, and the battery/tamper entities.
+🟡 means the manifest is on `main` but the behaviour is unconfirmed, not that it is broken.
 
 Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 deployed, not verified ·
 ✅ confirmed
@@ -24,13 +24,13 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 | 3 | `tofu apply` the **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ✅ | applied by owner 2026-08-31 |
 | 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ✅ | `init-passwd` logged `password file built for user iot`; broker up and logging 2026-08-31 |
 | 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ✅ | pod `Running` and decoding 2026-08-31 — so the device plugin handed over the SDR |
-| 6 | rtl-433 connected to the broker | same | 🟡 | startup log `Publishing MQTT data to mosquitto…`, and a mosquitto line ending `u'iot'` |
+| 6 | rtl-433 connected to the broker | same | ✅ | proven transitively — an HA entity cannot update unless messages traverse the broker |
 | 7 | Sensors actually decoding | — | ✅ | `Interlogix-Security` decode in rtl-433's stdout 2026-08-31 |
 | 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
-| 9 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
+| 9 | HA MQTT integration added (manual, UI) | Home Assistant | ✅ | added 2026-08-31; until it existed, HA warned it had found manually configured MQTT items with nowhere to attach them |
 | 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.sops.yaml` | 🟡 | entity state changes when a sensor is tripped |
 | 11 | Sensor ids collected | — | ✅ | first real sensor identified and populated 2026-08-31 |
-| 12 | Real `binary_sensor` entities deployed | `configmap-rtl433.sops.yaml` | 🟡 | in git (encrypted); door entity flips `on`/`off` on open/close |
+| 12 | Real `binary_sensor` entities deployed | `configmap-rtl433.sops.yaml` | ✅ | first sensor confirmed working in HA 2026-08-31 |
 | 13 | Battery + tamper entities behaving | same | 🟡 | both report, grouped under one HA device |
 
 **Known blockers / watch items**
@@ -422,6 +422,31 @@ at apply time.
    Keep `metadata.name: home-assistant-rtl433` and the `rtl433.yaml` data key — the HelmRelease
    mounts them by name with `subPath`.
 3. Pick the `device_class` (`door`, `window`, `motion`, `smoke`, `gas`).
+
+   Use a YAML merge key to avoid restating the constants on every entity. The anchor has to be
+   defined **inline on its first use** — a stray top-level key like `defaults:` would break the
+   package, since Home Assistant maps top-level keys to integrations:
+
+   ```yaml
+   - name: "Front door"
+     unique_id: ilx_1a2b3c_contact
+     state_topic: "rtl_433/devices/Interlogix-Security/contact/1a2b3c/switch1"
+     device_class: door
+     <<: &trip                      # defined once, here
+       payload_on: "OPEN"
+       payload_off: "CLOSED"
+       expire_after: 10800
+       availability: [{topic: "rtl_433/availability"}]
+   - name: "Kitchen window"
+     unique_id: ilx_9f8e7d_contact
+     state_topic: "rtl_433/devices/Interlogix-Security/contact/9f8e7d/switch1"
+     device_class: window
+     <<: *trip                      # and reused from here on
+   ```
+
+   Battery entities need their own anchor: `device_class: battery` is inverted, so
+   `payload_on: "0"` / `payload_off: "1"`. The id still has to appear in each `state_topic` —
+   plain YAML cannot interpolate it — so this gets each entity to four lines, not to id-only.
 4. Commit. Flux reconciles, the ConfigMap changes, and Reloader restarts Home Assistant.
 
 **Never commit this file unencrypted.** `task sops:encrypt` only touches `*.sops.*` files that
