@@ -5,7 +5,7 @@ resources:
   - ./helm-release.yaml
   - ./pvc.yaml
   - ./configmap.yaml
-  - ./configmap-rtl433.yaml
+  - ./configmap-rtl433.sops.yaml
   - ./externalsecret.yaml
   - ./database
   - ../../../../templates/gatus/guarded
