@@ -10,9 +10,10 @@
 
 ## Status at a glance
 
-**Last updated: 2026-08-31** · **Working end to end** — a sensor reaches Home Assistant as a
-live entity. What remains is polish: antenna placement, and the battery/tamper entities.
-🟡 means the manifest is on `main` but the behaviour is unconfirmed, not that it is broken.
+**Last updated: 2026-08-31** · **Done** — a sensor reaches Home Assistant as a live entity, on
+a correctly oriented antenna. The only rows left are optional: battery/tamper entities, which
+are a per-sensor choice rather than a step. 🟡 means the manifest is on `main` but the
+behaviour is unconfirmed, not that it is broken.
 
 Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 deployed, not verified ·
 ✅ confirmed
@@ -26,7 +27,7 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 | 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ✅ | pod `Running` and decoding 2026-08-31 — so the device plugin handed over the SDR |
 | 6 | rtl-433 connected to the broker | same | ✅ | proven transitively — an HA entity cannot update unless messages traverse the broker |
 | 7 | Sensors actually decoding | — | ✅ | `Interlogix-Security` decode in rtl-433's stdout 2026-08-31 |
-| 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
+| 8 | Antenna re-oriented + cut for 319.5 MHz | physical | ✅ | done 2026-08-31 — vertical and collinear, quarter-wave elements |
 | 9 | HA MQTT integration added (manual, UI) | Home Assistant | ✅ | added 2026-08-31; until it existed, HA warned it had found manually configured MQTT items with nowhere to attach them |
 | 10 | `sensor.rtl_433_last_event` populating | `configmap-rtl433.sops.yaml` | 🟡 | entity state changes when a sensor is tripped |
 | 11 | Sensor ids collected | — | ✅ | first real sensor identified and populated 2026-08-31 |
