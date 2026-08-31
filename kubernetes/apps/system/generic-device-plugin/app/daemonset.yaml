@@ -23,8 +23,13 @@ spec:
         - operator: "Exists"
           effect: "NoSchedule"
       containers:
-        - image: squat/generic-device-plugin
+        - image: docker.io/squat/generic-device-plugin:0.2.0
           args:
+            # Devices are advertised as <domain>/<name>. Upstream's
+            # default moved from squat.ai to devic.es; pin it here
+            # rather than tracking whatever the default happens to be.
+            - --domain
+            - devic.es
             - --device
             - |
               name: tun
