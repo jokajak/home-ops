@@ -77,7 +77,11 @@ spec:
               # of as further folder levels — a correspondent folder under
               # month would usually hold just one file anyway. Changing this
               # later retroactively renames every existing file to match.
-              PAPERLESS_FILENAME_FORMAT: "{{ document_type }}/{{ created_year }}/{{ created_month }}/{{ doc_pk }}-{{ correspondent }}-{{ title }}"
+              # app-template runs Helm's `tpl` over env values, so the Paperless
+              # placeholders have to be wrapped in a Go raw string to survive
+              # rendering — bare {{ ... }} makes the chart fail to template.
+              PAPERLESS_FILENAME_FORMAT: >-
+                {{ `{{ document_type }}/{{ created_year }}/{{ created_month }}/{{ doc_pk }}-{{ correspondent }}-{{ title }}` }}
               # Office documents and e-mail are parsed by the sidecar services
               PAPERLESS_TIKA_ENABLED: "1"
               PAPERLESS_TIKA_ENDPOINT: http://paperless-tika.productivity.svc.cluster.local:9998
