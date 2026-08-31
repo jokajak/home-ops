@@ -51,6 +51,36 @@ be paired, and no cloud service needs to be involved. It is a pure receive probl
 An RTL-SDR Blog V3 is plugged into one of the cluster nodes. The task is to turn what that
 dongle hears into Home Assistant entities, declaratively, from this repo.
 
+## Prior art
+
+This design owes a lot to
+[*Integrating old GE Interlogix burglar alarm sensors into HomeAssistant with SDR*](https://pdx.su/blog/2024-10-20-integrating-old-ge-interlogix-burglar-alarm-sensors-into-homeassistant-with-sdr/)
+(pdx.su, 2024) — same sensors, same band, same decoder, arrived at independently. Worth reading; it is
+the shortest path from "I have these sensors" to "I have entities".
+
+It corroborates three conclusions reached separately here, which is reassuring given none of
+this could be tested against real hardware while it was written:
+
+- **319.5 MHz, and a quarter-wave element ≈ 9.2 in** — 23.4 cm, against the 23.5 cm derived
+  below from λ/4.
+- **The Interlogix decoder is protocol 100**, matching the position of `DECL(interlogix)` in
+  rtl_433's `rtl_433_devices.h`.
+- **Entities are written by hand**, with per-sensor ids discovered by watching MQTT — the same
+  place the autodiscovery bridge was abandoned here, for the same reason.
+
+Where this deployment deliberately diverges:
+
+| | The post | Here |
+|---|---|---|
+| Runtime | `rtl_433` as a CLI process on a host | a pod under Flux, with the SDR attached by a device plugin |
+| Decoder selection | `-R 100` to enable only Interlogix | all decoders left on — `-R` pins a *positional* number that shifts as decoders are added upstream, and stray decodes are harmless when entities subscribe to exact topics |
+| Entity type | `cover` | `binary_sensor` with `device_class: door`, plus separate tamper and battery entities |
+
+One correction worth flagging, since it would otherwise send you shopping: the post says cheaper
+RTL-SDRs cannot receive this band and recommends a Nooelec NESDR. That is not true of the
+RTL-SDR Blog V3 already plugged in here — its R820T2 tuner covers 24–1766 MHz, so 319.5 MHz is
+comfortably in range with no direct-sampling mode and no different hardware.
+
 ## A little RF, because the numbers matter
 
 These sensors are **Interlogix / GE / UTC** (also sold as NX, Qolsys IQ, ELK-319DWM, Alula
