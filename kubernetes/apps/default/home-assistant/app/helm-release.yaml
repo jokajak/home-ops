@@ -132,6 +132,16 @@ spec:
           - path: /config/packages/recorder.yaml
             subPath: recorder.yaml
             readOnly: true
+      # MQTT entities for the 319.5 MHz Interlogix security sensors received by
+      # rtl-433 in the home-automation namespace. Entities only -- the broker
+      # connection itself is a UI-created config entry, see the ConfigMap.
+      rtl433-config:
+        type: configMap
+        name: home-assistant-rtl433
+        globalMounts:
+          - path: /config/packages/rtl433.yaml
+            subPath: rtl433.yaml
+            readOnly: true
       # Ephemeral by design -- a fresh venv every pod start is the whole point.
       venv:
         type: emptyDir

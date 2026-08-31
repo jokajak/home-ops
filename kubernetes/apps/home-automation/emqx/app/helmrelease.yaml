@@ -1,0 +1,193 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app emqx
+  namespace: home-automation
+spec:
+  interval: 30m
+
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+
+  maxHistory: 2
+
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+
+  uninstall:
+    keepHistory: false
+
+  values:
+    controllers:
+      emqx:
+        annotations:
+          reloader.stakater.com/auto: "true"
+
+        # Single node. The MQTT listener is a hard dependency for rtl-433 and Home
+        # Assistant, and two EMQX pods sharing an emptyDir-backed node name would
+        # not form a cluster anyway -- so never run two at once.
+        strategy: Recreate
+
+        containers:
+          emqx:
+            image:
+              repository: docker.io/emqx/emqx
+              # Deliberately on the 5.x line rather than 6.x. Every behaviour this
+              # deployment leans on (env-var array override of `authentication`,
+              # the built-in-database bootstrap file) is long-settled here, and
+              # there is no cluster in this environment to test a major bump
+              # against. Moving to 6.x is a one-line change once it can be
+              # verified against the live broker.
+              tag: 5.10.4
+
+            env:
+              TZ: ${TIMEZONE:=America/New_York}
+
+              # Fixed node name. The default is `emqx@<pod IP>`, which changes on
+              # every reschedule; with a throwaway data dir there is no cluster
+              # state to keep, so pinning it to loopback keeps the Erlang
+              # distribution off the pod network entirely.
+              EMQX_NODE__NAME: emqx@127.0.0.1
+
+              # Password-based auth against the built-in (mnesia) database, seeded
+              # from a CSV that External Secrets renders out of Bitwarden.
+              #
+              # EMQX only reads the bootstrap file when the authenticator is
+              # *created*, i.e. once per data dir. That is exactly why the data dir
+              # below is an emptyDir: the authenticator is recreated on every pod
+              # start, so the CSV is re-read every start and rotating the password
+              # in Bitwarden actually takes effect. A persisted data dir would
+              # freeze the first password forever.
+              EMQX_AUTHENTICATION__1__MECHANISM: password_based
+              EMQX_AUTHENTICATION__1__BACKEND: built_in_database
+              EMQX_AUTHENTICATION__1__USER_ID_TYPE: username
+              EMQX_AUTHENTICATION__1__BOOTSTRAP_FILE: /opt/emqx/bootstrap/users.csv
+              # Passwords in the CSV are plaintext; EMQX hashes them on import.
+              EMQX_AUTHENTICATION__1__BOOTSTRAP_TYPE: plain
+
+              # Configuring an authenticator at all is what turns off anonymous
+              # access -- EMQX allows anonymous connections only while the
+              # authentication chain is empty.
+              EMQX_DASHBOARD__DEFAULT_USERNAME:
+                valueFrom:
+                  secretKeyRef:
+                    name: &secret emqx-secret
+                    key: EMQX_DASHBOARD__DEFAULT_USERNAME
+              EMQX_DASHBOARD__DEFAULT_PASSWORD:
+                valueFrom:
+                  secretKeyRef:
+                    name: *secret
+                    key: EMQX_DASHBOARD__DEFAULT_PASSWORD
+
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: &dashboardPort 18083
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /status
+                    port: *dashboardPort
+                  # EMQX takes a while to boot the Erlang VM on a cold node.
+                  initialDelaySeconds: 10
+                  periodSeconds: 5
+                  failureThreshold: 30
+
+            securityContext:
+              allowPrivilegeEscalation: false
+              # The entrypoint regenerates config under /opt/emqx/etc on boot, so
+              # the root filesystem cannot be read-only here.
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+
+            resources:
+              requests:
+                cpu: 25m
+                memory: 256Mi
+              limits:
+                memory: 768Mi
+
+        pod:
+          securityContext:
+            # uid/gid 1000 is the `emqx` user baked into the upstream image.
+            fsGroup: 1000
+            fsGroupChangePolicy: OnRootMismatch
+
+    service:
+      emqx:
+        controller: *app
+        ports:
+          mqtt:
+            port: 1883
+          http:
+            port: *dashboardPort
+
+    ingress:
+      emqx:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:transit-connection-variant
+        hosts:
+          - host: &host "emqx.${SECRET_DOMAIN:=internal}"
+            paths:
+              - path: /
+                service:
+                  identifier: *app
+                  port: http
+        tls:
+          # No secretName on purpose. `wildcard-cert-tls` is named all over this
+          # repo but no Certificate anywhere issues it -- those ingresses work
+          # only because the internal nginx controller is started with
+          # `default-ssl-certificate: networking/${SECRET_DOMAIN/./-}-production-tls`
+          # and falls back to it. Naming the host without a secret asks for the
+          # same default cert explicitly, instead of pointing at a Secret that
+          # does not exist in this namespace. Matches matter-hub next door.
+          - hosts:
+              - *host
+
+    persistence:
+      # Intentionally ephemeral -- see the bootstrap comment above. Nothing here
+      # is precious: sessions are re-established on reconnect, and rtl-433
+      # republishes device state on every transmission.
+      data:
+        type: emptyDir
+        globalMounts:
+          - path: /opt/emqx/data
+      log:
+        type: emptyDir
+        globalMounts:
+          - path: /opt/emqx/log
+      bootstrap:
+        type: secret
+        name: emqx-bootstrap-secret
+        globalMounts:
+          - path: /opt/emqx/bootstrap/users.csv
+            subPath: users.csv
+            readOnly: true

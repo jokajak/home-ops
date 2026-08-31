@@ -1,0 +1,29 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-rtl-433
+  namespace: flux-system
+spec:
+  targetNamespace: home-automation
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: rtl-433
+  interval: 10m
+  path: "./kubernetes/apps/home-automation/rtl-433/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  postBuild:
+    substitute:
+      APP: rtl-433
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    # rtl_433 exits if it cannot reach the broker at startup, so let EMQX come
+    # up first rather than relying on the CrashLoopBackoff to sort it out.
+    - name: cluster-apps-emqx
