@@ -60,6 +60,16 @@ spec:
             command:
               - /bin/sh
               - -c
+              # The `$$` is required, not a typo. Flux runs postBuild variable
+              # substitution over this manifest before it is applied, and a bare
+              # ${MQTT_USERNAME} would be consumed there as a cluster variable
+              # rather than reaching the shell. `$${VAR}` is Flux's escape and
+              # renders as `${VAR}`, which the container's env then expands at
+              # runtime. Writing it bare is worse than it looks: undefined Flux
+              # vars substitute to an *empty string* by default, so the script
+              # would happily write ":" as the credential and mosquitto_passwd
+              # would hash it, producing auth failures with no obvious cause.
+              #
               # chown by *name*, not uid: the image sets no USER, so mosquitto
               # starts as root and drops privileges to its own `mosquitto` user
               # itself. Referencing the name uses whatever uid the image ships
@@ -68,11 +78,11 @@ spec:
               - |
                 set -eu
                 umask 077
-                printf '%s:%s\n' "${MQTT_USERNAME}" "${MQTT_PASSWORD}" > /mosquitto/auth/passwd
+                printf '%s:%s\n' "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}" > /mosquitto/auth/passwd
                 mosquitto_passwd -U /mosquitto/auth/passwd
                 chown mosquitto:mosquitto /mosquitto/auth/passwd
                 chmod 0600 /mosquitto/auth/passwd
-                echo "password file built for user ${MQTT_USERNAME}"
+                echo "password file built for user $${MQTT_USERNAME}"
             envFrom: &envFrom
               - secretRef:
                   name: mosquitto-secret

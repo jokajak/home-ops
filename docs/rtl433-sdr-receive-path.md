@@ -10,8 +10,8 @@
 
 ## Status at a glance
 
-**Last updated: 2026-08-31** · Nothing is deployed yet. All manifests are staged on
-`claude/home-assistant-wireless-sensors-mioenq` and awaiting merge + Flux reconcile.
+**Last updated: 2026-08-31** · Merged to `main`; Flux reconciling. Downstream stages are
+unconfirmed — update them as each is verified rather than assuming the merge did it.
 
 Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, not verified ·
 ✅ confirmed working
@@ -266,10 +266,28 @@ Hence the `init-passwd` initContainer. It writes `iot:<password>` from the Secre
 user at 0600:
 
 ```sh
-printf '%s:%s\n' "${MQTT_USERNAME}" "${MQTT_PASSWORD}" > /mosquitto/auth/passwd
+printf '%s:%s\n' "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}" > /mosquitto/auth/passwd
 mosquitto_passwd -U /mosquitto/auth/passwd
 chown mosquitto:mosquitto /mosquitto/auth/passwd
 chmod 0600 /mosquitto/auth/passwd
+```
+
+**The `$$` is required.** Flux runs postBuild variable substitution over this manifest before
+applying it, so a bare `${MQTT_USERNAME}` is consumed there as a *cluster* variable and never
+reaches the shell. `$${VAR}` is Flux's escape and renders as `${VAR}`, which the container's
+environment then expands at runtime.
+
+This is worth stating loudly because the failure mode is asymmetric. Undefined Flux variables
+substitute to an **empty string** by default, so the bare form does not error — it silently
+writes `:` as the credential, `mosquitto_passwd` hashes that quite happily, and every client is
+then rejected with no indication why. Check it with `flux envsubst`:
+
+```console
+$ printf 'printf %%s:%%s "${MQTT_USERNAME}"\n' | flux envsubst
+printf %s:%s ""                 # bare — credential silently gone
+
+$ printf 'printf %%s:%%s "$${MQTT_USERNAME}"\n' | flux envsubst
+printf %s:%s "${MQTT_USERNAME}" # escaped — survives to the shell
 ```
 
 Three details that are load-bearing:
@@ -401,6 +419,7 @@ purge from the entity registry later.
 | Pod runs, zero decodes | wrong band, or antenna | confirm the sensors really are Interlogix; check the antenna is **vertical**, not a V, and ~22 cm per element |
 | Decodes appear but no HA entities | MQTT integration not added | stage 10 — it is a UI step, see below |
 | Entities go `unavailable` after 3h | `expire_after` firing | either the sensor is genuinely silent (battery) or the supervisory interval is longer than assumed — stretch the value |
+| Kustomization fails to render, *variable not defined* | a bare `${VAR}` meant for the shell was eaten by Flux postBuild substitution | escape it as `$${VAR}` — see *The `$$` is required* above |
 | Broker pod stuck in `Init:` | `init-passwd` failed | `kubectl -n home-automation logs deploy/mosquitto -c init-passwd`. Usually the ExternalSecret has not synced yet, so `MQTT_USERNAME`/`MQTT_PASSWORD` are unset |
 | Clients rejected with bad username/password | password file built from a stale Secret, or the `tofu apply` for "mqtt credentials" never ran | check the item exists in Bitwarden, then `kubectl -n home-automation rollout restart deploy/mosquitto` to rebuild the file |
 

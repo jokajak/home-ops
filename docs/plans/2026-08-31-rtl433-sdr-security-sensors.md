@@ -241,14 +241,6 @@ Nothing in Bitwarden or terraform. Four things, in order:
 
 ## Possible follow-ups
 
-- **Decide what `LB_EMQX_CIDR_V4` was for.** `kubernetes/flux/vars/cluster-settings.sops.yaml`
-  carries a substitution variable reserving a load-balancer address for an MQTT broker,
-  alongside the unused "emqx credentials" item. Nothing consumes it, and the Mosquitto Service
-  here is deliberately **ClusterIP only** — rtl-433 and Home Assistant are both in-cluster, so
-  nothing needs a LAN address. If the original intent was to let off-cluster IoT devices publish
-  to the broker, that is a real change and should land as a set: an L2 `LoadBalancer` Service on
-  that address, per-client accounts, a Mosquitto ACL file, and TLS on the listener — not a
-  ClusterIP quietly promoted. If it was speculative, drop the variable.
 - Split `iot` into per-client accounts plus a Mosquitto ACL file, once terraform grows the
   fields for it.
 - If non-security 433.92 MHz devices ever show up (weather stations, TPMS), they want a
