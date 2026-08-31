@@ -22,7 +22,7 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 | 1 | PR merged to `main` | — | ✅ | #1224, merged 2026-08-31 |
 | 2 | `generic-device-plugin` advertises `devic.es/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
 | 3 | `tofu apply` the **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ✅ | applied by owner 2026-08-31 |
-| 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | 🟡 | pod `Running`; `init-passwd` logged `password file built for user iot` — **with a non-empty username** |
+| 4 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ✅ | `init-passwd` logged `password file built for user iot`; broker up and logging 2026-08-31 |
 | 5 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | 🟡 | pod `Running`, not `Pending`, on the expected node |
 | 6 | rtl-433 connected to the broker | same | 🟡 | log line `Publishing MQTT data to mosquitto…` |
 | 7 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
@@ -35,12 +35,11 @@ Legend: ⬜ not started · 🟡 on `main`, not confirmed in-cluster · 🔵 depl
 
 **Known blockers / watch items**
 
-- Stage 4 is the current front line. With the Bitwarden item applied, the ExternalSecret should
-  sync and `init-passwd` should run. **Check the username in its log line is not empty** — an
-  empty one would mean a `${VAR}` was eaten by Flux substitution somewhere, which is what
-  `8eb64f8` fixed for the two known cases.
-- Stage 5 is gated on stage 4: `cluster-apps-rtl-433` `dependsOn` mosquitto, whose Kustomization
-  has `wait: true`, so rtl-433 is not applied at all until the broker is healthy.
+- The credential path is proven end to end: `init-passwd` built the file with a real username,
+  so the Flux substitution escape (`8eb64f8`) works in-cluster. A client connecting is confirmed
+  by a mosquitto log line ending `u'iot'`; `not authorised` there would mean a hash mismatch.
+- Stage 5 was gated on stage 4: `cluster-apps-rtl-433` `dependsOn` mosquitto, whose
+  Kustomization has `wait: true`, so rtl-433 is not applied at all until the broker is healthy.
 - Stage 5 may then fail on the DVB kernel driver. See *When it doesn't work*.
 
 ---
