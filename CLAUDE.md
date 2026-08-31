@@ -39,6 +39,28 @@ The pieces:
   NFS (e.g. Immich data lives on `nfs://<nas>/volume1/immich`). openebs-hostpath is used for
   ephemeral/local PVCs; CNPG Postgres backups go to MinIO (S3).
 
+## This is a home lab — uptime is not the goal
+
+This cluster serves one household. There is no SLA, no on-call rotation, no paying users, and
+nobody is paged when something is down. **Availability is cheap to lose here; complexity is
+expensive to live with.** Design for the simplest thing that works, not for the most resilient.
+
+- **Downtime is fine.** Single-replica apps, `Recreate` update strategies, RWO volumes, brief
+  outages while Flux reconciles, and whole-cluster reboots for Talos upgrades are all acceptable.
+  Don't design zero-downtime migrations, and don't treat "this app will be unavailable for a few
+  minutes" as a blocker worth engineering around.
+- **Don't add HA machinery unasked.** Multiple replicas, PodDisruptionBudgets, anti-affinity,
+  topology spread constraints, leader election, and multi-instance datastores are not defaults
+  to reach for. Add them when the app genuinely requires it, when they're the chart's own default,
+  or when the owner asks — otherwise leave them out and keep the manifest small.
+- **Durability still matters.** An outage is an annoyance; losing data is not recoverable. Effort
+  belongs in the backup/restore path — NAS-backed NFS for durable data, CNPG backups to MinIO,
+  volsync — rather than in keeping things serving through a failure. A change that means deleting
+  a workload and restoring from backup is a perfectly good option if it's the simpler one.
+- **Prefer the boring, legible option.** Fewer moving parts beats more nines. When a simpler
+  design costs some availability, take it and note the trade-off in a sentence rather than
+  building around it.
+
 ## ⚠️ Secrets: I do not have them, and that is by design
 
 **I (Claude) cannot read or decrypt the real secret values in this repo, and I should never
