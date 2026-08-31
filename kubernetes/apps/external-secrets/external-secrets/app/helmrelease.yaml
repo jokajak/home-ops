@@ -28,6 +28,20 @@ spec:
   values:
     installCRDs: true
     replicaCount: 2
+    # Spread the two controller replicas across nodes so a single node going
+    # away doesn't take secret syncing with it. Set on `global` so the chart
+    # applies it to the controller, webhook and cert-controller alike, each
+    # with its own component selector filled in — a hand-written labelSelector
+    # here could only ever match one of the three.
+    global:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          # Ignore the outgoing revision's pods during a rollout; without this
+          # the old and new pod count together and the new one can't be placed.
+          matchLabelKeys:
+            - pod-template-hash
     serviceMonitor:
       enabled: true
       interval: 1m
