@@ -19,7 +19,6 @@ data:
     EXTERNAL_PROXY_CIDR_V4: ENC[AES256_GCM,data:tCF7hmDb+HmWn1Y3zuw=,iv:7jTzbV5NPrH8nmDIQ8Rrnt+zoLow2+IftOf7yWCyVJY=,tag:S5TEk9OfKuZ7fvxZtzXSPA==,type:str]
     LB_UNIFI_CIDR_V4: ENC[AES256_GCM,data:80Q9CCzmLrJ+UbrKCEQ=,iv:kkl+S2k1clI9Rec6e7XMyA2kHyhtsRBFZithlmC+B5c=,tag:YvoVCzOBhr58fWRuxrgu9w==,type:str]
     CLUSTER_LB_MINECRAFT_ROUTER_V4: ENC[AES256_GCM,data:+BiieKJ0jFSd5SwCf1M=,iv:mnp1jAwUcb/+ZcHk8bKn/6pPT43CDBTRF1to+bVdOhc=,tag:j1JMc87x11fF7wJLKWq4bQ==,type:str]
-    LB_EMQX_CIDR_V4: ENC[AES256_GCM,data:irDsQFzPJMlB8nq4eds=,iv:trTp/3EDJoYKlceLrshGejMT8ZORK52C5ALNV0E4L0U=,tag:U8/EetK/oyTJWguijnBBxg==,type:str]
     LB_CIDR_MINECRAFT_V4: ENC[AES256_GCM,data:HCDYBxNJIcGKfFRCh80=,iv:58AuCOh2bP6uCCzm5H5SshgAWBU3V1giaSJYGmK/e9k=,tag:dhsHmLGmeXGOeOKqKGVekg==,type:str]
     LB_CIDR_GEYSERMC_V4: ENC[AES256_GCM,data:x8ZtunMawwYHMdIjD14=,iv:eDzLFWhvCgOzDctntIYPIizeVDV//Fej7a6r91J5K5U=,tag:cvBzd3H31DLUtHYaAEDU0g==,type:str]
     LB_FORGEJO_CIDR_V4: ENC[AES256_GCM,data:O5wR9FPST2+FiTezmTU=,iv:zpMX/b28uoUl/Z6A50S5nzJTP9/G5AAAEUMGMvJqrGs=,tag:6l/hl0nPySRy5ItaseQdfA==,type:str]
@@ -61,7 +60,7 @@ sops:
             K1hwQXViSGo2Vlc4aWlhcVNlODN0YjAKEILj46nOoqdd8/LwuNqksNNmVEPYeTUb
             z7YvduznYuJFFcNQ54jQej8ZqXX42HNfGtWX4B3K5OjXptTklAnfEw==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-08-23T01:50:26Z"
-    mac: ENC[AES256_GCM,data:NESJL/P0TH7BBu1rgTgBItWzGr6ctrVYav1VMeFq9KA/+H4ls33WX/qI7HF0FMH+rhw3Gdzq5gE48yKNti6yZ4rPh4B0coeg0KS2BzFunFX3pAcIia/84j/3+a+kZOKsLfs2g52Ii6P3HZQM9yyRHsZUhBiEwXqWri2vIub4MhQ=,iv:phyOU5QNMfkANmNGL6zAX21wWFLH1HRFWRhzkCF7WwM=,tag:+kmCjnYYozE789qmVON6fw==,type:str]
+    lastmodified: "2026-08-31T12:01:09Z"
+    mac: ENC[AES256_GCM,data:t4QE4mxCq4zwvGjJR/FBWoc8b3nCevJLOTK4xQbln+JjNbkOrzDQ70JL9fGV4L/aFMM5acawZgXFezYiGLXKpTE3/SJprjRFfwqgnSyChWjpF26Jf85Gxdtfd102nz5iSlCqWYZcHUk5h2doQgn3nyaxb7J1SEQ3keLSagx9q0Q=,iv:QNEcvtTG/icneeiuHEpSd/3xTsXiUzTZe9XHSj5+b50=,tag:RFAWYjXoAss+mWp4VQQFrQ==,type:str]
     encrypted_regex: ((?i)(displayname|email|pass|ca|id|bootstraptoken|secretboxencryptionsecret|secrets|secrets|password|cert|secret($|[^N])|key|token|^data$|^stringData))
     version: 3.12.2
