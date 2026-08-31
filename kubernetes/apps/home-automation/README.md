@@ -20,5 +20,7 @@ RTL-SDR v3 (USB, on one node)
                                                         packages/rtl433.yaml
 ```
 
-Design notes, the manual steps that are not yet code, and the antenna maths are in
+How this is wired end to end, the rollout status table, and the manual steps that are not yet
+code: [`docs/rtl433-sdr-receive-path.md`](../../../docs/rtl433-sdr-receive-path.md).
+The decision record for why it is built this way:
 [`docs/plans/2026-08-31-rtl433-sdr-security-sensors.md`](../../../docs/plans/2026-08-31-rtl433-sdr-security-sensors.md).

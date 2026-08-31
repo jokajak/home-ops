@@ -1,7 +1,12 @@
 # RTL-SDR → MQTT → Home Assistant: 319.5 MHz security sensors
 
-> Status: **STAGED** — manifests written and pushed, awaiting owner reconcile · 2026-08-31 ·
+> Status: **STAGED** — on a branch with an open PR, not yet merged or deployed · 2026-08-31 ·
 > Owner: Josh · Author: Claude
+>
+> This is the **decision record**: why each choice was made and what was rejected. It is not
+> where progress is tracked — rollout status lives in the status table in
+> [`docs/rtl433-sdr-receive-path.md`](../rtl433-sdr-receive-path.md), which also carries the
+> narrative walkthrough of how the pieces fit together. Update that table, not this header.
 >
 > One-shot change, not a multi-phase migration. The **Owner action items** section is the
 > part that cannot be done from this repo; everything else reconciles on its own.
