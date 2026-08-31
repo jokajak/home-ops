@@ -90,7 +90,7 @@ spec:
               # is what backs `availability_topic` on the HA entities.
               - -F
               - >-
-                mqtt://emqx.home-automation.svc.cluster.local:1883,base=rtl_433,retain=1,devices=rtl_433/devices[/model][/subtype][/id],events=rtl_433/events
+                mqtt://mosquitto.home-automation.svc.cluster.local:1883,base=rtl_433,retain=1,devices=rtl_433/devices[/model][/subtype][/id],events=rtl_433/events
 
             env:
               TZ: ${TIMEZONE:=America/New_York}

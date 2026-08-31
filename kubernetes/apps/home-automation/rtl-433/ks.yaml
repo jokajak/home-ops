@@ -24,6 +24,6 @@ spec:
         name: cluster-secrets
   dependsOn:
     - name: cluster-apps-external-secrets
-    # rtl_433 exits if it cannot reach the broker at startup, so let EMQX come
-    # up first rather than relying on the CrashLoopBackoff to sort it out.
-    - name: cluster-apps-emqx
+    # rtl_433 exits if it cannot reach the broker at startup, so let mosquitto
+    # come up first rather than relying on the CrashLoopBackoff to sort it out.
+    - name: cluster-apps-mosquitto

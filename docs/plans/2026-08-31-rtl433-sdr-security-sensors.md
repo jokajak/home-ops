@@ -35,7 +35,7 @@ RTL-SDR v3 (USB 0bda:2838, one node)
 rtl-433            (new, home-automation)   decodes 319.5 MHz → JSON
      │  MQTT, user `iot`
      ▼
-emqx               (new, home-automation)   broker, cluster-internal
+mosquitto          (new, home-automation)   broker, cluster-internal
      │  MQTT
      ▼
 home-assistant     (existing, default)      entities from packages/rtl433.yaml
@@ -82,40 +82,47 @@ Passing `--domain squat.ai` explicitly makes the resource names deterministic re
 which image a node has. It preserves current behaviour exactly; it does not fix the untagged
 image, which is worth pinning separately.
 
-### Broker: EMQX, reusing credentials that already existed
+### Broker: Mosquitto
 
-`terraform/bitwarden/main.tf` has provisioned an **"emqx credentials"** Bitwarden item —
-admin login, a generated `user_password` field, and a `https://emqx.${SECRET_DOMAIN}` URI —
-since before any broker existed. Nothing consumed it. This deployment consumes it, so **no
-new Bitwarden item and no terraform change is needed**.
+Started as EMQX for one reason, and that reason did not survive scrutiny.
+`terraform/bitwarden/main.tf` had provisioned an **"emqx credentials"** item — admin login,
+a generated `user_password` field, an `emqx.${SECRET_DOMAIN}` URI — since before any broker
+existed, and nothing consumed it. EMQX therefore needed no new secret plumbing.
 
-Mosquitto would have been lighter, but it would have meant a new terraform resource and a
-new item for the owner to apply, while leaving the emqx item dangling.
+That is a weak reason to run an Erlang cluster broker for two clients and a few hundred
+messages an hour. EMQX's memory *request* alone reserved 256Mi of a node whether used or not
+(limit 768Mi); Mosquitto is a single C binary idling under 10 MB, requesting 16Mi. The only
+real loss is the web dashboard, which `kubectl logs` and `mosquitto_sub -t '#' -v` replace for
+every use it would have had. EMQX also went BSL at 5.9.
 
-One shared MQTT account, `iot`, for both rtl-433 and Home Assistant: the broker is only
-reachable inside the cluster, and the Bitwarden item carries exactly one non-admin secret.
-Splitting the two clients apart means adding fields in terraform first — worth doing the
-moment anything outside the cluster connects, unnecessary while nothing does.
+The Bitwarden item is renamed **"mqtt credentials"** and simplified: EMQX needed a dashboard
+admin login *plus* a `user_password` custom field, whereas Mosquitto has no web UI, so it is
+now a plain login item (username `iot`, one password). Both ExternalSecrets read it through
+`bitwarden-login`; nothing needs `bitwarden-fields` any more. **This costs one `tofu apply`,
+which only the owner can run** — the manifests fail closed until it exists.
 
-### EMQX's data directory is deliberately an `emptyDir`
+### The password file is built by an initContainer
 
-EMQX seeds MQTT users from a bootstrap CSV, and it reads that CSV **only when the
-authenticator is created** — i.e. once per data directory, ever. On a persistent volume the
-first password would be frozen in mnesia forever, and rotating it in Bitwarden would silently
-lock both clients out.
+Mosquitto's one piece of real plumbing, and the thing not to "simplify" away later.
 
-With a throwaway data dir the authenticator is recreated on every pod start, so the CSV is
-re-read every start and Bitwarden stays the source of truth. Nothing of value is lost:
-sessions re-establish on reconnect and rtl-433 republishes retained device state on the next
-transmission. This is the whole reason the deployment is stateless — it is a correctness
-requirement, not a shortcut.
+Mosquitto 2.x refuses plaintext entries in `password_file` (argon2id by default) *and* refuses
+to load a file that is group- or world-readable. Secret volumes mount 0644, so the credential
+can be neither rendered as plaintext nor mounted pre-hashed. The `init-passwd` initContainer
+therefore writes `iot:<password>` into an `emptyDir`, hashes it in place with
+`mosquitto_passwd -U`, and chowns it to `mosquitto` at 0600.
 
-### Pinned to EMQX 5.10.4, not 6.x
+Because it runs on every pod start, the file is re-derived from Bitwarden each time and
+rotation actually takes effect. That is the same property EMQX's throwaway data directory was
+protecting — EMQX reads its bootstrap CSV only once per data directory, so a PVC there would
+have frozen the first password forever — but reached directly, with no way to break it later by
+adding a PVC.
 
-6.2.3 is current. Everything here leans on env-var override of the `authentication` array and
-the built-in-database bootstrap file, both long-settled on 5.x, and there is no cluster in
-the authoring environment to test a major bump against. Moving to 6.x is a one-line change
-once it can be verified against the live broker.
+The chown is by *name*, not uid: the image sets no `USER`, so Mosquitto starts as root and
+drops privileges itself, and its entrypoint chowns only `/mosquitto/data`. The container keeps
+`CHOWN`/`SETUID`/`SETGID` out of an otherwise-`drop: ALL` set for exactly that reason.
+
+`persistence false`: retained messages last only as long as the pod, which is fine because
+rtl-433 republishes on the next transmission and the entities carry `expire_after` anyway.
 
 ### One frequency, not band hopping
 
@@ -153,8 +160,9 @@ unavailable things to clean out of the entity registry later.
 | File | Change |
 | --- | --- |
 | `kubernetes/apps/system/generic-device-plugin/app/daemonset.yaml` | `rtl-sdr` USB device group; `--domain squat.ai` pinned |
-| `kubernetes/apps/home-automation/emqx/**` | new — HelmRelease, two ExternalSecrets, ks, gatus |
+| `kubernetes/apps/home-automation/mosquitto/**` | new — HelmRelease (+ init-passwd), ConfigMap, ExternalSecret, ks |
 | `kubernetes/apps/home-automation/rtl-433/**` | new — HelmRelease, ExternalSecret, ks |
+| `terraform/bitwarden/main.tf` | "emqx credentials" → "mqtt credentials", simplified to a plain login |
 | `kubernetes/apps/home-automation/kustomization.yaml` | wire both apps in |
 | `kubernetes/apps/home-automation/README.md` | app table + receive-path diagram |
 | `kubernetes/apps/default/home-assistant/app/configmap-rtl433.yaml` | new — MQTT entity package |
@@ -173,9 +181,9 @@ Nothing in Bitwarden or terraform. Four things, in order:
 
 2. **Add the MQTT integration in Home Assistant.** Settings → Devices & Services → Add
    Integration → MQTT:
-   - Broker: `emqx.home-automation.svc.cluster.local`, port `1883`
+   - Broker: `mosquitto.home-automation.svc.cluster.local`, port `1883`
    - Username: `iot`
-   - Password: the `user_password` field on the **emqx credentials** Bitwarden item
+   - Password: the password on the **mqtt credentials** Bitwarden item
 
    This is the one manual step, and it is a genuine gap against the everything-as-code rule
    — see **Known gaps** below.
@@ -196,7 +204,7 @@ Nothing in Bitwarden or terraform. Four things, in order:
 - `kubectl -n home-automation get pods` — `rtl-433` should land on the node with the dongle.
   If it is `Pending` with *Insufficient squat.ai/rtl-sdr*, the device plugin is not seeing
   the dongle: check `kubectl get node <node> -o jsonpath='{.status.allocatable}'`.
-- rtl-433's logs should open with `Publishing MQTT data to emqx…` and
+- rtl-433's logs should open with `Publishing MQTT data to mosquitto…` and
   `Publishing device info to MQTT topic "rtl_433/devices…"`.
 - `-M level` puts `rssi`/`snr` on every decode — use it to judge antenna placement.
 
@@ -221,7 +229,7 @@ Nothing in Bitwarden or terraform. Four things, in order:
   TLS `secretName`, but no `Certificate` anywhere issues a secret by that name — the only real
   one is `networking/${SECRET_DOMAIN/./-}-production-tls`. Those ingresses serve valid TLS only
   because both nginx controllers run with `default-ssl-certificate` pointing at the real
-  secret, so the missing one falls back. The emqx ingress here deliberately omits `secretName`
+  secret, so the missing one falls back. Moot here now that the broker has no ingress at all,
   rather than copy the pattern. Worth cleaning up across the repo separately; nothing is broken
   today, it is just load-bearing coincidence.
 - **`squat/generic-device-plugin` is still untagged.** `--domain` is pinned now, so a surprise
@@ -232,8 +240,16 @@ Nothing in Bitwarden or terraform. Four things, in order:
 
 ## Possible follow-ups
 
+- **Decide what `LB_EMQX_CIDR_V4` was for.** `kubernetes/flux/vars/cluster-settings.sops.yaml`
+  carries a substitution variable reserving a load-balancer address for an MQTT broker,
+  alongside the unused "emqx credentials" item. Nothing consumes it, and the Mosquitto Service
+  here is deliberately **ClusterIP only** — rtl-433 and Home Assistant are both in-cluster, so
+  nothing needs a LAN address. If the original intent was to let off-cluster IoT devices publish
+  to the broker, that is a real change and should land as a set: an L2 `LoadBalancer` Service on
+  that address, per-client accounts, a Mosquitto ACL file, and TLS on the listener — not a
+  ClusterIP quietly promoted. If it was speculative, drop the variable.
 - Pin the `generic-device-plugin` image.
-- Split `iot` into per-client accounts plus an EMQX authz ruleset, once terraform grows the
+- Split `iot` into per-client accounts plus a Mosquitto ACL file, once terraform grows the
   fields for it.
 - If non-security 433.92 MHz devices ever show up (weather stations, TPMS), they want a
   *second* dongle and a second rtl-433 instance rather than hopping — see the frequency

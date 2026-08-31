@@ -21,10 +21,10 @@ Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, 
 | 1 | PR merged to `main` | — | 🟡 | PR is green and merged |
 | 2 | `generic-device-plugin` advertises `squat.ai/rtl-sdr` | `kubernetes/apps/system/generic-device-plugin` | 🟡 | `kubectl get node <node> -o jsonpath='{.status.allocatable}'` shows the resource |
 | 3 | `vpn/gateway` still schedules after the `--domain` pin | `kubernetes/apps/vpn/gateway` | 🟡 | gateway pod stays `Running` (regression check, see below) |
-| 4 | **EMQX deployed** | `kubernetes/apps/home-automation/emqx` | ⬜ | pod `Running`, `emqx.${SECRET_DOMAIN}` dashboard loads |
-| 5 | EMQX seeded the `iot` MQTT account | same | ⬜ | dashboard → Access Control → Authentication → built-in DB lists `iot` |
+| 4 | `tofu apply` the renamed **"mqtt credentials"** Bitwarden item | `terraform/bitwarden` | ⬜ | item exists in Bitwarden with username `iot` |
+| 5 | **Mosquitto deployed** | `kubernetes/apps/home-automation/mosquitto` | ⬜ | pod `Running`; `init-passwd` logged `password file built for user iot` |
 | 6 | `rtl-433` scheduled onto the dongle's node | `kubernetes/apps/home-automation/rtl-433` | ⬜ | pod `Running`, not `Pending`, on the expected node |
-| 7 | rtl-433 connected to the broker | same | ⬜ | log line `Publishing MQTT data to emqx…` |
+| 7 | rtl-433 connected to the broker | same | ⬜ | log line `Publishing MQTT data to mosquitto…` |
 | 8 | Sensors actually decoding | — | ⬜ | tripping a sensor produces a JSON line in the pod log |
 | 9 | Antenna re-oriented + cut for 319.5 MHz | physical | ⬜ | `rssi`/`snr` in decodes look healthy |
 | 10 | HA MQTT integration added (manual, UI) | Home Assistant | ⬜ | MQTT shows as a configured integration |
@@ -35,7 +35,8 @@ Legend: ⬜ not started · 🟡 staged in git, not reconciled · 🔵 deployed, 
 
 **Known blockers / watch items**
 
-- Stage 4 is the current front line — EMQX has not been deployed yet.
+- Stage 4 is the current front line, and it is **yours, not Flux's**: the Bitwarden item is
+  renamed in terraform but only a `tofu apply` creates it, and stage 5 fails without it.
 - Stage 3 is a regression check, not new work. See *The device-plugin domain trap* below.
 - Stage 6 may fail on the DVB kernel driver. See *When it doesn't work*.
 
@@ -122,7 +123,7 @@ The receiver stays locked to 319.5 MHz.
            │  MQTT, user `iot`
            ▼
   ┌─────────────────┐
-  │  emqx           │  broker, cluster-internal
+  │  mosquitto      │  broker, cluster-internal
   └────────┬────────┘
            │  MQTT
            ▼
@@ -231,44 +232,66 @@ repo and the process's `argv`.
 ### 3. Transport
 
 MQTT is the lingua franca here: `rtl_433` speaks it natively and Home Assistant consumes it
-natively. The broker is **EMQX**, for a reason that has nothing to do with EMQX's merits:
-`terraform/bitwarden/main.tf` has been provisioning an **"emqx credentials"** item — an admin
-login, a generated `user_password` field, and an `emqx.${SECRET_DOMAIN}` URI — since well
-before any broker existed. Nothing consumed it. Using EMQX means **no new secret material to
-create**; choosing Mosquitto would have meant a new terraform resource and a new Bitwarden item,
-while leaving that one dangling.
+natively. The broker is **Mosquitto**, deliberately the boring choice.
 
-#### Why the broker is deliberately stateless
+This was originally EMQX, for one reason: `terraform/bitwarden/main.tf` had been provisioning
+an "emqx credentials" item since before any broker existed, and nothing consumed it, so EMQX
+meant no new secret plumbing. That is a weak reason to run an Erlang cluster broker to move a
+few hundred messages an hour between two clients. EMQX's memory *request* alone reserved 256Mi
+of a node whether used or not; Mosquitto is a single C binary that idles under 10 MB and asks
+for 16Mi. The only thing genuinely lost is a web dashboard, and `kubectl logs` plus
+`mosquitto_sub -t '#' -v` cover everything it would have been used for.
 
-The one genuinely subtle decision in the whole stack, and it looks like a mistake until you
-know why.
+The Bitwarden item was renamed to **"mqtt credentials"** to match — and simplified while there.
+EMQX needed two secrets (a dashboard admin login plus a `user_password` custom field for MQTT
+clients); Mosquitto has no web UI, so there is no admin account and the item is now a plain
+login: username `iot`, one password. That also means both ExternalSecrets read it through the
+`bitwarden-login` store rather than one of them needing `bitwarden-fields`.
 
-EMQX seeds its MQTT users from a bootstrap CSV — rendered here by External Secrets straight out
-of Bitwarden:
+#### The password file is built at pod start, not mounted
 
-```csv
-user_id,password,is_superuser
-iot,<from Bitwarden>,false
+The one piece of real plumbing Mosquitto costs, and worth understanding before someone tries to
+simplify it away.
+
+**Mosquitto 2.x will not read plaintext passwords.** Entries in `password_file` must be hashed
+(argon2id by default), so the file cannot simply be an ExternalSecret rendered into a volume.
+It also refuses to load a password file that is group- or world-readable, and Secret volumes
+mount 0644 — so even a pre-hashed file could not be mounted directly.
+
+Hence the `init-passwd` initContainer. It writes `iot:<password>` from the Secret into an
+`emptyDir`, hashes it in place with `mosquitto_passwd -U`, and chowns it to the `mosquitto`
+user at 0600:
+
+```sh
+printf '%s:%s\n' "${MQTT_USERNAME}" "${MQTT_PASSWORD}" > /mosquitto/auth/passwd
+mosquitto_passwd -U /mosquitto/auth/passwd
+chown mosquitto:mosquitto /mosquitto/auth/passwd
+chmod 0600 /mosquitto/auth/passwd
 ```
 
-But EMQX reads that file **only when the authenticator is created** — that is, once per data
-directory, ever. Put the data directory on a PVC and the first password is baked into mnesia
-permanently: rotating it in Bitwarden would change nothing, and eventually someone would rotate
-it, watch both clients start failing to authenticate against a password that no longer exists
-anywhere, and have a genuinely miserable afternoon.
+Three details that are load-bearing:
 
-So the data directory is an `emptyDir`. The authenticator is recreated on every pod start, the
-CSV is re-read every start, and Bitwarden stays the actual source of truth. Nothing of value is
-lost: MQTT sessions re-establish on reconnect, and rtl-433 republishes retained device state on
-the next transmission.
+- **It runs every pod start**, so the file is re-derived from Bitwarden each time. Rotating the
+  password there actually takes effect. This is the same guarantee EMQX's throwaway data
+  directory was protecting, reached by a more direct route — and unlike EMQX, there is no way
+  to break it by adding a PVC later.
+- **The chown is by name, not uid.** The image sets no `USER`: Mosquitto starts as root and
+  drops privileges to its own account itself. Its entrypoint chowns only `/mosquitto/data`, so
+  nothing else fixes up `/mosquitto/auth`. (The image's `PUID`/`PGID` default to 1883, but
+  referencing the name means this does not break if that ever changes.)
+- **The container keeps `CHOWN`, `SETUID` and `SETGID`** out of an otherwise-`drop: ALL` set,
+  which is exactly what the entrypoint's chown and the privilege drop need. Forcing a non-root
+  `runAsUser` instead would skip the drop and leave the daemon unable to read its own state.
 
-**The statelessness is a correctness requirement, not a shortcut.** If someone later "fixes"
-this by adding a PVC, credential rotation breaks silently.
+Also `persistence false`: retained messages live only as long as the pod. rtl-433 republishes
+device state on the next transmission, and the entities carry `expire_after` regardless, so a
+PVC here would pin the pod to a node in exchange for data that regenerates itself within the
+hour.
 
-One shared `iot` account serves both clients. The broker is reachable only inside the cluster,
-and the Bitwarden item carries exactly one non-admin secret. Splitting rtl-433 and Home
-Assistant onto separate accounts means adding terraform fields first — worth doing the moment
-anything off-cluster connects, unnecessary while nothing does.
+One shared `iot` account serves both clients. The broker is reachable only inside the cluster
+and has exactly two of them, so one account is proportionate. Splitting rtl-433 and Home
+Assistant apart means a second terraform item first — worth doing the moment anything
+off-cluster connects, unnecessary while nothing does.
 
 ### 4. Entities
 
@@ -375,7 +398,8 @@ purge from the entity registry later.
 | Pod runs, zero decodes | wrong band, or antenna | confirm the sensors really are Interlogix; check the antenna is **vertical**, not a V, and ~22 cm per element |
 | Decodes appear but no HA entities | MQTT integration not added | stage 10 — it is a UI step, see below |
 | Entities go `unavailable` after 3h | `expire_after` firing | either the sensor is genuinely silent (battery) or the supervisory interval is longer than assumed — stretch the value |
-| Auth failures after rotating the password | someone added a PVC to EMQX | see *Why the broker is deliberately stateless* |
+| Broker pod stuck in `Init:` | `init-passwd` failed | `kubectl -n home-automation logs deploy/mosquitto -c init-passwd`. Usually the ExternalSecret has not synced yet, so `MQTT_USERNAME`/`MQTT_PASSWORD` are unset |
+| Clients rejected with bad username/password | password file built from a stale Secret, or the `tofu apply` for "mqtt credentials" never ran | check the item exists in Bitwarden, then `kubectl -n home-automation rollout restart deploy/mosquitto` to rebuild the file |
 
 ## What isn't code yet
 
@@ -388,10 +412,10 @@ connection itself is not expressible in this repo.
 
 Settings → Devices & Services → Add Integration → MQTT:
 
-- Broker: `emqx.home-automation.svc.cluster.local`
+- Broker: `mosquitto.home-automation.svc.cluster.local`
 - Port: `1883`
 - Username: `iot`
-- Password: the `user_password` field on the **emqx credentials** Bitwarden item
+- Password: the password on the **mqtt credentials** Bitwarden item
 
 Closing this properly would mean templating a config entry into `.storage` at boot, which is
 unsupported and brittle. It stays a documented one-time step rather than a hidden one.
