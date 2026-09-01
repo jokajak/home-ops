@@ -142,6 +142,15 @@ spec:
           - path: /config/packages/rtl433.yaml
             subPath: rtl433.yaml
             readOnly: true
+      # Scrape sensors for the Atlanta Allergy & Asthma counting station -- the
+      # data behind the panel below.
+      pollen-config:
+        type: configMap
+        name: home-assistant-pollen
+        globalMounts:
+          - path: /config/packages/pollen.yaml
+            subPath: pollen.yaml
+            readOnly: true
       # Pollen/mold panel. Two mounts off one ConfigMap: the package registers the
       # dashboard with Lovelace, the dashboard file holds the cards. Both have to
       # be on disk before HA starts -- a YAML dashboard is read at setup, not on

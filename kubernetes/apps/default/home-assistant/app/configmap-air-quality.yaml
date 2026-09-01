@@ -35,15 +35,10 @@ data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/air-quality.yaml -- the panel itself.
   #
-  # Entity ids below assume the AccuWeather config entry is titled "Home" (the
-  # default when it picks up HA's own coordinates). If yours is named after your
-  # town, the prefix changes: sensor.<slugified entry title>_mold_pollen_day_0.
-  #
-  # AccuWeather is the only core integration that reports an actual outdoor mold
-  # spore count, so it drives this panel. All four pollen/mold sensors ship
-  # DISABLED in the entity registry -- see the plan doc for the enable step.
-  # Until the integration exists these cards render "Entity not found", which is
-  # the intended TODO marker; they light up on their own once it is added.
+  # Entities come from the Atlanta Allergy scrape package (configmap-pollen.yaml),
+  # which reads the NAB-certified counting station directly. Nothing here needs a
+  # paid API key, and nothing goes unavailable except on days the station does not
+  # publish -- weekends and holidays -- when every card greys out together.
   # ---------------------------------------------------------------------------
   dashboard.yaml: |
     views:
@@ -59,57 +54,69 @@ data:
                 heading: Today
                 heading_style: title
                 icon: mdi:calendar-today
-              # state_content pairs the raw p/m3 count with AccuWeather's own
-              # category ("Low".."Extreme"), which is the half you actually read.
               - type: tile
-                entity: sensor.home_mold_pollen_day_0
-                name: Mold
-                icon: mdi:mushroom
-                state_content: [state, level]
-              - type: tile
-                entity: sensor.home_tree_pollen_day_0
-                name: Tree
-                icon: mdi:tree
-                state_content: [state, level]
-              - type: tile
-                entity: sensor.home_grass_pollen_day_0
-                name: Grass
-                icon: mdi:grass
-                state_content: [state, level]
-              - type: tile
-                entity: sensor.home_ragweed_pollen_day_0
-                name: Ragweed
+                entity: sensor.atlanta_pollen_total
+                name: Total pollen
                 icon: mdi:flower-pollen
-                state_content: [state, level]
+              # Mold is a band, not a number -- the station publishes activity
+              # level only, so there is no count to show here.
+              - type: tile
+                entity: sensor.atlanta_mold_activity
+                name: Mold activity
+                icon: mdi:mushroom
+              # Guards against reading a stale count as today's. On a Monday
+              # before the new count is posted this still says Friday.
+              - type: tile
+                entity: sensor.atlanta_pollen_reading_date
+                name: Counted for
+                icon: mdi:calendar-check
 
           - type: grid
             cards:
               - type: heading
-                heading: Next three days
+                heading: By type
                 heading_style: title
-                icon: mdi:calendar-arrow-right
-              # AccuWeather publishes days 0-4; three ahead is as far as the
-              # numbers are worth trusting.
-              - type: entities
-                title: Mold
-                icon: mdi:mushroom
-                entities:
-                  - entity: sensor.home_mold_pollen_day_1
-                    name: Tomorrow
-                  - entity: sensor.home_mold_pollen_day_2
-                    name: In two days
-                  - entity: sensor.home_mold_pollen_day_3
-                    name: In three days
-              - type: entities
-                title: Pollen
+                icon: mdi:chart-bar
+              # The count tiles go unavailable in the top band, where the gauge
+              # the count is recovered from saturates; the level below always
+              # reads, and on those days the total is essentially this number.
+              - type: tile
+                entity: sensor.atlanta_tree_pollen
+                name: Trees
+                icon: mdi:tree
+              - type: tile
+                entity: sensor.atlanta_grass_pollen
+                name: Grass
+                icon: mdi:grass
+              - type: tile
+                entity: sensor.atlanta_weed_pollen
+                name: Weeds
                 icon: mdi:flower-pollen
+
+          - type: grid
+            cards:
+              - type: heading
+                heading: What is in the air
+                heading_style: title
+                icon: mdi:leaf
+              # The half of the station's report no forecast API provides: which
+              # plants the count is actually made of.
+              - type: entities
                 entities:
-                  - entity: sensor.home_tree_pollen_day_1
-                    name: Tree, tomorrow
-                  - entity: sensor.home_grass_pollen_day_1
-                    name: Grass, tomorrow
-                  - entity: sensor.home_ragweed_pollen_day_1
-                    name: Ragweed, tomorrow
+                  - entity: sensor.atlanta_tree_pollen_level
+                    name: Trees
+                  - entity: sensor.atlanta_tree_pollen_contributors
+                    name: "  from"
+                  - type: divider
+                  - entity: sensor.atlanta_grass_pollen_level
+                    name: Grass
+                  - entity: sensor.atlanta_grass_pollen_contributors
+                    name: "  from"
+                  - type: divider
+                  - entity: sensor.atlanta_weed_pollen_level
+                    name: Weeds
+                  - entity: sensor.atlanta_weed_pollen_contributors
+                    name: "  from"
 
           - type: grid
             column_span: 2
@@ -118,21 +125,20 @@ data:
                 heading: Trend
                 heading_style: title
                 icon: mdi:chart-line
-              # Recorder keeps 30 days, which is the useful window here: it is
-              # long enough to see a tree-pollen season start and short enough
-              # that the graph stays readable.
+              # 30 days is what the recorder keeps, and enough to watch a season
+              # turn over. The y-axis is dominated by trees in spring.
               - type: history-graph
                 hours_to_show: 720
                 title: Last 30 days
                 entities:
-                  - entity: sensor.home_mold_pollen_day_0
-                    name: Mold
-                  - entity: sensor.home_tree_pollen_day_0
-                    name: Tree
-                  - entity: sensor.home_grass_pollen_day_0
+                  - entity: sensor.atlanta_pollen_total
+                    name: Total
+                  - entity: sensor.atlanta_tree_pollen
+                    name: Trees
+                  - entity: sensor.atlanta_grass_pollen
                     name: Grass
-                  - entity: sensor.home_ragweed_pollen_day_0
-                    name: Ragweed
+                  - entity: sensor.atlanta_weed_pollen
+                    name: Weeds
 
           # -------------------------------------------------------------------
           # Local particulate, from the Ambient Weather station. Only exists if
@@ -153,23 +159,3 @@ data:
           #     - type: tile
           #       entity: sensor.backyard_pm25_aqi_24h_average
           #       name: PM2.5 AQI, 24h average
-
-          # -------------------------------------------------------------------
-          # Free fallback / cross-check: IQVIA (Pollen.com). No API key, ZIP code
-          # only, and it reports an allergy *index* rather than a count -- and no
-          # mold at all. Worth having alongside AccuWeather because it names the
-          # allergens actually driving the index. Entity ids embed the ZIP, so
-          # confirm them in Developer Tools -> States before uncommenting.
-          # -------------------------------------------------------------------
-          # - type: grid
-          #   cards:
-          #     - type: heading
-          #       heading: Allergy index
-          #       heading_style: title
-          #       icon: mdi:flower
-          #     - type: tile
-          #       entity: sensor.00000_allergy_index_today
-          #       name: Today
-          #     - type: tile
-          #       entity: sensor.00000_allergy_index_tomorrow
-          #       name: Tomorrow
