@@ -139,23 +139,3 @@ data:
                     name: Grass
                   - entity: sensor.atlanta_weed_pollen
                     name: Weeds
-
-          # -------------------------------------------------------------------
-          # Local particulate, from the Ambient Weather station. Only exists if
-          # the station has the AQIN air-quality module -- the base WS-2902 and
-          # friends report no PM at all. Uncomment once you have confirmed the
-          # entity ids in Developer Tools -> States (the prefix is the station's
-          # name in the Ambient Weather app, not necessarily "backyard").
-          # -------------------------------------------------------------------
-          # - type: grid
-          #   cards:
-          #     - type: heading
-          #       heading: Particulate
-          #       heading_style: title
-          #       icon: mdi:air-filter
-          #     - type: tile
-          #       entity: sensor.backyard_pm25_aqi
-          #       name: PM2.5 AQI
-          #     - type: tile
-          #       entity: sensor.backyard_pm25_aqi_24h_average
-          #       name: PM2.5 AQI, 24h average

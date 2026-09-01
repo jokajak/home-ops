@@ -39,9 +39,9 @@ whether to open the windows this morning is not the question being asked.
 temperature, humidity, wind, rain, solar/UV, lightning, and — only with the AQIN add-on module
 — PM2.5, PM10 and CO₂. There is no pollen or mold field anywhere in it, and there could not
 be: a consumer weather station measures the atmosphere, while pollen and mold counts come from
-microscope slide counts. What it *can* add is locally measured PM2.5, which beats any
-forecast; that section ships commented out because the base stations without AQIN have no PM
-entities to point at.
+microscope slide counts. It can measure PM2.5 locally with that module, which
+would beat any forecast, but particulate is a different question from pollen and mold and is
+deliberately not on this panel.
 
 ## Decisions, and why
 
@@ -166,14 +166,11 @@ all — the Scrape platform is YAML-configurable, so unlike the MQTT and AccuWea
 is no config flow to click through. Push the branch, let Flux reconcile, and the `Air Quality`
 panel appears in the sidebar.
 
-Optional: uncomment the Ambient PM section in `configmap-air-quality.yaml` if the station has
-an AQIN module, after confirming the real entity ids in Developer Tools → States.
-
 ## Known gaps
 
 - **No forecast.** The station reports what it counted yesterday; there is no "tomorrow will
-  be worse". If that turns out to matter, IQVIA is free and adds a forecast index (no mold),
-  and can sit alongside this rather than replacing it.
+  be worse". Accepted deliberately: the owner's call is that this page carries everything
+  wanted, so no second source is wired in behind it.
 - **No mold number**, because the station does not publish one — mold is an activity band on
   this page and nothing more. AccuWeather is still the only source of a numeric mold count,
   and it is modelled rather than measured.
