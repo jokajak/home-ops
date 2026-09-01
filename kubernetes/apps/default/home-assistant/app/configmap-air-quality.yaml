@@ -1,0 +1,175 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-air-quality
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/packages/air-quality.yaml, picked up by the existing
+  # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
+  #
+  # `lovelace:` is a plain dict-schema integration, so it merges out of a package
+  # like any other. That is what keeps the dashboard itself in Git rather than in
+  # .storage: the panel is registered here and its cards live in the second key
+  # below. Nothing else in this repo may define a top-level `lovelace:` key --
+  # two of them would collide on merge.
+  #
+  # The dashboard slug MUST contain a hyphen; Lovelace rejects single-word url
+  # paths for anything but the built-in `lovelace` dashboard.
+  # ---------------------------------------------------------------------------
+  air-quality.yaml: |
+    lovelace:
+      dashboards:
+        air-quality:
+          mode: yaml
+          filename: dashboards/air-quality.yaml
+          title: Air Quality
+          icon: mdi:flower-pollen
+          show_in_sidebar: true
+          require_admin: false
+
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/dashboards/air-quality.yaml -- the panel itself.
+  #
+  # Entity ids below assume the AccuWeather config entry is titled "Home" (the
+  # default when it picks up HA's own coordinates). If yours is named after your
+  # town, the prefix changes: sensor.<slugified entry title>_mold_pollen_day_0.
+  #
+  # AccuWeather is the only core integration that reports an actual outdoor mold
+  # spore count, so it drives this panel. All four pollen/mold sensors ship
+  # DISABLED in the entity registry -- see the plan doc for the enable step.
+  # Until the integration exists these cards render "Entity not found", which is
+  # the intended TODO marker; they light up on their own once it is added.
+  # ---------------------------------------------------------------------------
+  dashboard.yaml: |
+    views:
+      - title: Pollen & Mold
+        path: pollen
+        icon: mdi:flower-pollen
+        type: sections
+        max_columns: 3
+        sections:
+          - type: grid
+            cards:
+              - type: heading
+                heading: Today
+                heading_style: title
+                icon: mdi:calendar-today
+              # state_content pairs the raw p/m3 count with AccuWeather's own
+              # category ("Low".."Extreme"), which is the half you actually read.
+              - type: tile
+                entity: sensor.home_mold_pollen_day_0
+                name: Mold
+                icon: mdi:mushroom
+                state_content: [state, level]
+              - type: tile
+                entity: sensor.home_tree_pollen_day_0
+                name: Tree
+                icon: mdi:tree
+                state_content: [state, level]
+              - type: tile
+                entity: sensor.home_grass_pollen_day_0
+                name: Grass
+                icon: mdi:grass
+                state_content: [state, level]
+              - type: tile
+                entity: sensor.home_ragweed_pollen_day_0
+                name: Ragweed
+                icon: mdi:flower-pollen
+                state_content: [state, level]
+
+          - type: grid
+            cards:
+              - type: heading
+                heading: Next three days
+                heading_style: title
+                icon: mdi:calendar-arrow-right
+              # AccuWeather publishes days 0-4; three ahead is as far as the
+              # numbers are worth trusting.
+              - type: entities
+                title: Mold
+                icon: mdi:mushroom
+                entities:
+                  - entity: sensor.home_mold_pollen_day_1
+                    name: Tomorrow
+                  - entity: sensor.home_mold_pollen_day_2
+                    name: In two days
+                  - entity: sensor.home_mold_pollen_day_3
+                    name: In three days
+              - type: entities
+                title: Pollen
+                icon: mdi:flower-pollen
+                entities:
+                  - entity: sensor.home_tree_pollen_day_1
+                    name: Tree, tomorrow
+                  - entity: sensor.home_grass_pollen_day_1
+                    name: Grass, tomorrow
+                  - entity: sensor.home_ragweed_pollen_day_1
+                    name: Ragweed, tomorrow
+
+          - type: grid
+            column_span: 2
+            cards:
+              - type: heading
+                heading: Trend
+                heading_style: title
+                icon: mdi:chart-line
+              # Recorder keeps 30 days, which is the useful window here: it is
+              # long enough to see a tree-pollen season start and short enough
+              # that the graph stays readable.
+              - type: history-graph
+                hours_to_show: 720
+                title: Last 30 days
+                entities:
+                  - entity: sensor.home_mold_pollen_day_0
+                    name: Mold
+                  - entity: sensor.home_tree_pollen_day_0
+                    name: Tree
+                  - entity: sensor.home_grass_pollen_day_0
+                    name: Grass
+                  - entity: sensor.home_ragweed_pollen_day_0
+                    name: Ragweed
+
+          # -------------------------------------------------------------------
+          # Local particulate, from the Ambient Weather station. Only exists if
+          # the station has the AQIN air-quality module -- the base WS-2902 and
+          # friends report no PM at all. Uncomment once you have confirmed the
+          # entity ids in Developer Tools -> States (the prefix is the station's
+          # name in the Ambient Weather app, not necessarily "backyard").
+          # -------------------------------------------------------------------
+          # - type: grid
+          #   cards:
+          #     - type: heading
+          #       heading: Particulate
+          #       heading_style: title
+          #       icon: mdi:air-filter
+          #     - type: tile
+          #       entity: sensor.backyard_pm25_aqi
+          #       name: PM2.5 AQI
+          #     - type: tile
+          #       entity: sensor.backyard_pm25_aqi_24h_average
+          #       name: PM2.5 AQI, 24h average
+
+          # -------------------------------------------------------------------
+          # Free fallback / cross-check: IQVIA (Pollen.com). No API key, ZIP code
+          # only, and it reports an allergy *index* rather than a count -- and no
+          # mold at all. Worth having alongside AccuWeather because it names the
+          # allergens actually driving the index. Entity ids embed the ZIP, so
+          # confirm them in Developer Tools -> States before uncommenting.
+          # -------------------------------------------------------------------
+          # - type: grid
+          #   cards:
+          #     - type: heading
+          #       heading: Allergy index
+          #       heading_style: title
+          #       icon: mdi:flower
+          #     - type: tile
+          #       entity: sensor.00000_allergy_index_today
+          #       name: Today
+          #     - type: tile
+          #       entity: sensor.00000_allergy_index_tomorrow
+          #       name: Tomorrow

@@ -6,6 +6,7 @@ resources:
   - ./pvc.yaml
   - ./configmap.yaml
   - ./configmap-rtl433.sops.yaml
+  - ./configmap-air-quality.yaml
   - ./externalsecret.yaml
   - ./database
   - ../../../../templates/gatus/guarded
