@@ -5,6 +5,9 @@ resources:
   - ./helm-release.yaml
   - ./pvc.yaml
   - ./configmap.yaml
+  - ./configmap-rtl433.sops.yaml
+  - ./configmap-air-quality.yaml
+  - ./configmap-pollen.yaml
   - ./externalsecret.yaml
   - ./database
   - ../../../../templates/gatus/guarded

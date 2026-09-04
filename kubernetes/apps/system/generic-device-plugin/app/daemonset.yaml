@@ -23,8 +23,13 @@ spec:
         - operator: "Exists"
           effect: "NoSchedule"
       containers:
-        - image: squat/generic-device-plugin
+        - image: docker.io/squat/generic-device-plugin:0.2.0
           args:
+            # Devices are advertised as <domain>/<name>. Upstream's
+            # default moved from squat.ai to devic.es; pin it here
+            # rather than tracking whatever the default happens to be.
+            - --domain
+            - devic.es
             - --device
             - |
               name: tun
@@ -32,6 +37,24 @@ spec:
                 - count: 1000
                   paths:
                     - path: /dev/net/tun
+            # RTL-SDR Blog V3 (RTL2832U + R820T2), used by rtl-433 to receive 319.5 MHz
+            # Interlogix security sensors. Advertised as `devic.es/rtl-sdr` and only on the
+            # node the dongle is actually plugged into, so requesting the resource is what
+            # pins the pod to that node -- no NodeFeatureRule or nodeSelector needed.
+            #
+            # Each group is matched independently. 0bda:2838 ("RTL2838 DVB-T") is what a V3
+            # enumerates as; 0bda:2832 covers older RTL2832U sticks. A group that matches
+            # nothing simply contributes no devices, so listing both is free.
+            - --device
+            - |
+              name: rtl-sdr
+              groups:
+                - usb:
+                    - vendor: "0bda"
+                      product: "2838"
+                - usb:
+                    - vendor: "0bda"
+                      product: "2832"
           name: generic-device-plugin
           resources:
             requests:

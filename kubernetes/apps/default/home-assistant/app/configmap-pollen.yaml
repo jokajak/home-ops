@@ -1,0 +1,174 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-pollen
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # Mounted at /config/packages/pollen.yaml; picked up via
+  # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
+  #
+  # Atlanta Allergy & Asthma run the only National Allergy Bureau certified
+  # counting station in metro Atlanta -- these are microscope counts of grains
+  # per cubic metre over the previous 24 hours, not a model's guess. Free, local,
+  # and strictly better than the paid AccuWeather forecast this replaces.
+  #
+  # No API, so this scrapes the page. Two things make that acceptable rather than
+  # merely expedient: robots.txt is `Disallow:` with an empty value (everything
+  # allowed), and the count is published once per weekday, so scan_interval is
+  # set to 4h -- six requests a day against a page a browser would fetch anyway.
+  # Do not lower it; there is nothing to gain, the number changes once.
+  #
+  # The bare /pollen_counts URL serves the current day, so no date templating is
+  # needed. On weekends and holidays the page says "There is no pollen data for
+  # <date>" and every selector below finds nothing; Scrape logs a warning and
+  # marks the sensor unavailable, which is the behaviour we want and costs
+  # nothing to arrange.
+  pollen.yaml: |
+    scrape:
+      - resource: https://www.atlantaallergy.com/pollen_counts
+        scan_interval: "04:00:00"
+        sensor:
+          # ---- The published headline number -------------------------------
+          - name: Atlanta pollen total
+            unique_id: atlanta_allergy_pollen_total
+            select: ".widget-pollen-count-full .pollen-num"
+            unit_of_measurement: "p/m³"
+            state_class: measurement
+            icon: mdi:flower-pollen
+            value_template: "{{ value | replace(',', '') | trim | int }}"
+
+          # Which day the count on the page is for. Worth having: it is the only
+          # way to tell a fresh count from yesterday's still being displayed.
+          - name: Atlanta pollen reading date
+            unique_id: atlanta_allergy_pollen_date
+            select: ".widget-pollen-count-full .pollen-text h3"
+            icon: mdi:calendar-check
+            value_template: >-
+              {% set m = value | regex_findall('\d{2}/\d{2}/\d{4}') %}
+              {{ strptime(m[0], '%m/%d/%Y').strftime('%Y-%m-%d') if m else none }}
+
+          # ---- Mold ---------------------------------------------------------
+          # The station publishes mold as an activity band only, never a spore
+          # count, so there is no number to extract -- the gauge segments are
+          # unlabelled. The four `.active` segments on the page are, in order:
+          # trees, grass, weeds, mold.
+          - name: Atlanta mold activity
+            unique_id: atlanta_allergy_mold_activity
+            select: ".widget-pollen-count-full span.active"
+            index: 3
+            icon: mdi:mushroom
+            value_template: "{{ value | trim }}"
+
+          # ---- Per-category bands ------------------------------------------
+          # Active segment text is "L=0-14" / "M=15-89" / etc, so the letter
+          # before the "=" is the band.
+          - name: Atlanta tree pollen level
+            unique_id: atlanta_allergy_tree_level
+            select: ".widget-pollen-count-full span.active"
+            index: 0
+            icon: mdi:tree
+            value_template: &level >-
+              {{ {'L': 'Low', 'M': 'Moderate', 'H': 'High', 'E': 'Extreme'}
+                 .get(value.split('=')[0] | trim, value | trim) }}
+          - name: Atlanta grass pollen level
+            unique_id: atlanta_allergy_grass_level
+            select: ".widget-pollen-count-full span.active"
+            index: 1
+            icon: mdi:grass
+            value_template: *level
+          - name: Atlanta weed pollen level
+            unique_id: atlanta_allergy_weed_level
+            select: ".widget-pollen-count-full span.active"
+            index: 2
+            icon: mdi:flower-pollen
+            value_template: *level
+
+          # ---- Per-category counts, recovered from the gauge needle ---------
+          # The page prints only the combined total, but each gauge positions its
+          # needle by an exact linear interpolation within the active band, so the
+          # underlying per-category count is recoverable. Each of the four bands
+          # occupies 25% of the bar, so for a needle at p% in band s = p // 25:
+          #
+          #     count = lo[s] + (p - 25s) / 25 * (lo[s+1] - lo[s])
+          #
+          # Verified against three days spanning three different bands: on
+          # 2026-03-20 trees read 52.712765957447% -> 243, grass 0% -> 0, weeds
+          # 5% -> 2, summing to the published total of 245. Same on 2026-09-01
+          # (5 + 1 + 7 = 13). If these three ever stop summing to
+          # sensor.atlanta_pollen_total, the site has changed its gauge and these
+          # four sensors are the ones to delete.
+          #
+          # The top band is open-ended ("E=1500+") and the needle saturates at
+          # 99%, so no count can be derived there -- the availability template
+          # takes the sensor unavailable rather than inventing a number. The
+          # level sensor above still reads "Extreme", and the total is unaffected.
+          - name: Atlanta tree pollen
+            unique_id: atlanta_allergy_tree_count
+            select: ".widget-pollen-count-full .needle"
+            index: 0
+            attribute: style
+            unit_of_measurement: "p/m³"
+            state_class: measurement
+            icon: mdi:tree
+            availability: &needle_ok >-
+              {% set p = (value | replace('%', '')).split(':')[-1] | float(-1) %}
+              {{ 0 <= p < 75 }}
+            value_template: >-
+              {% set bounds = [0, 15, 90, 1500] %}
+              {% set p = (value | replace('%', '')).split(':')[-1] | float %}
+              {% set s = (p / 25) | int %}
+              {{ (bounds[s] + (p - 25 * s) / 25 * (bounds[s + 1] - bounds[s])) | round | int }}
+          - name: Atlanta grass pollen
+            unique_id: atlanta_allergy_grass_count
+            select: ".widget-pollen-count-full .needle"
+            index: 1
+            attribute: style
+            unit_of_measurement: "p/m³"
+            state_class: measurement
+            icon: mdi:grass
+            availability: *needle_ok
+            value_template: >-
+              {% set bounds = [0, 5, 20, 200] %}
+              {% set p = (value | replace('%', '')).split(':')[-1] | float %}
+              {% set s = (p / 25) | int %}
+              {{ (bounds[s] + (p - 25 * s) / 25 * (bounds[s + 1] - bounds[s])) | round | int }}
+          - name: Atlanta weed pollen
+            unique_id: atlanta_allergy_weed_count
+            select: ".widget-pollen-count-full .needle"
+            index: 2
+            attribute: style
+            unit_of_measurement: "p/m³"
+            state_class: measurement
+            icon: mdi:flower-pollen
+            availability: *needle_ok
+            value_template: >-
+              {% set bounds = [0, 10, 50, 500] %}
+              {% set p = (value | replace('%', '')).split(':')[-1] | float %}
+              {% set s = (p / 25) | int %}
+              {{ (bounds[s] + (p - 25 * s) / 25 * (bounds[s + 1] - bounds[s])) | round | int }}
+
+          # ---- Which plants are actually driving it -------------------------
+          # The half of the page a hay fever sufferer actually reads, and the one
+          # thing no forecast API provides.
+          - name: Atlanta tree pollen contributors
+            unique_id: atlanta_allergy_tree_contributors
+            select: ".widget-pollen-count-full .gauge p"
+            index: 0
+            icon: mdi:tree
+            value_template: &contrib "{{ value | trim | title }}"
+          - name: Atlanta grass pollen contributors
+            unique_id: atlanta_allergy_grass_contributors
+            select: ".widget-pollen-count-full .gauge p"
+            index: 1
+            icon: mdi:grass
+            value_template: *contrib
+          - name: Atlanta weed pollen contributors
+            unique_id: atlanta_allergy_weed_contributors
+            select: ".widget-pollen-count-full .gauge p"
+            index: 2
+            icon: mdi:flower-pollen
+            value_template: *contrib

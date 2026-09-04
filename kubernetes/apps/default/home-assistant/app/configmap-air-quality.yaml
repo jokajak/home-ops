@@ -1,0 +1,141 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-air-quality
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/packages/air-quality.yaml, picked up by the existing
+  # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
+  #
+  # `lovelace:` is a plain dict-schema integration, so it merges out of a package
+  # like any other. That is what keeps the dashboard itself in Git rather than in
+  # .storage: the panel is registered here and its cards live in the second key
+  # below. Nothing else in this repo may define a top-level `lovelace:` key --
+  # two of them would collide on merge.
+  #
+  # The dashboard slug MUST contain a hyphen; Lovelace rejects single-word url
+  # paths for anything but the built-in `lovelace` dashboard.
+  # ---------------------------------------------------------------------------
+  air-quality.yaml: |
+    lovelace:
+      dashboards:
+        air-quality:
+          mode: yaml
+          filename: dashboards/air-quality.yaml
+          title: Air Quality
+          icon: mdi:flower-pollen
+          show_in_sidebar: true
+          require_admin: false
+
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/dashboards/air-quality.yaml -- the panel itself.
+  #
+  # Entities come from the Atlanta Allergy scrape package (configmap-pollen.yaml),
+  # which reads the NAB-certified counting station directly. Nothing here needs a
+  # paid API key, and nothing goes unavailable except on days the station does not
+  # publish -- weekends and holidays -- when every card greys out together.
+  # ---------------------------------------------------------------------------
+  dashboard.yaml: |
+    views:
+      - title: Pollen & Mold
+        path: pollen
+        icon: mdi:flower-pollen
+        type: sections
+        max_columns: 3
+        sections:
+          - type: grid
+            cards:
+              - type: heading
+                heading: Today
+                heading_style: title
+                icon: mdi:calendar-today
+              - type: tile
+                entity: sensor.atlanta_pollen_total
+                name: Total pollen
+                icon: mdi:flower-pollen
+              # Mold is a band, not a number -- the station publishes activity
+              # level only, so there is no count to show here.
+              - type: tile
+                entity: sensor.atlanta_mold_activity
+                name: Mold activity
+                icon: mdi:mushroom
+              # Guards against reading a stale count as today's. On a Monday
+              # before the new count is posted this still says Friday.
+              - type: tile
+                entity: sensor.atlanta_pollen_reading_date
+                name: Counted for
+                icon: mdi:calendar-check
+
+          - type: grid
+            cards:
+              - type: heading
+                heading: By type
+                heading_style: title
+                icon: mdi:chart-bar
+              # The count tiles go unavailable in the top band, where the gauge
+              # the count is recovered from saturates; the level below always
+              # reads, and on those days the total is essentially this number.
+              - type: tile
+                entity: sensor.atlanta_tree_pollen
+                name: Trees
+                icon: mdi:tree
+              - type: tile
+                entity: sensor.atlanta_grass_pollen
+                name: Grass
+                icon: mdi:grass
+              - type: tile
+                entity: sensor.atlanta_weed_pollen
+                name: Weeds
+                icon: mdi:flower-pollen
+
+          - type: grid
+            cards:
+              - type: heading
+                heading: What is in the air
+                heading_style: title
+                icon: mdi:leaf
+              # The half of the station's report no forecast API provides: which
+              # plants the count is actually made of.
+              - type: entities
+                entities:
+                  - entity: sensor.atlanta_tree_pollen_level
+                    name: Trees
+                  - entity: sensor.atlanta_tree_pollen_contributors
+                    name: "  from"
+                  - type: divider
+                  - entity: sensor.atlanta_grass_pollen_level
+                    name: Grass
+                  - entity: sensor.atlanta_grass_pollen_contributors
+                    name: "  from"
+                  - type: divider
+                  - entity: sensor.atlanta_weed_pollen_level
+                    name: Weeds
+                  - entity: sensor.atlanta_weed_pollen_contributors
+                    name: "  from"
+
+          - type: grid
+            column_span: 2
+            cards:
+              - type: heading
+                heading: Trend
+                heading_style: title
+                icon: mdi:chart-line
+              # 30 days is what the recorder keeps, and enough to watch a season
+              # turn over. The y-axis is dominated by trees in spring.
+              - type: history-graph
+                hours_to_show: 720
+                title: Last 30 days
+                entities:
+                  - entity: sensor.atlanta_pollen_total
+                    name: Total
+                  - entity: sensor.atlanta_tree_pollen
+                    name: Trees
+                  - entity: sensor.atlanta_grass_pollen
+                    name: Grass
+                  - entity: sensor.atlanta_weed_pollen
+                    name: Weeds

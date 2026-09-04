@@ -132,6 +132,39 @@ spec:
           - path: /config/packages/recorder.yaml
             subPath: recorder.yaml
             readOnly: true
+      # MQTT entities for the 319.5 MHz Interlogix security sensors received by
+      # rtl-433 in the home-automation namespace. Entities only -- the broker
+      # connection itself is a UI-created config entry, see the ConfigMap.
+      rtl433-config:
+        type: configMap
+        name: home-assistant-rtl433
+        globalMounts:
+          - path: /config/packages/rtl433.yaml
+            subPath: rtl433.yaml
+            readOnly: true
+      # Scrape sensors for the Atlanta Allergy & Asthma counting station -- the
+      # data behind the panel below.
+      pollen-config:
+        type: configMap
+        name: home-assistant-pollen
+        globalMounts:
+          - path: /config/packages/pollen.yaml
+            subPath: pollen.yaml
+            readOnly: true
+      # Pollen/mold panel. Two mounts off one ConfigMap: the package registers the
+      # dashboard with Lovelace, the dashboard file holds the cards. Both have to
+      # be on disk before HA starts -- a YAML dashboard is read at setup, not on
+      # demand -- so neither can live in .storage.
+      air-quality-config:
+        type: configMap
+        name: home-assistant-air-quality
+        globalMounts:
+          - path: /config/packages/air-quality.yaml
+            subPath: air-quality.yaml
+            readOnly: true
+          - path: /config/dashboards/air-quality.yaml
+            subPath: dashboard.yaml
+            readOnly: true
       # Ephemeral by design -- a fresh venv every pod start is the whole point.
       venv:
         type: emptyDir

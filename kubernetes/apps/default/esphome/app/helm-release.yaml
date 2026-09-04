@@ -35,7 +35,7 @@ spec:
           app:
             image:
               repository: ghcr.io/esphome/esphome
-              tag: 2026.8.0
+              tag: 2026.8.1
             env:
               ESPHOME_DASHBOARD_USE_PING: true
             resources:
@@ -43,7 +43,7 @@ spec:
                 memory: 500Mi
                 cpu: 5m
               limits:
-                memory: 1Gi
+                memory: 2Gi
     service:
       app:
         controller: app
