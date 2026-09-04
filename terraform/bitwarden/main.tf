@@ -550,141 +550,54 @@ resource "bitwarden_item_login" "meridian" {
 }
 
 ################################################################################
-# Per-agent LiteLLM virtual keys
+# Open WebUI's LiteLLM virtual key
 ################################################################################
-# These are the one credential in the platform with a genuine chicken-and-egg:
-# LiteLLM mints them, so they cannot exist until LiteLLM is running — but the
-# agents' ExternalSecrets reference them, and ESO has NO per-key "optional".
-# One unresolvable data[] entry and the whole target Secret is never created,
-# so the agents would sit unschedulable waiting for a key that cannot be
-# minted yet.
+# The one credential in the platform with a genuine chicken-and-egg: LiteLLM
+# mints it, so it cannot exist until LiteLLM is running — but Open WebUI's
+# ExternalSecret references it, and ESO has NO per-key "optional". One
+# unresolvable data[] entry and the whole target Secret is never created, so
+# Open WebUI would sit waiting for a key that cannot be minted yet.
 #
 # So terraform owns the ITEM and the human owns the VALUE. The item is created
-# with a `replace-me` sentinel, which lets ESO resolve and every workload
-# reconcile;
-# the agents come up and fail at conversation time with an auth error instead
-# of failing to exist. `ignore_changes` is what makes it eventually consistent:
-# paste the real key into Bitwarden and no later apply will revert it.
+# with a `replace-me` sentinel, which lets ESO resolve and the workload
+# reconcile; Open WebUI comes up and fails at conversation time with an auth
+# error instead of failing to exist. `ignore_changes` is what makes it
+# eventually consistent: paste the real key into Bitwarden and no later apply
+# will revert it.
 #
 # ⚠️ EDIT the litellm_api_key field, never DELETE it. A missing property fails
-# the whole ExternalSecret and takes the agent down with it — which is also why
-# the sentinel is a real string rather than "".
+# the whole ExternalSecret and takes Open WebUI down with it — which is also
+# why the sentinel is a real string rather than "".
 #
-# Mint them at https://llm.<domain> once LiteLLM is up — one per person, so
-# spend is attributable and either can be revoked without touching the other.
+# Mint it at https://llm.<domain> once LiteLLM is up. A virtual key rather than
+# the master key so the household's spend on chat is attributable and capped on
+# its own budget.
+#
+# Replaced the per-agent `hermes josh` / `hermes partner` keys and the two
+# `hermes * gateway` API-server tokens, all removed with the agents on
+# 2026-09-04. Delete those four items from Bitwarden by hand; terraform will
+# not, because it no longer knows they exist.
 
-resource "bitwarden_item_login" "hermes_josh" {
+resource "bitwarden_item_login" "open_webui_litellm" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
 
-  name  = "hermes josh"
-  notes = "Josh's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted over the replace-me sentinel in litellm_api_key."
+  name  = "open-webui litellm"
+  notes = "Open WebUI's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted over the replace-me sentinel in litellm_api_key."
 
   field {
     name = "litellm_api_key"
     # NOT empty. An empty hidden field is dropped rather than stored, which
-    # left the item with no litellm_api_key property at all — and a MISSING
-    # property fails the whole ExternalSecret, the exact blocking failure this
-    # resource exists to avoid. A sentinel value persists, so ESO always
-    # resolves and the agent starts; LiteLLM rejects it as an unknown key, so
-    # the agent runs and cannot answer until a real key replaces it.
+    # would leave the item with no litellm_api_key property at all — and a
+    # MISSING property fails the whole ExternalSecret, the exact blocking
+    # failure this resource exists to avoid.
     hidden = "replace-me"
   }
 
   lifecycle {
-    # Terraform creates this once and then never looks at the values again,
-    # so a pasted key survives every subsequent apply.
+    # Terraform creates this once and then never looks at the value again, so a
+    # pasted key survives every subsequent apply.
     ignore_changes = [field]
-  }
-}
-
-resource "bitwarden_item_login" "hermes_partner" {
-  organization_id = var.terraform_organization
-  collection_ids  = [var.collection_id]
-
-  name  = "hermes partner"
-  notes = "The partner's LiteLLM virtual key. Minted in the LiteLLM admin UI, then pasted over the replace-me sentinel in litellm_api_key."
-
-  field {
-    name = "litellm_api_key"
-    # NOT empty. An empty hidden field is dropped rather than stored, which
-    # left the item with no litellm_api_key property at all — and a MISSING
-    # property fails the whole ExternalSecret, the exact blocking failure this
-    # resource exists to avoid. A sentinel value persists, so ESO always
-    # resolves and the agent starts; LiteLLM rejects it as an unknown key, so
-    # the agent runs and cannot answer until a real key replaces it.
-    hidden = "replace-me"
-  }
-
-  lifecycle {
-    ignore_changes = [field]
-  }
-}
-
-## -----------------------------------------------------------------------------
-## Hermes gateway API key + Open WebUI session key
-##
-## Open WebUI talks to Josh's agent through Hermes' OpenAI-compatible API
-## server. That listener does not open at all unless API_SERVER_KEY is at least
-## 16 characters, so this is a real gate rather than a formality — and since the
-## bearer token is the only thing between a caller and a full agent session with
-## Josh's private memory, it is generated rather than typed. A
-## CiliumNetworkPolicy restricts who can reach the port at all; see
-## kubernetes/apps/ai/hermes-josh/app/networkpolicy.yaml.
-##
-## Both sides read the SAME Bitwarden field — the agent as API_SERVER_KEY, Open
-## WebUI as OPENAI_API_KEY — so they cannot drift apart.
-##
-## A separate item rather than a new field on "hermes josh": that one carries
-## lifecycle { ignore_changes = [field] } so a hand-pasted LiteLLM key survives
-## every apply, which also means a field added to it now would never be written.
-## -----------------------------------------------------------------------------
-
-resource "random_password" "hermes_josh_api_server_key" {
-  length  = 48
-  special = false
-}
-
-resource "bitwarden_item_login" "hermes_josh_gateway" {
-  organization_id = var.terraform_organization
-  collection_ids  = [var.collection_id]
-
-  name  = "hermes josh gateway"
-  notes = "Bearer token for Josh's Hermes API server, shared with Open WebUI. Rotating it is safe: both consumers read this field and restart on change."
-
-  field {
-    name    = "terraform managed"
-    boolean = true
-  }
-
-  field {
-    name   = "api_server_key"
-    hidden = random_password.hermes_josh_api_server_key.result
-  }
-}
-
-## Partner's counterpart to hermes_josh_gateway above — same rationale, same
-## Open WebUI multi-model wiring (kubernetes/apps/ai/open-webui).
-resource "random_password" "hermes_partner_api_server_key" {
-  length  = 48
-  special = false
-}
-
-resource "bitwarden_item_login" "hermes_partner_gateway" {
-  organization_id = var.terraform_organization
-  collection_ids  = [var.collection_id]
-
-  name  = "hermes partner gateway"
-  notes = "Bearer token for Partner's Hermes API server, shared with Open WebUI. Rotating it is safe: both consumers read this field and restart on change."
-
-  field {
-    name    = "terraform managed"
-    boolean = true
-  }
-
-  field {
-    name   = "api_server_key"
-    hidden = random_password.hermes_partner_api_server_key.result
   }
 }
 
@@ -702,7 +615,7 @@ resource "bitwarden_item_login" "open_webui" {
   notes = "Signs Open WebUI session cookies. Rotating it logs everyone out and destroys nothing."
 
   uri {
-    value = "https://josh-chat.${local.domain}"
+    value = "https://chat.${local.domain}"
     match = "host"
   }
 

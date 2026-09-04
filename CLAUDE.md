@@ -1,6 +1,8 @@
 # CLAUDE.md
 
-Guidance for Claude (and other AI agents) working in this repository.
+Guidance for Claude (and other AI agents) working in this repository. `AGENTS.md` is a
+symlink to this file, so agents that look for that name read the same instructions — edit
+this file, never the symlink.
 
 ## What this repo is
 
@@ -25,6 +27,21 @@ lives in version control and is reconciled by machines, via two complementary en
 
 When something can't yet be expressed as code, treat that as a gap to close, and call it out
 rather than papering over it with a manual step.
+
+**Exception — steps that only ever happen once or twice.** The rule is aimed at what recurs:
+anything reconciled continuously, rebuilt from scratch, or repeated on every deploy. A step
+taken once or twice in the life of a component is not a gap and does not need machinery built
+around it — an interactive OAuth device-code login, a first-boot bootstrap, a one-time data
+migration, a single grant in an app's own admin UI. Existing examples: logging LiteLLM into the
+ChatGPT subscription, and pasting a LiteLLM-minted virtual key into Bitwarden. Don't invent a
+controller, a Job, or a sync loop to make those declarative; write the step down where the next
+person will look for it — the owner-steps section of the plan doc, or a comment on the
+HelmRelease it belongs to — and move on. If it turns out to be happening a third time, that is
+the signal to automate it.
+
+This exception is about automation effort only. It does not relax the secrets or network-details
+rules below: a one-off step still never justifies committing a real secret value, IP, or
+hostname.
 
 The pieces:
 

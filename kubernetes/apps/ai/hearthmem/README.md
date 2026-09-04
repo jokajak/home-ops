@@ -4,11 +4,20 @@
 `ghcr.io/jokajak/hearthmem:0.1.0` and its Helm chart, so this is wired into
 `kubernetes/apps/ai/kustomization.yaml` and deployed like any other app here.
 
+## ⚠️ Currently has no consumers
+
+Its only clients were the two Hermes agents' `shared-memory` skill, and those were removed on
+2026-09-04. Nothing reads or writes this service today. It is left deployed — the data is small,
+the volume is backed up, and markdown-in-git is inspectable in a way a vector table is not — while
+it is decided whether it becomes the store of record behind Open WebUI or is retired. Retiring it
+means dropping `./hearthmem/ks.yaml` from `kubernetes/apps/ai/kustomization.yaml`, which prunes
+the PVC.
+
 ## Bootstrapping the household store
 
-The service itself has no built-in stores. Once the pod is up, create the shared one from
-either agent: `hearthmem create family "shared household memory"` — then give the token it
-prints to the other person so their agent can `hearthmem add family <token>`.
+The service itself has no built-in stores. A store is created by whatever client holds the
+token — historically `hearthmem create family "shared household memory"` from an agent, which
+printed a token the other person's agent joined with via `hearthmem add family <token>`.
 
 Renovate tracks `ghcr.io/jokajak/hearthmem` tags for future bumps the same as any other image
 in this repo.

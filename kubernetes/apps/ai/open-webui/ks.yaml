@@ -30,4 +30,4 @@ spec:
     - name: cluster-apps-external-secrets
     - name: cluster-apps-external-secrets-bitwarden
     # Its only backend. wait:false there, so this is ordering, not a gate.
-    - name: cluster-apps-hermes-josh
+    - name: cluster-apps-litellm

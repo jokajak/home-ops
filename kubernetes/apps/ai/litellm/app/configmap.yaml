@@ -31,11 +31,11 @@ data:
     #
     # When a 5.6 entry appears there, swap the gpt-5.4 alias below to it.
     model_list:
-      # Main conversational model for both household agents.
+      # Main conversational model for the household assistant.
       - model_name: gpt-5.4
         model_info:
           # The subscription backend is native to the Responses API; LiteLLM
-          # bridges Chat Completions onto it, which is what Hermes speaks.
+          # bridges Chat Completions onto it, which is what Open WebUI speaks.
           mode: responses
         litellm_params:
           model: chatgpt/gpt-5.4
@@ -73,7 +73,7 @@ data:
     litellm_settings:
       # Load-bearing here, not just tidiness: the ChatGPT subscription backend
       # REJECTS max_tokens / max_output_tokens / max_completion_tokens and
-      # metadata. Hermes sends some of those, so without this the requests fail.
+      # metadata. Clients send some of those, so without this requests fail.
       drop_params: true
       num_retries: 2
       # Agent turns with large tool payloads are slow; the default is too tight.

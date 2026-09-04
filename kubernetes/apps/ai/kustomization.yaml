@@ -5,19 +5,15 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   # The household's inference router: one subscription, one virtual key per
-  # agent. Both agents depend on it.
+  # consumer. Open WebUI depends on it.
   - ./litellm/ks.yaml
-  # One agent per person — separate process, separate volume, separate memory.
-  # Neither has a hostname of its own; both sit behind hearthai.
-  - ./hermes-josh/ks.yaml
-  - ./hermes-partner/ks.yaml
-  # The household door: one URL, routed to your agent by who you logged in as.
-  - ./hearthai/ks.yaml
   # Claude-subscription bridge. Inert until logged in; see its HelmRelease.
   - ./meridian/ks.yaml
-  # A chat front end onto Josh's agent, at josh-chat. A TRIAL, wired to one
-  # agent only — see its HelmRelease for why it is not in front of both.
+  # The household assistant, at chat.<domain>. Talks to litellm directly; the
+  # per-person Hermes agents it used to front were removed 2026-09-04, see
+  # docs/plans/2026-08-24-hermes-household-agents.md.
   - ./open-webui/ks.yaml
-  # The shared-memory store both agents read and write. Was staged pending an
-  # image; jokajak/hearthai v0.1.0 published ghcr.io/jokajak/hearthmem.
+  # The hearthai shared-memory store. Its consumers were the Hermes agents'
+  # shared-memory skill, so it currently has none — kept while its future as a
+  # store of record is decided; see kubernetes/apps/ai/hearthmem/README.md.
   - ./hearthmem/ks.yaml

@@ -36,24 +36,27 @@ external-secrets.
 ## Terraform owns the item, you own the value
 
 A third category, for credentials that only a human can produce but that something else *blocks
-on*. `hermes josh` and `hermes partner` hold LiteLLM virtual keys, which cannot exist until
-LiteLLM is running, because LiteLLM mints them.
+on*. `open-webui litellm` holds a LiteLLM virtual key, which cannot exist until LiteLLM is
+running, because LiteLLM mints it.
 
 That ordering used to be a deadlock. **external-secrets has no per-key "optional"**: if a single
-`data[]` entry cannot resolve, the target Secret is never created at all, so an agent waiting on
+`data[]` entry cannot resolve, the target Secret is never created at all, so a workload waiting on
 an unmintable key could not even start.
 
-So terraform creates these two items with a `replace-me` sentinel in
-`litellm_api_key`, and `lifecycle { ignore_changes = [field] }` means it never looks at the
-value again. Everything
-reconciles from the first apply; the agents run and return auth errors until real keys arrive;
-pasting a key in is permanent.
+So terraform creates the item with a `replace-me` sentinel in `litellm_api_key`, and
+`lifecycle { ignore_changes = [field] }` means it never looks at the value again. Everything
+reconciles from the first apply; Open WebUI runs and returns auth errors until a real key
+arrives; pasting a key in is permanent.
 
 ⚠️ **Edit that field, never delete it.** A *missing* property fails the whole ExternalSecret and
-takes the agent down with it — which is also why the sentinel is a real string. An empty `hidden`
+takes Open WebUI down with it — which is also why the sentinel is a real string. An empty `hidden`
 field is dropped rather than stored, so `""` left the item with no property at all and reproduced
 exactly the failure it was meant to prevent.
 
 Order of operations: `tofu apply` → deploy LiteLLM → log in at `llm.<domain>` → mint a virtual key
-per agent (a monthly budget on each is the point of having two) → paste each into its item. The
-agents are up and reconciled the whole way through.
+(give it a monthly budget) → paste it into the item. Open WebUI is up and reconciled the whole way
+through.
+
+Retired 2026-09-04 with the Hermes agents: `hermes josh`, `hermes partner`,
+`hermes josh gateway`, `hermes partner gateway`. Terraform no longer manages them, so it will not
+remove them either — delete those four items in Bitwarden by hand.

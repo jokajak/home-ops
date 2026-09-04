@@ -1,6 +1,20 @@
 # Hermes household agents + hearthai shared memory
 
-> Status: **PHASE 1 BUILT, NOT YET RECONCILED** · 2026-08-24 · Owner: Josh · Author: Claude
+> Status: **SUPERSEDED — the agents were removed 2026-09-04** · 2026-08-24 · Owner: Josh ·
+> Author: Claude
+>
+> Kept as the record of what was built and why; nothing below still runs. Open WebUI is now the
+> assistant itself rather than a surface onto per-person agents, talking to LiteLLM directly.
+> What decided it: Open WebUI turns out to have the autonomy the agents were kept for —
+> scheduled automations on a background worker, sub-agents, tool servers and per-user memory
+> scoped to the Authentik identity — so running an agent process per person bought isolation
+> the household did not want to pay for. LiteLLM, meridian and hearthmem survive; D1 (two
+> containers, not two profiles), D4 (one door, routed by identity) and D5 (config seeded, not
+> enforced) are moot. D2 and D3 still describe how inference and storage work here.
+>
+> ⚠️ **Removing this pruned `hermes-josh-data` and `hermes-partner-data`, and with them
+> everything both agents remembered.** VolSync restic snapshots in MinIO outlive the
+> ReplicationSources until their retention expires; that window is the only way back.
 >
 > First real implementation of the [`docs/ai-platform/`](../ai-platform/README.md) brainstorm.
 > Two [Hermes](https://github.com/NousResearch/hermes-agent) agents — one for Josh, one for his
