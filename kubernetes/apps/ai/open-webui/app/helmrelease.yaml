@@ -1,21 +1,19 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
 #
-# Open WebUI as a phone-friendly front end onto both household Hermes agents —
-# the "one door" at chat.<domain> (docs/plans/2026-08-24-hermes-household-agents.md).
-# Each agent's own dashboard at josh-hermes.<domain> / partner-hermes.<domain>
-# remains available too; this is just a second, nicer surface onto the same
-# agents.
+# Open WebUI is the household assistant, at chat.<domain> — the whole of it, not
+# a front end onto something else. The per-person Hermes agents it used to
+# front were removed 2026-09-04; see the superseded note at the top of
+# docs/plans/2026-08-24-hermes-household-agents.md for why.
 #
-# Both agents appear as separate models (OPENAI_API_BASE_URLS below); who can
-# see which model is a manual grant in Open WebUI's own admin UI (Workspace >
-# Models > Visibility), not something wired through Authentik group claims.
+# The backend is litellm, which is what it was built for (D2 in that plan): one
+# ChatGPT subscription, one virtual key per consumer, and swapping in a local
+# model later is an entry in litellm's model_list rather than a migration here.
 #
-# The backend is the AGENT, not litellm. Hermes' API server is "a Hermes agent
-# runtime, not a pure LLM proxy" — each request spawns a server-side AIAgent, so
-# a chat here gets the same memory, skills and background learning the dashboard
-# gets. Pointing this at litellm instead would produce a chat UI with no session
-# and no memory, which is a different product.
+# Memory now belongs to Open WebUI rather than to a per-person agent process:
+# memories are scoped to the signed-in Authentik user, so identity is a column
+# rather than a routing convention. The model picker names MODELS again, not
+# people.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -74,22 +72,19 @@ spec:
               # Required before OAuth will engage, and used to build callback
               # URLs.
               WEBUI_URL: "https://chat.${SECRET_DOMAIN:=internal}"
-              # The agents are the backend. /v1 on each Hermes API server is
-              # OpenAI-compatible, so no adapter is needed. Order here MUST
-              # match OPENAI_API_KEYS' order in open-webui-secret.
-              OPENAI_API_BASE_URLS: "http://hermes-josh.ai.svc.cluster.local:8642/v1;http://hermes-partner.ai.svc.cluster.local:8642/v1"
-              # Each agent runs under its own named profile, so /v1/models
-              # advertises "josh" / "partner" rather than the default
-              # "hermes-agent" alias — that is what keeps the two distinct in
-              # the model picker.
+              # litellm is the backend, and the only one. Its /v1 is
+              # OpenAI-compatible, so no adapter is needed; which upstream
+              # actually answers is litellm's decision (see its configmap).
+              # A single URL, so OPENAI_API_KEYS in open-webui-secret carries a
+              # single virtual key rather than a ";"-joined list.
+              OPENAI_API_BASE_URLS: "http://litellm.ai.svc.cluster.local:4000/v1"
               # Nothing here speaks Ollama; leaving it on costs a failing health
               # check every refresh.
               ENABLE_OLLAMA_API: "false"
               # Authentik is the only way in. No local password accounts exist
-              # to fall back on — the Authentik application's policy binding
-              # (to the household group) decides who can sign in at all; which
-              # model(s) a signed-in user can then see is a separate, manual
-              # grant in Open WebUI's own admin UI.
+              # to fall back on — the Authentik application's policy bindings
+              # (terraform/authentik/application_openwebui.tf) decide who can
+              # sign in at all.
               ENABLE_SIGNUP: "false"
               ENABLE_LOGIN_FORM: "false"
               ENABLE_OAUTH_SIGNUP: "true"
@@ -156,11 +151,9 @@ spec:
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
           nginx.ingress.kubernetes.io/proxy-buffering: "off"
         hosts:
-          # The one door (docs/plans/2026-08-24-hermes-household-agents.md).
-          # hearthai used to own this host as a group-based reverse proxy;
-          # that design hit an upstream OIDC bug and was superseded, and this
-          # ingress replaces it. Each agent's own dashboard stays reachable
-          # separately at josh-hermes.<domain> / partner-hermes.<domain>.
+          # The one door. Two earlier designs owned this host and are gone:
+          # hearthai's group-routing reverse proxy (an upstream OIDC bug), then
+          # the two Hermes dashboards behind it. Nothing else serves chat now.
           - host: &host "chat.${SECRET_DOMAIN:=internal}"
             paths:
               - path: /

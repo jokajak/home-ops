@@ -27,7 +27,22 @@
   question 4 by elimination: no messaging platform is available to this household. Voice,
   ambient and mobile remain unbuilt. _(Josh)_
 
-> Implementation: [`docs/plans/2026-08-24-hermes-household-agents.md`](../plans/2026-08-24-hermes-household-agents.md).
+- **2026-09-04 — Substrate is Open WebUI; Hermes is out.** Reverses the 2026-08-24 substrate
+  decision after two weeks. Open WebUI has the autonomy the agents were kept for — scheduled
+  automations run by a background worker, sub-agents, OpenAPI/MCP tool servers, and memory
+  scoped per signed-in user — so one shared application replaces two agent processes, and
+  identity stops being "which model did you pick". _(Josh)_
+- **2026-09-04 — Structural separation is not worth its cost.** Per-person process, volume and
+  home-directory isolation was what made "a private store is private" structural rather than
+  policy. The household does not want it at that price, which is what made the decision above
+  possible. hearthai's first non-negotiable no longer holds here; say so rather than pretending
+  otherwise. _(Josh)_
+- **2026-09-04 — hearthai becomes the extension repo, not the runtime.** Plugins, tools and the
+  memory-extraction loop are built there and reach Open WebUI over HTTP, so home-ops holds
+  wiring rather than logic. _(Josh)_
+
+> Implementation: [`docs/plans/2026-08-24-hermes-household-agents.md`](../plans/2026-08-24-hermes-household-agents.md)
+> (superseded — describes what was removed on 2026-09-04).
 
 ## ❓ Open questions (the forks that change everything)
 
@@ -41,10 +56,11 @@
    hardware that could serve a tool-calling model locally.
 4. ~~**Primary surface**~~ — answered 2026-08-24 (web dashboard). "Reachable where you already
    are" is still unmet; that was hearthai's second goal.
-5. **Autonomy** — how proactive by default? Where's the line between suggest and act?
-   Deliberately unanswered: both agents only respond. Hermes' cron scheduler could change that
-   the day we know what proactivity should be licensed by.
-6. ~~**Substrate**~~ — answered 2026-08-24 (Hermes).
+5. **Autonomy** — how proactive by default? Where's the line between suggest and act? Still
+   unanswered, and now urgent rather than theoretical: Open WebUI's scheduled automations run
+   unattended **with full tool approval**, so the question is no longer "could we" but "what
+   licenses this run to act".
+6. ~~**Substrate**~~ — answered 2026-08-24 (Hermes), **reversed 2026-09-04** (Open WebUI).
 
 > Next step: live with it. 2 and 5 are the ones real use should answer, and the TELOS engine
 > (`00-telos.md`) is still a skeleton that nothing reads.

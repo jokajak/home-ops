@@ -31,8 +31,9 @@ locals {
     "Grafana Admins"  = authentik_group.grafana_admin.id
     "Grafana Editors" = authentik_group.grafana_editors.id
     "Grafana Viewers" = authentik_group.grafana_viewers.id
-    # One member each — these groups are the access boundary on the household
-    # agents' dashboards (see application_hermes.tf).
+    # One member each — these groups decide who may sign in to Open WebUI
+    # (see application_openwebui.tf). Named for the Hermes agents they were
+    # created for; renaming them means editing users.sops.yaml too.
     "Hermes Josh"    = authentik_group.hermes_josh.id
     "Hermes Partner" = authentik_group.hermes_partner.id
   }

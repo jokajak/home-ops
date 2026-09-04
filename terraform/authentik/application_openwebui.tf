@@ -1,23 +1,35 @@
 ## -----------------------------------------------------------------------------
 ## Authentik Application - Open WebUI
 ##
-## The household's chat front end onto both Hermes agents, at
-## https://chat.<domain> (kubernetes/apps/ai/open-webui). Both agents are
-## wired in as separate model connections; which model a signed-in user can
-## see is a manual grant in Open WebUI's own admin UI, not an Authentik
-## concern.
+## The household assistant at https://chat.<domain>
+## (kubernetes/apps/ai/open-webui). Since the Hermes agents were removed
+## (2026-09-04) this is the only thing on that host, and the only OIDC
+## application in the ai namespace.
 ##
 ## The policy bindings below are who may sign in AT ALL — bound to each
-## person's own single-member group ("Hermes Josh" / "Hermes Partner"), OR'd
-## together via policy_engine_mode = "any". NOT bound to "Home": that group
-## is a display-only directory label (used elsewhere purely to categorize
-## apps in the launcher UI) and has no actual members, so binding access to
-## it locks everyone out — confirmed the hard way when this bound to "Home"
-## briefly and denied Josh his own login.
+## person's own single-member group, OR'd together via
+## policy_engine_mode = "any". NOT bound to "Home": that group is a
+## display-only directory label (used elsewhere purely to categorize apps in
+## the launcher UI) and has no actual members, so binding access to it locks
+## everyone out — confirmed the hard way when this bound to "Home" briefly and
+## denied Josh his own login. The groups still carry Hermes names; see
+## directory.tf for why renaming them is an owner step.
 ##
-## Unlike the agents' dashboards this is a CONFIDENTIAL client: Open WebUI runs
-## the code exchange server-side, so the secret is used rather than ignored.
+## A CONFIDENTIAL client: Open WebUI runs the code exchange server-side, so the
+## secret is used rather than ignored.
 ## -----------------------------------------------------------------------------
+
+## Providers default to signing_key = null, which Authentik signs as HS256 —
+## legitimately no public key to publish, so /jwks/ returns {}. Open WebUI's
+## OAuth client (Authlib) fetches JWKS unconditionally and errors ("Missing
+## expected key 'keys' in OAuth response") rather than falling back, so this
+## provider needs an explicit (RS256) signing key. Other providers in this repo
+## (e.g. grafana) are left alone — their clients tolerate the HS256 default.
+## Declared here because Open WebUI is now its only consumer; it lived in the
+## deleted application_hermes.tf before.
+data "authentik_certificate_key_pair" "default_signing" {
+  name = "authentik Self-signed Certificate"
+}
 
 module "openwebui_oidc_creds" {
   source          = "./oidc_creds"
@@ -33,16 +45,12 @@ resource "authentik_provider_oauth2" "openwebui" {
   client_secret = module.openwebui_oidc_creds.client_secret
   client_type   = "confidential"
 
-  # Providers default to signing_key = null (HS256, /jwks/ returns {}). Open
-  # WebUI's OAuth client (Authlib) fetches JWKS unconditionally and errors
-  # ("Missing expected key 'keys' in OAuth response") rather than falling
-  # back to HS256 — same failure mode as hermes-agent's OIDC client, same
-  # fix. See application_hermes.tf's data.authentik_certificate_key_pair.
+  # See the data source above.
   signing_key = data.authentik_certificate_key_pair.default_signing.id
 
-  # Explicit for the same reason as the Hermes providers: Authentik's model
-  # defaults grant_types to an empty list, and an /authorize with response_type
-  # code then fails as "Invalid grant_type for provider".
+  # grant_types has no useful default — Authentik's model defaults it to an
+  # empty list, and an /authorize with response_type code then fails as
+  # "Invalid grant_type for provider".
   grant_types = ["authorization_code", "refresh_token"]
 
   authorization_flow = resource.authentik_flow.provider-authorization-implicit-consent.uuid
