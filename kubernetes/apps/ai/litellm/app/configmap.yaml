@@ -16,48 +16,75 @@ metadata:
   namespace: ai
 data:
   config.yaml: |
-    # WHY 5.4 AND NOT 5.6: GPT-5.6 (Sol/Terra/Luna) is in the ChatGPT app on a
-    # paid plan, and LiteLLM supports it on the metered routes — openai/, azure/,
-    # bedrock_mantle/ all carry the family. The `chatgpt/` subscription-OAuth
-    # route does not: its price/context map has ten entries and stops at
-    # gpt-5.4-pro, on main as well as on the pinned release. Whether that is
-    # LiteLLM lagging or the OAuth backend not serving 5.6 is not visible from
-    # here; the app's model picker and the subscription API expose different
-    # sets. Re-check after a Renovate bump with:
+    # The `chatgpt/` provider is the CODEX backend, not chatgpt.com: it talks to
+    # https://chatgpt.com/backend-api/codex using Codex's client id, identifies
+    # as originator `codex_cli_rs`, and prepends the Codex CLI system prompt to
+    # every request. So the servable set is whatever Codex offers this
+    # subscription — not what the ChatGPT app's model picker shows.
     #
-    #   python3 -c "import json,urllib.request as u; \
-    #     d=json.load(u.urlopen('https://raw.githubusercontent.com/BerriAI/litellm/main/litellm/model_prices_and_context_window_backup.json')); \
-    #     print(sorted(k for k in d if k.startswith('chatgpt/')))"
+    # LiteLLM's price/context map does NOT gate availability: the responses
+    # transformation passes `model` straight through with no local validation,
+    # so a model absent from the map still works and merely reports zero cost.
+    # The map has no `chatgpt/` entries past gpt-5.4-pro and is not worth
+    # consulting for this. To see what this route can actually reach, run
+    # `/model` in the codex CLI — that list is authoritative.
     #
-    # When a 5.6 entry appears there, swap the gpt-5.4 alias below to it.
+    # Every entry sets mode: responses because the backend is native to the
+    # Responses API and LiteLLM bridges Chat Completions onto it, which is what
+    # Open WebUI speaks. Capability flags are set explicitly because LiteLLM
+    # carries no `chatgpt/`-prefixed metadata to infer them from.
     model_list:
-      # Main conversational model for the household assistant.
-      - model_name: gpt-5.4
-        model_info:
-          # The subscription backend is native to the Responses API; LiteLLM
-          # bridges Chat Completions onto it, which is what Open WebUI speaks.
-          mode: responses
-        litellm_params:
-          model: chatgpt/gpt-5.4
-      # Deeper reasoning, when an answer is worth waiting for.
-      - model_name: gpt-5.4-pro
+      # Most capable — complex, demanding work. Only model here that accepts
+      # reasoning_effort: max.
+      - model_name: gpt-6-astra
         model_info:
           mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
+          supports_max_reasoning_effort: true
         litellm_params:
-          model: chatgpt/gpt-5.4-pro
-      # Fast and cheap — auxiliary tasks: summarisation, context compression,
-      # session titles.
-      - model_name: gpt-5.3-instant
+          model: chatgpt/gpt-6-astra
+      # Reliable agentic workhorse — the everyday default.
+      - model_name: gpt-5.6-sol
         model_info:
           mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
         litellm_params:
-          model: chatgpt/gpt-5.3-instant
-      # Codex-tuned, for the agent's own tool-heavy and code-shaped work.
-      - model_name: gpt-5.3-codex
+          model: chatgpt/gpt-5.6-sol
+      # Balanced agentic coding — tool-heavy and code-shaped work.
+      - model_name: gpt-5.6-terra
         model_info:
           mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
         litellm_params:
-          model: chatgpt/gpt-5.3-codex
+          model: chatgpt/gpt-5.6-terra
+      # Fast and affordable — auxiliary tasks: summarisation, context
+      # compression, session titles.
+      - model_name: gpt-5.6-luna
+        model_info:
+          mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
+        litellm_params:
+          model: chatgpt/gpt-5.6-luna
+      # Previous generation, kept as a known-good fallback.
+      - model_name: gpt-5.5
+        model_info:
+          mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
+        litellm_params:
+          model: chatgpt/gpt-5.5
+      # Smallest and cheapest — simple, high-volume calls.
+      - model_name: gpt-5.4-mini
+        model_info:
+          mode: responses
+          supports_reasoning: true
+          supports_xhigh_reasoning_effort: true
+        litellm_params:
+          model: chatgpt/gpt-5.4-mini
 
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
