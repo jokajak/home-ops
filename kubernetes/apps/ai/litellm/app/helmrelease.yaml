@@ -64,9 +64,14 @@ spec:
           app:
             # The `-database` variant bundles Prisma and applies its own schema
             # migrations at startup, so no separate migration Job is needed.
+            # Plain version tag, not "-stable": BerriAI's -stable channel is
+            # stuck at v1.83.14 as of 2026-09, so this deliberately trades their
+            # extra testing pass for staying current. Renovate's default docker
+            # versioning has no suffix to lock to now, so it tracks future plain
+            # releases automatically.
             image:
               repository: ghcr.io/berriai/litellm-database
-              tag: v1.83.14-stable
+              tag: v1.99.1
             args: ["--config", "/config/config.yaml", "--port", "4000"]
             env:
               # DATABASE_URL is assembled in the ExternalSecret and arrives via
