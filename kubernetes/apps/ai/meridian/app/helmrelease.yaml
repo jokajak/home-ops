@@ -58,7 +58,7 @@ spec:
               # series — git is on v1.29.x while the registry is on 1.62.x.
               # Renovate follows the registry, which is what actually ships.
               repository: ghcr.io/rynfar/meridian
-              tag: 1.65.0
+              tag: 1.67.0
             env:
               TZ: "${TIMEZONE:=America/New_York}"
               # Reachable from other pods rather than container-loopback only.
