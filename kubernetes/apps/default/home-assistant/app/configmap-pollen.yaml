@@ -18,19 +18,39 @@ data:
   #
   # No API, so this scrapes the page. Two things make that acceptable rather than
   # merely expedient: robots.txt is `Disallow:` with an empty value (everything
-  # allowed), and the count is published once per weekday, so scan_interval is
-  # set to 4h -- six requests a day against a page a browser would fetch anyway.
-  # Do not lower it; there is nothing to gain, the number changes once.
+  # allowed), and the count is published once per weekday, so the poll is slow --
+  # 2h, twelve requests a day against a page a browser would fetch anyway. The
+  # only reason it is not slower is the 17:00 handover below: the interval bounds
+  # how long after 17:00 the day's new count takes to appear. Nothing is gained
+  # by going faster than that.
   #
-  # The bare /pollen_counts URL serves the current day, so no date templating is
-  # needed. On weekends and holidays the page says "There is no pollen data for
-  # <date>" and every selector below finds nothing; Scrape logs a warning and
-  # marks the sensor unavailable, which is the behaviour we want and costs
-  # nothing to arrange.
+  # Which day to ask for is the whole difficulty. The bare /pollen_counts URL
+  # serves *today*, and today's page reads "There is no pollen data for <date>"
+  # until the station posts -- which is not at a fixed hour (2026-09-01 was up by
+  # 10:23 ET; 2026-09-05 still was not by 13:30 ET). Pointed at the bare URL every
+  # sensor therefore sat unavailable through the whole morning, every morning,
+  # and all weekend. That is what "no data" looked like.
+  #
+  # So resource_template asks for the most recent weekday that is certain to have
+  # been posted: today once past 17:00 local, otherwise yesterday, then back off a
+  # weekend to Friday. ScrapeCoordinator re-renders this on every refresh with a
+  # full hass template render, so now() is available here.
+  #
+  # The cost is that the count reads one day old until 17:00. That is the right
+  # trade: the number covers the previous 24 hours either way, and
+  # sensor.atlanta_pollen_reading_date always says exactly which day is on screen.
+  # The remaining gap is public holidays, when the station skips a weekday and
+  # every sensor goes unavailable for a day -- see the plan doc.
   pollen.yaml: |
     scrape:
-      - resource: https://www.atlantaallergy.com/pollen_counts
-        scan_interval: "04:00:00"
+      - resource_template: >-
+          {%- set n = now() -%}
+          {%- set base = n if n.hour >= 17 else n - timedelta(days=1) -%}
+          {%- set w = base.weekday() -%}
+          {%- set back = 1 if w == 5 else (2 if w == 6 else 0) -%}
+          {%- set d = base - timedelta(days=back) -%}
+          https://www.atlantaallergy.com/pollen_counts/index/{{ d.strftime('%Y/%m/%d') }}
+        scan_interval: "02:00:00"
         sensor:
           # ---- The published headline number -------------------------------
           - name: Atlanta pollen total

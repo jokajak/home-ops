@@ -1,6 +1,6 @@
 # Home Assistant: a pollen & mold panel, shipped as code
 
-> Status: **STAGED** — on a branch, not yet merged or deployed · 2026-09-01 ·
+> Status: **DEPLOYED**, then fixed twice · 2026-09-01, revised 2026-09-05 ·
 > Owner: Josh · Author: Claude
 >
 > Small change, two shape decisions worth writing down: this is the first Lovelace
@@ -100,15 +100,32 @@ an extreme tree day the total *is* the tree count to within a rounding error (20
 total 3640, of which weeds contributed 2), so the fallback would add an entity and a failure
 mode to restate a number already on screen.
 
-### Weekends need no handling
+### Which day to ask for — the bug that made this ship broken
 
-On days the station does not publish, the page says "There is no pollen data for `<date>`" and
-the entire widget is absent. Every selector misses, Scrape logs a warning and marks each
-sensor unavailable, and the cards grey out together. That is the correct behaviour and it
-arrives for free — worth knowing so it is not mistaken for a break.
+The first version pointed at the bare `/pollen_counts`, which serves **today**, on the
+reasoning that weekends would simply mark the sensors unavailable and that this was correct
+behaviour arriving for free.
 
-The reading-date sensor exists for the adjacent failure: a count that loads fine but is
-yesterday's. It is the only way to tell from the dashboard.
+It was correct behaviour for the wrong question. Today's page reads "There is no pollen data
+for `<date>`" *until the station posts*, and posting is not at a fixed hour — 2026-09-01 was up
+by 10:23 ET, 2026-09-05 still was not by 13:30 ET. Pointed at today, every sensor sat
+unavailable through the whole morning on weekdays and the entire weekend. Deployed on a
+Tuesday, checked on a Saturday, it looked simply dead.
+
+`resource_template` now asks for the most recent weekday certain to have been posted: today
+once past 17:00 local, otherwise yesterday, then back off a weekend to Friday.
+`ScrapeCoordinator` re-renders it on every refresh with a full hass template render, so `now()`
+and `timedelta` are both available there — this does not work in a limited template
+environment, and `now()` is explicitly `limited_ok=False`.
+
+The cost is that the count reads one day old until 17:00. That is the right trade: the number
+covers the previous 24 hours either way, and the reading-date sensor always says exactly which
+day is on screen. `scan_interval` is 2h rather than 4h only because it bounds how long after
+17:00 the new count takes to appear.
+
+Verified end to end against the live site: the template resolves to a weekday with data at
+every hour across a full week, and the resolved page yields all 12 sensors with the three
+per-category counts summing to the published total.
 
 ### The dashboard is a YAML dashboard, registered from a package
 
@@ -123,13 +140,25 @@ integration with no platform list, so `merge_packages_config` merges it into the
 config like any other dict, which means the registration can live in a package ConfigMap
 alongside `recorder.yaml` and `rtl433.yaml` and the whole panel reconciles from Git.
 
-Two constraints this creates:
+Three constraints this creates, one of which was the second shipping bug:
 
 - **Nothing else in the repo may define a top-level `lovelace:` key.** Two packages declaring
   it would collide on merge. Future dashboards go in the `dashboards:` dict in this same file.
 - **The dashboard slug must contain a hyphen.** Lovelace's `_validate_url_slug` rejects
   single-word url paths for everything except the built-in `lovelace` dashboard, so the panel
   is `air-quality`, not `pollen`.
+- **The package *filename* must NOT contain a hyphen.** With `!include_dir_named`, the filename
+  becomes the package name, and `_validate_package_definition` runs it through `cv.slug`, which
+  rejects hyphens. The file first shipped as `air-quality.yaml`, so Home Assistant logged
+  `Invalid package definition 'air-quality' … Package will not be initialized` and dropped the
+  dashboard registration entirely — no panel, no error anywhere near the dashboard.
+
+  These last two are **opposite rules on the same word**, which is why it slipped through: the
+  file is `air_quality.yaml` and the dashboard inside it is `air-quality`. Not a typo.
+
+  Worth knowing for the next one: only the offending package is dropped, not all of them.
+  `_PACKAGES_CONFIG_SCHEMA` keys on `cv.string`, so a bad name fails in the per-package loop
+  and `recorder.yaml`, `rtl433.yaml` and `pollen.yaml` were never at risk.
 
 ### Two ConfigMaps, not one
 
@@ -174,6 +203,9 @@ panel appears in the sidebar.
 - **No mold number**, because the station does not publish one — mold is an activity band on
   this page and nothing more. AccuWeather is still the only source of a numeric mold count,
   and it is modelled rather than measured.
+- **Public holidays.** The date walk-back skips weekends but not holidays, so on a weekday the
+  station skips — Labor Day, Thanksgiving — every sensor goes unavailable for that day. Handling
+  it properly would mean probing several dates per refresh, which is not worth the machinery.
 - **Markup dependency.** A site redesign breaks the sensors. The cross-check above is the
   early warning; the failure mode is unavailable entities, not silently wrong ones, except in
   the derived counts where the sum is the guard.

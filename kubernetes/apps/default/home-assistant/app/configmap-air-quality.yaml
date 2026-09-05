@@ -18,10 +18,19 @@ data:
   # below. Nothing else in this repo may define a top-level `lovelace:` key --
   # two of them would collide on merge.
   #
-  # The dashboard slug MUST contain a hyphen; Lovelace rejects single-word url
-  # paths for anything but the built-in `lovelace` dashboard.
+  # Two opposite naming rules collide here, and getting one wrong silently drops
+  # the whole package:
+  #   * the FILE this is mounted as becomes the package name, and package names
+  #     go through cv.slug -- so it must be air_quality.yaml, with an UNDERSCORE.
+  #     A hyphen there fails validation and Home Assistant logs "Invalid package
+  #     definition 'air-quality' ... Package will not be initialized", dropping
+  #     the dashboard registration below without touching any other package.
+  #   * the dashboard's url_path key must contain a HYPHEN, because Lovelace's
+  #     _validate_url_slug rejects single-word paths for anything but the
+  #     built-in `lovelace` dashboard.
+  # So: air_quality.yaml holds a dashboard called air-quality. Not a typo.
   # ---------------------------------------------------------------------------
-  air-quality.yaml: |
+  air_quality.yaml: |
     lovelace:
       dashboards:
         air-quality:

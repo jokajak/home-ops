@@ -159,8 +159,8 @@ spec:
         type: configMap
         name: home-assistant-air-quality
         globalMounts:
-          - path: /config/packages/air-quality.yaml
-            subPath: air-quality.yaml
+          - path: /config/packages/air_quality.yaml
+            subPath: air_quality.yaml
             readOnly: true
           - path: /config/dashboards/air-quality.yaml
             subPath: dashboard.yaml
