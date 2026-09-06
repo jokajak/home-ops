@@ -27,9 +27,20 @@ spec:
               command:
                 - /ip-reconciler
                 - -log-level=verbose
+              volumeMounts:
+                # ip-reconciler reads whereabouts.d/whereabouts.conf from the host
+                # CNI dir to find the IPAM store. Without it every run exits with
+                # "could not get flatipam config: config file not found".
+                - name: cni-net-dir
+                  mountPath: /host/etc/cni/net.d
+                  readOnly: true
               resources:
                 requests:
                   cpu: 100m
                   memory: 50Mi
                 limits:
                   memory: 128Mi
+          volumes:
+            - name: cni-net-dir
+              hostPath:
+                path: /etc/cni/net.d
