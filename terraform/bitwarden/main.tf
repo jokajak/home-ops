@@ -629,3 +629,66 @@ resource "bitwarden_item_login" "open_webui" {
     hidden = random_password.open_webui_secret_key.result
   }
 }
+
+################################################################################
+# n8n credentials
+################################################################################
+# Workflow automation in the `ai` namespace (kubernetes/apps/ai/n8n).
+#
+# ⚠️ THE ENCRYPTION KEY CANNOT BE ROTATED. It encrypts every credential n8n
+# stores in its database — the API tokens workflows use to reach anything else.
+# Tainting `random_password.n8n_encryption_key` makes all of them permanently
+# unreadable, exactly like litellm's salt key.
+#
+# Not covered here: n8n's owner account. The community edition has no SSO, so
+# that account is created interactively on first visit and its credentials are
+# stored in Bitwarden by hand. A once-per-lifetime step, not a gap.
+resource "random_password" "n8n_encryption_key" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "n8n" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name  = "n8n credentials"
+  notes = "Encrypts n8n's stored workflow credentials. Rotating it makes every one of them unreadable — do not."
+
+  uri {
+    value = "https://n8n.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "encryption_key"
+    hidden = random_password.n8n_encryption_key.result
+  }
+}
+
+resource "random_password" "n8n_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "n8n_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "n8n pgcreds"
+  username = "n8n"
+  password = random_password.n8n_pgpass.result
+
+  notes = "n8n's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}

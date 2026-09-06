@@ -1,0 +1,26 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+# n8n's user folder (~/.n8n): its settings file, any community nodes it
+# installs, and binary data written by workflows. Deliberately NOT where the
+# state that matters lives — workflows, executions and credentials are rows in
+# the shared Postgres, which is what CNPG backs up to MinIO.
+#
+# So this claim is replaceable, and it is not enrolled in VolSync: losing it
+# costs a re-install of community nodes, not data. Keeping the encryption key
+# out of it (see externalsecret.yaml) is what makes that true.
+#
+# nfs-csi for the same reason every volume in this namespace is: no pod welded
+# to a node. There is no SQLite here to worry about locking over NFS — the
+# database is Postgres.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: n8n-data
+  namespace: ai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-csi
