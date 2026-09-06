@@ -5,12 +5,5 @@ kind: Kustomization
 resources:
   - ./helmrepository.yaml
   - ./helmrelease.yaml
+  - ./rbac.yaml
   - ./cronjob.yaml
-patches:
-  - target:
-      kind: CronJob
-      name: whereabouts-ip-reconciler
-    patch: |-
-      - op: replace
-        path: /metadata/namespace
-        value: kube-system

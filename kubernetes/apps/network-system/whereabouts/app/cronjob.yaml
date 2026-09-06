@@ -4,17 +4,22 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: whereabouts-ip-reconciler
-  namespace: kube-system
 spec:
   schedule: "*/15 * * * *"
   concurrencyPolicy: Forbid
+  # Without these two, a run that never completes blocks every later run
+  # indefinitely under Forbid, and missed schedules accumulate until the
+  # controller stops scheduling entirely.
+  startingDeadlineSeconds: 300
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 600
       template:
         spec:
-          serviceAccountName: whereabouts-whereabouts-chart
+          serviceAccountName: whereabouts-ip-reconciler
           restartPolicy: OnFailure
           containers:
             - name: ip-reconciler
