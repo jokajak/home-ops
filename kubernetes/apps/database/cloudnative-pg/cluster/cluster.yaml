@@ -19,6 +19,13 @@ spec:
     parameters:
       max_connections: "400"
       shared_buffers: 256MB
+      # A client killed without a TCP FIN leaves its backend idle in transaction
+      # holding any lock it took, until OS keepalives expire ~2h later. That
+      # deadlocks apps which take a migration lock at startup.
+      idle_in_transaction_session_timeout: "300000" # 5min, in ms
+      tcp_keepalives_idle: "60"
+      tcp_keepalives_interval: "10"
+      tcp_keepalives_count: "6" # 60s idle + 6x10s probes = dead peer dropped in ~2min
   nodeMaintenanceWindow:
     inProgress: false
     reusePVC: true
