@@ -44,3 +44,19 @@ spec:
         memory: "50Mi"
       limits:
         memory: "256Mi"
+
+  # ip-control-loop releases IPs on observed pod deletions, so leaks only happen
+  # when a node dies without emitting one — a power cut takes the loop down with
+  # the kubelet. Recovery then waits for the periodic sweep, and a pod pinned to
+  # a fixed address cannot start until it runs. The chart hardcodes the schedule
+  # in its ConfigMap with no value to override, hence the patch.
+  postRenderers:
+    - kustomize:
+        patches:
+          - target:
+              kind: ConfigMap
+              name: whereabouts-whereabouts-chart-config
+            patch: |-
+              - op: replace
+                path: /data/cron-expression
+                value: "17 * * * *"

@@ -5,5 +5,3 @@ kind: Kustomization
 resources:
   - ./helmrepository.yaml
   - ./helmrelease.yaml
-  - ./rbac.yaml
-  - ./cronjob.yaml
