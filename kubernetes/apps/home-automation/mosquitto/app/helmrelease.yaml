@@ -33,6 +33,8 @@ spec:
     keepHistory: false
 
   values:
+    defaultPodOptions:
+      priorityClassName: household-critical
     controllers:
       mosquitto:
         annotations:

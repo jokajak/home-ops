@@ -7,6 +7,9 @@ metadata:
   namespace: default
 spec:
   instances: 2
+  # Welded to one node by its openebs-hostpath PV, so it cannot be rescheduled
+  # around a full node — it has to be able to displace movable workloads.
+  priorityClassName: household-critical
   # Stock CNPG image — HA's recorder is plain relational and keeps its own
   # long-term statistics rollups, so no extensions / postInitApplicationSQL.
   imageName: ghcr.io/cloudnative-pg/postgresql:16.0-10

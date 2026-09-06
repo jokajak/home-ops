@@ -1,0 +1,29 @@
+---
+# Scheduling order for the household. Without at least two distinct priorities
+# preemption cannot work at all: it only evicts *lower* priority pods, so when
+# every pod sits at the default 0 the scheduler reports "no preemption victims
+# found" and a pod that cannot move stays Pending forever.
+#
+# This matters most for workloads welded to one node by a local (openebs-hostpath)
+# PV — a CNPG instance can only ever run where its data is, so if a freely
+# movable pod has taken that node's memory, the database is the one that loses.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: household-critical
+value: 1000
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: >-
+  Home Assistant and the services it depends on. Wins a contended node over
+  anything below, including by evicting it.
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: household-important
+value: 500
+globalDefault: false
+preemptionPolicy: PreemptLowerPriority
+description: >-
+  Immich. Outranks general-purpose workloads but yields to Home Assistant.

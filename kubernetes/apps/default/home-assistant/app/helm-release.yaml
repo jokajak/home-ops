@@ -26,6 +26,8 @@ spec:
     remediation:
       retries: 3
   values:
+    defaultPodOptions:
+      priorityClassName: household-critical
     controllers:
       home-assistant:
         annotations:

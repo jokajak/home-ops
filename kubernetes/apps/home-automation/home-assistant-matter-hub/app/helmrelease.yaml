@@ -90,6 +90,7 @@ spec:
               ]
 
     defaultPodOptions:
+      priorityClassName: household-critical
       hostNetwork: true
       hostPID: true
       securityContext:

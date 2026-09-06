@@ -26,6 +26,7 @@ spec:
       retries: 5
   values:
     defaultPodOptions:
+      priorityClassName: household-important
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:

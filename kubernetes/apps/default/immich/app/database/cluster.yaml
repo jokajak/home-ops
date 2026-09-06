@@ -7,6 +7,7 @@ metadata:
   namespace: default
 spec:
   instances: 3
+  priorityClassName: household-important
   postgresql:
     # pgvecto.rs -> VectorChord migration complete; only vchord is needed now.
     shared_preload_libraries:

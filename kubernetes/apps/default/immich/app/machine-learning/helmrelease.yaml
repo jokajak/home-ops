@@ -26,6 +26,8 @@ spec:
   dependsOn:
     - name: immich-server
   values:
+    defaultPodOptions:
+      priorityClassName: household-important
     controllers:
       immich-machine-learning:
         annotations:
