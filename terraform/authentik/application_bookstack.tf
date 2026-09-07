@@ -60,9 +60,13 @@ resource "authentik_application" "bookstack_application" {
 ## ------------------------------------------
 ## BookStack - Authorization (authz) resources
 ## ------------------------------------------
-# All users can reach the wiki. BookStack roles are not group-driven here
-# (OIDC_USER_TO_GROUPS is off): the first person in becomes the admin and
-# assigns roles in Settings -> Roles by hand, the same way Paperless is run.
+# All users can reach the wiki. Roles are not group-driven here
+# (OIDC_USER_TO_GROUPS is off): BookStack assigns each SSO arrival whatever
+# "default role after registration" is set to in Settings -> Registration,
+# which lives in its own database, not in this repo. That setting starts empty
+# and a user with no role has no permissions at all, so the first account in
+# has to be granted a role out-of-band — AUTH_METHOD=oidc disables local login,
+# so the seeded admin@admin.com account is not a way back in.
 resource "authentik_policy_binding" "bookstack_users" {
   target = authentik_application.bookstack_application.uuid
   group  = authentik_group.users.id
