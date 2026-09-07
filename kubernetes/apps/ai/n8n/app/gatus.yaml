@@ -1,0 +1,21 @@
+---
+# /healthz is outside n8n's login gate and answers regardless of Host header,
+# so an in-cluster probe gets a straight answer. It is process-only — the
+# readiness variant is the one that touches the database, and that is the
+# kubelet's job, not the dashboard's.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: n8n-gatus-ep
+  namespace: ai
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "n8n"
+        group: internal
+        url: "http://n8n.ai.svc.cluster.local:5678/healthz"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"

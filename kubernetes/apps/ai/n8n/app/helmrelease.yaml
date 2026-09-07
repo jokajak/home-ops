@@ -1,0 +1,228 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# n8n — workflow automation, at n8n.<domain>. Added on request as a trial: the
+# household has plenty of "when X happens, do Y" glue that currently lives in
+# Home Assistant automations or nowhere at all, and this is the cheapest way to
+# find out whether a dedicated tool for it earns its place.
+#
+# It sits in `ai` rather than `productivity` because the interesting half is
+# the LLM nodes, and litellm is already here: n8n's OpenAI-compatible nodes can
+# be pointed at http://litellm.ai.svc.cluster.local:4000/v1 with a virtual key,
+# the same contract Open WebUI uses. That wiring is per-credential and lives in
+# n8n's own UI, so there is nothing to declare here for it.
+#
+# ⚠️ NO SSO. n8n's SAML/OIDC support is an enterprise feature, so there is no
+# Authentik application here and the owner account is the only way in. It is
+# still fully declared: N8N_INSTANCE_OWNER_* (n8n >= 2.17.0) pre-provisions it
+# from the environment, terraform/bitwarden generates the password, and n8n
+# reasserts the account on every startup. Nobody types anything into a setup
+# form, and the form is never served — which matters, because before an owner
+# exists it is offered to whoever reaches the ingress first.
+#
+# The ingress is `internal` (LAN only) regardless, and should stay that way:
+# one local account with no MFA is not a thing to expose.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: n8n
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 10m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    defaultPodOptions:
+      # Same call as litellm and Open WebUI. The image is honestly multi-arch,
+      # so this is about capability rather than a broken manifest: n8n is a
+      # large Node process that forks a task runner per execution, and this
+      # cluster's arm64 nodes are two RPi4s. Landing there makes the editor
+      # miserable and every workflow slow.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      securityContext:
+        # The image ships USER node (uid 1000) and owns ~/.n8n; fsGroup makes
+        # the PVC writable to it without an init container doing a chown.
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    controllers:
+      n8n:
+        # One writer against one RWO volume, and n8n runs its schema migrations
+        # at startup — two versions overlapping during a rolling update is a
+        # worse outcome than a minute of downtime.
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the n8n database and role on the shared cluster if they are
+          # not there yet, then does nothing on every subsequent start. Same
+          # image and same contract litellm uses.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: n8n-secret
+        containers:
+          app:
+            image:
+              repository: docker.io/n8nio/n8n
+              tag: 2.37.10
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              # n8n reads its own timezone separately from TZ; this is the one
+              # Cron/Schedule triggers are interpreted in. Getting it wrong
+              # means workflows firing at the wrong hour, silently.
+              GENERIC_TIMEZONE: "${TIMEZONE:=America/New_York}"
+              N8N_PORT: "5678"
+              # Used to build the URLs n8n hands out — webhook endpoints it
+              # tells third parties to call, and the links in the editor. TLS
+              # terminates at the ingress, so the protocol here describes what
+              # the caller sees, not what the pod listens with.
+              N8N_HOST: &host "n8n.${SECRET_DOMAIN:=internal}"
+              N8N_PROTOCOL: https
+              WEBHOOK_URL: &url "https://n8n.${SECRET_DOMAIN:=internal}/"
+              N8N_EDITOR_BASE_URL: *url
+              # One proxy in front (the nginx ingress), so trust exactly one
+              # hop of X-Forwarded-For. Without it n8n sees every request as
+              # coming from the ingress controller.
+              N8N_PROXY_HOPS: "1"
+              # Owner account comes from the environment rather than a setup
+              # form. This also LOCKS it: n8n overwrites the account on every
+              # startup, greys out the profile controls, and rejects API writes
+              # to it — so the Bitwarden item is authoritative and cannot drift.
+              # Same posture as Open WebUI's ENABLE_PERSISTENT_CONFIG=false.
+              #
+              # ⚠️ Requires n8n >= 2.17.0. On anything older these are unknown
+              # variables, silently ignored, and the instance comes up serving
+              # an open setup form. Do not downgrade past that line.
+              N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+              N8N_INSTANCE_OWNER_FIRST_NAME: "Site"
+              N8N_INSTANCE_OWNER_LAST_NAME: "Admin"
+              # Executions run in a separate task-runner process rather than in
+              # the main event loop. Default in 2.x, set explicitly because a
+              # workflow that blocks the main process also blocks the health
+              # endpoint the kubelet is probing.
+              N8N_RUNNERS_ENABLED: "true"
+              # Refuse to start if ~/.n8n/config is group/world readable. It no
+              # longer holds the encryption key (that arrives from Bitwarden),
+              # but the check is free and catches a botched fsGroup.
+              N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+              # Household cluster: no telemetry, no upgrade nag, no recruiting
+              # banner in the logs. Renovate is what tells us about new
+              # versions here.
+              N8N_DIAGNOSTICS_ENABLED: "false"
+              N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+              N8N_HIRING_BANNER_ENABLED: "false"
+            envFrom:
+              # DB_*, N8N_ENCRYPTION_KEY and the owner's email + bcrypt password
+              # hash, all assembled in the ExternalSecret.
+              - secretRef:
+                  name: n8n-secret
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    # Process-only. Deliberately not the readiness variant: a
+                    # Postgres blip should not restart n8n mid-execution.
+                    path: /healthz
+                    port: 5678
+                  initialDelaySeconds: 30
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    # Includes database connectivity and migration state.
+                    path: /healthz/readiness
+                    port: 5678
+                  initialDelaySeconds: 15
+                  periodSeconds: 15
+                  failureThreshold: 5
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 5678
+                  # First boot migrates an empty database, and a version bump
+                  # can migrate a populated one.
+                  initialDelaySeconds: 15
+                  periodSeconds: 10
+                  failureThreshold: 60
+            securityContext:
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 100m
+                memory: 512Mi
+              limits:
+                # Node plus a task runner per concurrent execution. 2Gi is a
+                # guess for a trial; raise it if executions start getting
+                # OOM-killed rather than failing on their own terms.
+                memory: 2Gi
+    service:
+      app:
+        controller: n8n
+        ports:
+          http:
+            port: 5678
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          hajimari.io/icon: mdi:sitemap
+          # The editor holds a long-lived push connection for execution
+          # progress, and a workflow can legitimately run for minutes. Without
+          # these the UI drops it and reconnects in a loop.
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          # Workflows move files; the default 1m cap is too small for that.
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        hosts:
+          - host: *host
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+    persistence:
+      data:
+        existingClaim: n8n-data
+        globalMounts:
+          - path: /home/node/.n8n

@@ -17,3 +17,6 @@ resources:
   # shared-memory skill, so it currently has none — kept while its future as a
   # store of record is decided; see kubernetes/apps/ai/hearthmem/README.md.
   - ./hearthmem/ks.yaml
+  # Workflow automation, at n8n.<domain>. A trial (2026-09-06); here rather
+  # than in productivity because litellm is the point of it.
+  - ./n8n/ks.yaml
