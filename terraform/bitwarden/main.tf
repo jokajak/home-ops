@@ -799,8 +799,12 @@ resource "bitwarden_item_login" "vikunja" {
 # Laravel APP_KEY. Encrypts session cookies and anything BookStack stores
 # encrypted, so rotating it logs everyone out — write-once. No login pair: the
 # first user in via Authentik becomes the admin, per application_bookstack.tf.
+# Laravel's Encrypter takes the key as raw bytes and aes-256-cbc needs exactly
+# 32 of them, so this is 32 chars wrapped in the `base64:` form that
+# `artisan key:generate` emits. A longer string fails at boot with
+# "Unsupported cipher or incorrect key length".
 resource "random_password" "bookstack_app_key" {
-  length  = 64
+  length  = 32
   special = false
 }
 
@@ -822,7 +826,7 @@ resource "bitwarden_item_login" "bookstack" {
 
   field {
     name   = "app_key"
-    hidden = random_password.bookstack_app_key.result
+    hidden = "base64:${base64encode(random_password.bookstack_app_key.result)}"
   }
 }
 
