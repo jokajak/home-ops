@@ -34,3 +34,4 @@ talos/clusterconfig/
 
 # bitwarden
 **/.bitwarden/data.json
+.claude/settings.local.json
