@@ -4,8 +4,8 @@
 #
 #   config/    -> the linuxserver image's /config (uploads, page images,
 #                 attachments, themes, and its generated nginx/php config)
-#   db-dumps/  -> compressed mariadb-dump output written by the CronJob in
-#                 db-dump.yaml
+#   db-dumps/  -> plain-SQL mariadb-dump output written by the CronJob in
+#                 db-dump.yaml (uncompressed so restic can deduplicate it)
 #
 # Holding both on one claim means a single VolSync ReplicationSource covers the
 # whole recovery story: the files AND a consistent logical copy of the wiki
