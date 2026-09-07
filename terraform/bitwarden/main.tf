@@ -737,3 +737,135 @@ resource "bitwarden_item_login" "n8n_pgcreds" {
     boolean = true
   }
 }
+
+resource "random_password" "vikunja_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "vikunja_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "vikunja pgcreds"
+  username = "vikunja"
+  password = random_password.vikunja_pgpass.result
+
+  notes = "Vikunja's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+################################################################################
+# vikunja credentials
+################################################################################
+# Signs Vikunja's session JWTs. Rotating it invalidates every logged-in session,
+# so treat it as write-once. Vikunja has no local admin to bootstrap — accounts
+# come from Authentik — so this item carries no login pair.
+resource "random_password" "vikunja_service_secret" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "vikunja" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "vikunja credentials"
+
+  uri {
+    value = "https://tasks.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "service_secret"
+    hidden = random_password.vikunja_service_secret.result
+  }
+}
+
+################################################################################
+# bookstack credentials
+################################################################################
+# Laravel APP_KEY. Encrypts session cookies and anything BookStack stores
+# encrypted, so rotating it logs everyone out — write-once. No login pair: the
+# first user in via Authentik becomes the admin, per application_bookstack.tf.
+resource "random_password" "bookstack_app_key" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "bookstack" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "bookstack credentials"
+
+  uri {
+    value = "https://wiki.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "app_key"
+    hidden = random_password.bookstack_app_key.result
+  }
+}
+
+################################################################################
+# bookstack dbcreds
+################################################################################
+# BookStack runs its own MariaDB rather than a role on the shared postgres
+# cluster, hence `dbcreds` and not `pgcreds`. root_password is a custom field
+# read through the bitwarden-login store, the same way `authentik credentials`
+# exposes secret_key.
+#
+# ⚠️ The mariadb image only reads MARIADB_* on an empty datadir, so rotating
+# these after first boot does NOT change what MariaDB accepts — that needs a
+# manual ALTER USER. See kubernetes/apps/productivity/bookstack/app/externalsecret.yaml.
+resource "random_password" "bookstack_dbpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "random_password" "bookstack_db_root_password" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "bookstack_dbcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "bookstack dbcreds"
+  username = "bookstack"
+  password = random_password.bookstack_dbpass.result
+
+  notes = "BookStack's role on its own MariaDB instance in productivity"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+
+  field {
+    name   = "root_password"
+    hidden = random_password.bookstack_db_root_password.result
+  }
+}
