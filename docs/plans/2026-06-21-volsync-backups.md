@@ -27,8 +27,29 @@ The onedr0p component is the right *shape* but its backend assumes hardware we d
   **`copyMethod: Direct`** — the mover reads the source PVC directly. Caveat: the app isn't
   quiesced during backup; for the small, low-write config volumes in scope (matter-hub, calibre,
   wallos, unifi, zwave, esphome, HA config…) a crash-consistent file copy is fine.
-- **Backend = MinIO/S3, not an NFS kopia repo.** Matches `storage/README`, reuses the existing
-  `terraform/minio` bucket+cred pattern, and keeps backups off the same NAS the PVCs live on.
+- **Backend = MinIO/S3, not an NFS kopia repo.** Matches `storage/README` and reuses the
+  existing `terraform/minio` bucket+cred pattern.
+
+  > **Correction (2026-09-07).** This bullet originally also claimed the MinIO backend "keeps
+  > backups off the same NAS the PVCs live on." That is **not true** and never was. MinIO's
+  > `/data` is an NFS mount of `${SECRET_NFS_SERVER}:${SECRET_NFS_PATH}/s3`
+  > (`kubernetes/apps/storage/minio/app/storage.yaml`) — the same server and the same export
+  > root as every `nfs-csi` PVC and every static app PV. Source and restic repository share one
+  > RAID array.
+  >
+  > What this tier actually buys is **logical** recovery, not media redundancy: the restic
+  > repository is versioned and unreachable from the application pods, so it survives an
+  > accidental deletion, a bad Flux prune, an app bug, or a migration that eats a table — the
+  > loss modes a home lab actually hits. It does **not** survive loss of the NAS, and neither
+  > does the barman-cloud archive for CNPG, which lands in the same place. RAID1 covers a dead
+  > drive; nothing here covers a dead array.
+  >
+  > The fix does not belong in this repo. Adding a second restic destination per app would mean
+  > editing every ReplicationSource and re-uploading data restic already deduplicated. One
+  > off-box backup at the NAS layer (e.g. Synology Hyper Backup to external object storage or a
+  > rotating disk) transitively covers every PVC, every restic repository, and the barman
+  > archives at once — and it is a step taken once, which `CLAUDE.md` explicitly exempts from
+  > being made declarative. **Owner: confirm whether such an off-box copy exists today.**
 - **Mover = restic.** First-class in upstream `backube/volsync`; encrypted + deduplicated +
   incremental to S3. (kopia is a viable alternative — see Open decisions.)
 

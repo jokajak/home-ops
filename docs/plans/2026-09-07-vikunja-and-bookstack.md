@@ -109,6 +109,14 @@ claim — uploads and dumps together — to MinIO hourly. Worst case is losing u
 wiki edits; the restore is `gunzip | mariadb` into an empty instance, which works across
 MariaDB versions in a way a datadir copy does not.
 
+Be clear about what that VolSync hop buys, because MinIO is itself NFS-backed by the same NAS
+(see the 2026-09-07 correction in `2026-06-21-volsync-backups.md`): the restic repository is
+versioned and unreachable from the app pods, so it covers accidental deletion and bad
+reconciles, but it is **not** a second copy in a second failure domain. The dumps and their
+restic copy live on one array. The only reason the dumps are not merely redundant with that
+hop is that they are the sole *consistent* copy of the wiki — the datadir they come from is
+never replicated at all.
+
 **D3 — One RWX claim for BookStack, split by subPath.**
 `config/` for the app, `db-dumps/` for the CronJob, following the way paperless splits its
 share. This keeps a single ReplicationSource covering the entire recovery story. It is
@@ -189,6 +197,15 @@ These cannot be done from the repo — they need secrets or an interactive sessi
   MariaDB — that is a manual `ALTER USER`, followed by letting ESO refresh the Secret.
 - **The MariaDB pod is welded to one node** by its `openebs-hostpath` PV. Losing that node means
   restoring from the newest dump, which is the designed path, not an incident.
+- **One failure domain for everything durable.** The NFS claim, the dumps on it, the restic
+  repository in MinIO, and the CNPG barman archive that backs Vikunja's task data are all on the
+  same NAS export. Nothing added here changes that, and nothing here survives losing the array.
+  The mitigation is an off-box backup at the NAS layer, not more ReplicationSources — see the
+  correction in `2026-06-21-volsync-backups.md`.
+- **Gzipped dumps do not deduplicate.** restic uses content-defined chunking, and gzip changes
+  the whole byte stream on every run, so each six-hourly snapshot stores a fresh full blob
+  rather than a delta. Harmless at a household wiki's size (single-digit MB), but writing the
+  dump plain rather than `.sql.gz` would make the restic copy nearly free if it ever matters.
 
 ## Rollback
 
