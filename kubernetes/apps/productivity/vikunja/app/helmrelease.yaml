@@ -1,0 +1,172 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: vikunja
+  namespace: productivity
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      vikunja:
+        # single writer against the NFS attachment tree
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the vikunja database and role on the shared cluster if they
+          # are not there yet, then does nothing on every subsequent start.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: vikunja-pg-secret
+        containers:
+          app:
+            image:
+              repository: docker.io/vikunja/vikunja
+              tag: 2.6.0
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              VIKUNJA_SERVICE_PUBLICURL: https://tasks.${SECRET_DOMAIN:=internal}/
+              VIKUNJA_SERVICE_TIMEZONE: "${TIMEZONE:=America/New_York}"
+              # SSO is the way in; no open signup form on a household instance.
+              # OpenID logins still provision an account on first sign-in.
+              VIKUNJA_SERVICE_ENABLEREGISTRATION: "false"
+              # Every project is also a CalDAV collection under /dav — this is
+              # how packing lists reach the phones' native reminders apps,
+              # which is the only notification path that works here (see
+              # VIKUNJA_MAILER_ENABLED below).
+              VIKUNJA_SERVICE_ENABLECALDAV: "true"
+              # There is no SMTP anywhere in this cluster, so fail closed
+              # rather than queue mail that will never leave. The cost: email
+              # reminders and password resets do not work. Reminders arrive via
+              # CalDAV on the phone instead, and the OIDC users have no
+              # password to reset.
+              VIKUNJA_MAILER_ENABLED: "false"
+              # Shared cluster in the database namespace — vikunja has its own
+              # database and its own role on it, not its own server. USER and
+              # PASSWORD arrive from vikunja-pg-secret via envFrom below.
+              VIKUNJA_DATABASE_TYPE: postgres
+              VIKUNJA_DATABASE_HOST: postgres-rw.database.svc.cluster.local.
+              VIKUNJA_DATABASE_DATABASE: vikunja
+              VIKUNJA_FILES_BASEPATH: /app/vikunja/files
+            envFrom:
+              - secretRef:
+                  name: vikunja-pg-secret
+              - secretRef:
+                  name: vikunja-fields-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /api/v1/info
+                    port: 3456
+                  # first boot runs the schema migrations
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 30
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      # the image runs rootless as uid 1000 with no internal remapping, so the
+      # NFS attachment tree must be owned by 1000:1000
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: &runAsUser 1000
+        runAsGroup: &runAsGroup 1000
+        fsGroup: *runAsGroup
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: vikunja
+        ports:
+          http:
+            port: 3456
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        hosts:
+          - host: &host tasks.${SECRET_DOMAIN:=internal}
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert-tls
+    persistence:
+      # Task attachments only — every task, project and label lives in
+      # Postgres. Claim name is vikunja-files, which is what VOLSYNC_CLAIM in
+      # ks.yaml points the restic mover at.
+      files:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /app/vikunja/files
+      # Vikunja will not read an OIDC provider that exists only in the
+      # environment (see externalsecret.yaml), so the provider block arrives as
+      # a file. Env still wins over anything set here.
+      config:
+        enabled: true
+        type: secret
+        name: vikunja-config-secret
+        globalMounts:
+          - path: /etc/vikunja/config.yml
+            subPath: config.yml
+            readOnly: true

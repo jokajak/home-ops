@@ -1,0 +1,39 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-bookstack
+  namespace: flux-system
+spec:
+  targetNamespace: productivity
+  interval: 10m
+  path: "./kubernetes/apps/productivity/bookstack/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  components:
+    - ../../../../components/volsync
+  postBuild:
+    substitute:
+      APP: bookstack
+      GATUS_SUBDOMAIN: wiki
+      # One claim carrying both /config and the MariaDB dumps — see pvc.yaml.
+      # The MariaDB datadir itself is deliberately not replicated.
+      VOLSYNC_CLAIM: bookstack-data
+      # the linuxserver image's s6 init owns /config as root before dropping to
+      # PUID/PGID, so the restic mover reads the tree as root
+      VOLSYNC_PUID: "0"
+      VOLSYNC_PGID: "0"
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-csi-driver-nfs
+    # node-local PV for the MariaDB datadir
+    - name: openebs

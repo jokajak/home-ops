@@ -1,0 +1,153 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: bookstack
+  namespace: productivity
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      bookstack:
+        # single writer against the NFS /config tree
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        containers:
+          app:
+            image:
+              repository: lscr.io/linuxserver/bookstack
+              tag: 26.05.4
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              PUID: 1000
+              PGID: &runAsGroup 1000
+              APP_URL: https://wiki.${SECRET_DOMAIN:=internal}
+              # DB_DATABASE/USERNAME/PASSWORD arrive from bookstack-db-secret
+              DB_HOST: bookstack-mariadb.productivity.svc.cluster.local.
+              DB_PORT: "3306"
+              # Authentik SSO as the ONLY login method. BookStack's local
+              # accounts are switched off entirely by this, which is the point:
+              # there is no SMTP here, so a local account could never reset its
+              # own password anyway. Break-glass is to flip AUTH_METHOD back to
+              # `standard` in Git.
+              AUTH_METHOD: oidc
+              OIDC_NAME: Authentik
+              OIDC_DISPLAY_NAME_CLAIMS: name
+              OIDC_ISSUER: https://auth.${SECRET_DOMAIN:=internal}/application/o/bookstack-provider/
+              OIDC_ISSUER_DISCOVER: "true"
+              # Land straight on Authentik instead of showing a one-button
+              # login page.
+              AUTH_AUTO_INITIATE: "true"
+            envFrom:
+              - secretRef:
+                  name: bookstack-db-secret
+              - secretRef:
+                  name: bookstack-fields-secret
+              - secretRef:
+                  name: bookstack-oidc-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /status
+                    port: 80
+                  # first boot runs the Laravel migrations
+                  initialDelaySeconds: 20
+                  periodSeconds: 10
+                  failureThreshold: 60
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop: ["ALL"]
+                # s6-overlay starts as root, fixes ownership on /config and
+                # then drops to PUID/PGID. That needs exactly these back —
+                # unlike every other app here, this image cannot run as a
+                # non-root user. It is the price of the only well-maintained
+                # BookStack image.
+                add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        # No runAsNonRoot/runAsUser: see the capabilities note above. fsGroup
+        # still makes the NFS mount group-writable for the uid s6 drops to.
+        fsGroup: *runAsGroup
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: bookstack
+        ports:
+          http:
+            port: 80
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        annotations:
+          # page attachments and image uploads
+          nginx.ingress.kubernetes.io/proxy-body-size: "512m"
+        hosts:
+          - host: &host wiki.${SECRET_DOMAIN:=internal}
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert-tls
+    persistence:
+      # subPath `config` of the shared claim; `db-dumps` on the same claim is
+      # written by the dump CronJob. See pvc.yaml.
+      data:
+        enabled: true
+        existingClaim: bookstack-data
+        globalMounts:
+          - path: /config
+            subPath: config
