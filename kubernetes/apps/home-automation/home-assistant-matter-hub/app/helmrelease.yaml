@@ -52,7 +52,11 @@ spec:
               HAMH_LOG_LEVEL: info
               HAMH_WEB_PORT: &port 8482
               HAMH_STORAGE_LOCATION: /data
-              HAMH_MDNS_NETWORK_INTERFACE: eth0.50
+              # hostNetwork is true below, so this names a *host* interface, not
+              # the pod-side one in the multus annotation. Talos builds the VLAN
+              # on the LinkAliasConfig alias, so it is ethSel0.50 — eth0.50 does
+              # not exist and mDNS fails with "Unknown interface: eth0.50".
+              HAMH_MDNS_NETWORK_INTERFACE: ethSel0.50
 
             envFrom:
               - secretRef:
