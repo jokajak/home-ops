@@ -1,0 +1,92 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/cronjob-batch-v1.json
+# The wiki itself — every shelf, book, chapter and page — lives in MariaDB, not
+# on disk. Nothing else in this cluster backs up MariaDB: CNPG's barman plugin
+# only knows Postgres, and pointing restic at a live InnoDB datadir yields a
+# crash-consistent copy at best.
+#
+# So this is the backup: a --single-transaction logical dump onto the NAS claim
+# every six hours, which VolSync then ships to MinIO on its hourly schedule
+# along with the uploads next to it. Worst case is losing up to six hours of
+# edits; restore is `gunzip | mariadb` into an empty instance.
+#
+# Substitution is disabled because the script uses shell variables, and Flux's
+# envsubst would otherwise eat them. Nothing in here needs a cluster variable.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: bookstack-db-dump
+  namespace: productivity
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+spec:
+  schedule: "0 */6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            fsGroup: 999
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: dump
+              image: docker.io/library/mariadb:11.8.9
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                # mariadb-dump reads the password from here, so it never
+                # appears in the process's argv
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: bookstack-mariadb-secret
+                      key: MARIADB_ROOT_PASSWORD
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -eu
+                  out="/dumps/bookstack-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+                  # --single-transaction takes a consistent InnoDB snapshot
+                  # without locking the wiki out for the duration
+                  mariadb-dump \
+                    --host=bookstack-mariadb.productivity.svc.cluster.local \
+                    --user=root \
+                    --single-transaction \
+                    --quick \
+                    --routines \
+                    --events \
+                    --databases bookstack \
+                    | gzip -c > "$out.part"
+                  mv "$out.part" "$out"
+                  # keep three days at six-hourly, and let the restic retention
+                  # in the volsync component hold the longer tail
+                  ls -1t /dumps/bookstack-*.sql.gz \
+                    | tail -n +13 \
+                    | xargs -r rm -f
+                  echo "wrote $out"
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: dumps
+                  mountPath: /dumps
+                  subPath: db-dumps
+          volumes:
+            - name: dumps
+              persistentVolumeClaim:
+                claimName: bookstack-data

@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/persistentvolumeclaim-v1.json
+# One NAS-backed claim, split by subPath the way paperless splits its share:
+#
+#   config/    -> the linuxserver image's /config (uploads, page images,
+#                 attachments, themes, and its generated nginx/php config)
+#   db-dumps/  -> compressed mariadb-dump output written by the CronJob in
+#                 db-dump.yaml
+#
+# Holding both on one claim means a single VolSync ReplicationSource covers the
+# whole recovery story: the files AND a consistent logical copy of the wiki
+# text, which otherwise only exists inside MariaDB.
+#
+# ReadWriteMany, unlike the rest of the apps here, because there genuinely are
+# two writers — the app pod and the dump CronJob — and they will not always be
+# scheduled onto the same node. NFS handles that; RWO would deadlock the
+# CronJob behind the app pod's node.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bookstack-data
+  namespace: productivity
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: nfs-csi

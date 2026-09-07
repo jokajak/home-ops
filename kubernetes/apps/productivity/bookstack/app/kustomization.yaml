@@ -1,0 +1,17 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: productivity
+labels:
+  - pairs:
+      app.kubernetes.io/name: bookstack
+      app.kubernetes.io/instance: bookstack
+      app.kubernetes.io/part-of: bookstack
+resources:
+  - ./externalsecret.yaml
+  - ./pvc.yaml
+  - ./mariadb.yaml
+  - ./helmrelease.yaml
+  - ./db-dump.yaml
+  - ../../../../templates/gatus/guarded

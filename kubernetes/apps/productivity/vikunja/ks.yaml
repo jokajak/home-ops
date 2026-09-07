@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-vikunja
+  namespace: flux-system
+spec:
+  targetNamespace: productivity
+  interval: 10m
+  path: "./kubernetes/apps/productivity/vikunja/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  components:
+    - ../../../../components/volsync
+  postBuild:
+    substitute:
+      APP: vikunja
+      GATUS_SUBDOMAIN: tasks
+      # The app-template claim for the `files` persistence key, not ${APP}:
+      # task text lives in Postgres (backed up by CNPG -> MinIO), this volume
+      # only holds task attachments.
+      VOLSYNC_CLAIM: vikunja-files
+      # the image runs directly as uid 1000 with no internal remapping, so the
+      # restic mover reads the attachment tree as the same user
+      VOLSYNC_PUID: "1000"
+      VOLSYNC_PGID: "1000"
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    # The shared cluster, not the operator: vikunja has no CNPG resources of
+    # its own, it just needs postgres-rw answering before init-db runs.
+    - name: cluster-apps-cloudnative-pg-cluster
+    - name: cluster-apps-csi-driver-nfs

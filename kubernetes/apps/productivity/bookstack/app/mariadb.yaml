@@ -1,0 +1,128 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+# BookStack is the only thing in this cluster that cannot use the shared
+# Postgres: it supports MySQL/MariaDB only, upstream has declined Postgres
+# support because its full-text search is MySQL-specific. So this is a second
+# database engine, run as a plain single instance rather than under an
+# operator, and backed up logically (db-dump.yaml) rather than by replicating
+# its datadir.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: bookstack-mariadb
+  namespace: productivity
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      mariadb:
+        # one process, one datadir — never two pods against the same files
+        strategy: Recreate
+        containers:
+          app:
+            image:
+              repository: docker.io/library/mariadb
+              tag: 11.8.9
+            args:
+              # BookStack requires utf8mb4 end to end; the server defaults
+              # differ by image version, so pin them rather than inherit.
+              - --character-set-server=utf8mb4
+              - --collation-server=utf8mb4_unicode_ci
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              # run mariadb-upgrade automatically after a version bump, so a
+              # renovate PR does not need a hands-on migration step
+              MARIADB_AUTO_UPGRADE: "1"
+            envFrom:
+              - secretRef:
+                  name: bookstack-mariadb-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  exec: &probe
+                    command:
+                      - healthcheck.sh
+                      - --connect
+                      - --innodb_initialized
+                  # first boot initialises the datadir
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 30
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  exec: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  exec: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 50m
+                memory: 256Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      securityContext:
+        runAsNonRoot: true
+        # `mysql` in the official image
+        runAsUser: &runAsUser 999
+        runAsGroup: &runAsGroup 999
+        fsGroup: *runAsGroup
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: mariadb
+        ports:
+          http:
+            port: 3306
+    persistence:
+      # openebs-hostpath, NOT nfs-csi: InnoDB needs real file locking and this
+      # is a live datadir, not a document tree. Node-local storage welds the
+      # pod to one node, which is the accepted trade — see the priority-classes
+      # note about locally-bound workloads.
+      #
+      # Deliberately NOT enrolled in VolSync. Replicating a live datadir with
+      # restic gives a crash-consistent copy at best; the recovery path here is
+      # the logical dump on the NAS instead (db-dump.yaml), which is consistent
+      # by construction and restores into any MariaDB.
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 8Gi
+        storageClass: openebs-hostpath
+        retain: true
+        globalMounts:
+          - path: /var/lib/mysql
