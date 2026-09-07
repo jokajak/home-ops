@@ -19,17 +19,10 @@
 ## secret is used rather than ignored.
 ## -----------------------------------------------------------------------------
 
-## Providers default to signing_key = null, which Authentik signs as HS256 —
-## legitimately no public key to publish, so /jwks/ returns {}. Open WebUI's
-## OAuth client (Authlib) fetches JWKS unconditionally and errors ("Missing
-## expected key 'keys' in OAuth response") rather than falling back, so this
-## provider needs an explicit (RS256) signing key. Other providers in this repo
-## (e.g. grafana) are left alone — their clients tolerate the HS256 default.
-## Declared here because Open WebUI is now its only consumer; it lived in the
-## deleted application_hermes.tf before.
-data "authentik_certificate_key_pair" "default_signing" {
-  name = "authentik Self-signed Certificate"
-}
+## Authlib fetches JWKS unconditionally and errors with "Missing expected key
+## 'keys' in OAuth response" against the HS256 default, so this provider needs
+## an explicit RS256 signing key. The data source lives in main.tf, shared with
+## BookStack, which fails the same way.
 
 module "openwebui_oidc_creds" {
   source          = "./oidc_creds"

@@ -19,6 +19,10 @@ resource "authentik_provider_oauth2" "bookstack_oauth" {
   client_id     = module.bookstack_oidc_creds.client_id
   client_secret = module.bookstack_oidc_creds.client_secret
 
+  # BookStack fetches JWKS and errors on the HS256 default, which publishes no
+  # keys. Same requirement as Open WebUI; see the data source in main.tf.
+  signing_key = data.authentik_certificate_key_pair.default_signing.id
+
   # grant_types has no useful default (Authentik's OAuth2Provider model
   # defaults it to an empty list), so an /authorize request with response_type
   # code fails check_grant() with "invalid_request". Same fix as
