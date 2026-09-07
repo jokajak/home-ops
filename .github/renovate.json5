@@ -76,6 +76,25 @@
       commitMessageSuffix: '(talos config)',
     },
     {
+      // Talos validates the kubelet image against the Kubernetes range its own
+      // release line supports, so Kubernetes must never advance without Talos.
+      // Bumping the kubelet to 1.37 while Talos stayed on 1.13 (which caps at
+      // 1.36) failed validation for every node — that blocks `topf apply`
+      // entirely, not just the upgrade plan. Grouping forces one PR so a
+      // reviewer sees, and approves, both halves together.
+      description: [
+        'Move the Talos installer and kubelet versions together',
+      ],
+      matchDatasources: [
+        'docker',
+      ],
+      matchPackageNames: [
+        'ghcr.io/siderolabs/installer',
+        'ghcr.io/siderolabs/kubelet',
+      ],
+      groupName: 'Talos and Kubernetes versions',
+    },
+    {
       // Note: workflow-only PRs are not covered by flate/flux-ks-paths, which are
       // all path-filtered to kubernetes/**. The effective gate here is the Labeler workflow
       // (pull_request_target, no path filter). This buys an audit trail and a merge that waits on

@@ -1,6 +1,10 @@
 # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-talosVersion: v1.13.10
+talosVersion: v1.14.0
 # renovate: datasource=docker depName=ghcr.io/siderolabs/kubelet
+# Must never lead talosVersion. Talos validates the kubelet image against the
+# range its own release line supports — 1.13 caps at 1.36, 1.14 defaults to
+# 1.37 — and a too-new value is not inert: it fails validation for every node,
+# so `topf apply`/`diff` stop working cluster-wide, not just the k8s upgrade.
 kubernetesVersion: v1.37.0
 clusterName: home-kubernetes
 clusterEndpoint: ENC[AES256_GCM,data:0DKrl3q3P4DnTcc5vUgaRt8YdbKBcUuok6v5,iv:KDBqrGoaEXoRQSDoDWTVBhlgAv/plX4iAEgGwFQHm3M=,tag:K7MgqMEW5NFsiWuSHk7mkA==,type:str]

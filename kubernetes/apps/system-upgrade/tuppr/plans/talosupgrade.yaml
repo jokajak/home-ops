@@ -6,7 +6,10 @@ metadata:
 spec:
   talos:
     # renovate: datasource=docker depName=ghcr.io/siderolabs/installer
-    version: v1.13.10
+    # Keep in step with kubernetesupgrade.yaml: Talos gates which Kubernetes
+    # minor it will accept, so this must reach a line that supports that
+    # version before the Kubernetes plan can succeed.
+    version: v1.14.0
   # Image is resolved per-node by version-swapping each node's running install image, so every
   # node keeps its own schematic (control-plane has intel-ucode, workers don't, the rpi4 keeps
   # its board overlay) without hard-coding a schematic id here.
