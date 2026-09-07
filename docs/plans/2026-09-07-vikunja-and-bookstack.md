@@ -186,7 +186,7 @@ These cannot be done from the repo — they need secrets or an interactive sessi
   and land back logged in. Gatus shows both green.
 - Confirm the second household member can sign in to Vikunja — registration is disabled, so
   verify that an OIDC login still provisions their account rather than being refused.
-- After the first six-hourly tick, a `bookstack-*.sql.gz` exists under `db-dumps/` on the claim,
+- After the first six-hourly tick, a `bookstack-*.sql` exists under `db-dumps/` on the claim,
   and the next VolSync run includes it.
 
 ## Risks

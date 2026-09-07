@@ -17,6 +17,7 @@ the tree from there. See each namespace's own `README.md` for the apps it contai
 | Namespace | Purpose |
 | --- | --- |
 | [actions-runner-system](./actions-runner-system/README.md) | Self-hosted GitHub Actions runners. |
+| [ai](./ai/README.md) | Household AI: inference router and its surfaces. |
 | [cert-manager](./cert-manager/README.md) | TLS certificate issuance and renewal. |
 | [database](./database/README.md) | PostgreSQL and Redis-compatible datastores. |
 | [default](./default/README.md) | User-facing apps and home services. |
