@@ -8,7 +8,13 @@
 # So this is the backup: a --single-transaction logical dump onto the NAS claim
 # every six hours, which VolSync then ships to MinIO on its hourly schedule
 # along with the uploads next to it. Worst case is losing up to six hours of
-# edits; restore is `gunzip | mariadb` into an empty instance.
+# edits; restore is `mariadb < dump` into an empty instance.
+#
+# The dump is written UNCOMPRESSED on purpose. restic splits files with
+# content-defined chunking and compresses the chunks itself, so consecutive
+# plain-SQL dumps of a wiki that barely changed deduplicate down to almost
+# nothing. Piping through gzip first would change every byte on every run and
+# make each snapshot store a fresh full copy.
 #
 # Substitution is disabled because the script uses shell variables, and Flux's
 # envsubst would otherwise eat them. Nothing in here needs a cluster variable.
@@ -57,9 +63,11 @@ spec:
                 - -c
                 - |
                   set -eu
-                  out="/dumps/bookstack-$(date -u +%Y%m%dT%H%M%SZ).sql.gz"
+                  out="/dumps/bookstack-$(date -u +%Y%m%dT%H%M%SZ).sql"
                   # --single-transaction takes a consistent InnoDB snapshot
-                  # without locking the wiki out for the duration
+                  # without locking the wiki out for the duration. Written to
+                  # .part first so a run that dies midway cannot leave a
+                  # truncated file that looks like a good dump.
                   mariadb-dump \
                     --host=bookstack-mariadb.productivity.svc.cluster.local \
                     --user=root \
@@ -68,11 +76,11 @@ spec:
                     --routines \
                     --events \
                     --databases bookstack \
-                    | gzip -c > "$out.part"
+                    > "$out.part"
                   mv "$out.part" "$out"
                   # keep three days at six-hourly, and let the restic retention
                   # in the volsync component hold the longer tail
-                  ls -1t /dumps/bookstack-*.sql.gz \
+                  ls -1t /dumps/bookstack-*.sql \
                     | tail -n +13 \
                     | xargs -r rm -f
                   echo "wrote $out"

@@ -106,8 +106,11 @@ Pointing restic at a live InnoDB datadir gives a crash-consistent copy at best. 
 datadir sits on `openebs-hostpath` and is explicitly *not* enrolled in VolSync, while a CronJob
 takes a `--single-transaction` dump onto the NAS claim every six hours. VolSync then ships that
 claim — uploads and dumps together — to MinIO hourly. Worst case is losing up to six hours of
-wiki edits; the restore is `gunzip | mariadb` into an empty instance, which works across
-MariaDB versions in a way a datadir copy does not.
+wiki edits; the restore is `mariadb < dump` into an empty instance, which works across
+MariaDB versions in a way a datadir copy does not. The dump is written uncompressed: restic
+chunks and compresses it itself, so consecutive plain-SQL dumps of a mostly-unchanged wiki
+deduplicate to nearly nothing, where gzipping first would make every snapshot store a fresh
+full copy.
 
 Be clear about what that VolSync hop buys, because MinIO is itself NFS-backed by the same NAS
 (see the 2026-09-07 correction in `2026-06-21-volsync-backups.md`): the restic repository is
@@ -202,10 +205,9 @@ These cannot be done from the repo — they need secrets or an interactive sessi
   same NAS export. Nothing added here changes that, and nothing here survives losing the array.
   The mitigation is an off-box backup at the NAS layer, not more ReplicationSources — see the
   correction in `2026-06-21-volsync-backups.md`.
-- **Gzipped dumps do not deduplicate.** restic uses content-defined chunking, and gzip changes
-  the whole byte stream on every run, so each six-hourly snapshot stores a fresh full blob
-  rather than a delta. Harmless at a household wiki's size (single-digit MB), but writing the
-  dump plain rather than `.sql.gz` would make the restic copy nearly free if it ever matters.
+- **Uncompressed dumps cost NAS space to buy restic efficiency.** Twelve plain-SQL dumps sit on
+  the claim at once rather than twelve gzipped ones. At a household wiki's size (single-digit
+  MB) that is noise, but it is the trade being made — see D2.
 
 ## Rollback
 
