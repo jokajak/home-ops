@@ -19,6 +19,12 @@ resource "authentik_provider_oauth2" "vikunja_oauth" {
   client_id     = module.vikunja_oidc_creds.client_id
   client_secret = module.vikunja_oidc_creds.client_secret
 
+  # Vikunja verifies the id_token with go-oidc, which only accepts RS256 and
+  # fails the callback with "unexpected signature algorithm HS256" against the
+  # unsigned default. Same requirement as BookStack and Open WebUI; see the data
+  # source in main.tf.
+  signing_key = data.authentik_certificate_key_pair.default_signing.id
+
   # grant_types has no useful default (Authentik's OAuth2Provider model
   # defaults it to an empty list), so an /authorize request with response_type
   # code fails check_grant() with "invalid_request". Same fix as
@@ -32,8 +38,9 @@ resource "authentik_provider_oauth2" "vikunja_oauth" {
 
   access_token_validity = "hours=8"
 
-  # Vikunja builds its callback from the provider's `name` in config.yml, which
-  # is `authentik` — see the vikunja-config ExternalSecret.
+  # Vikunja builds its callback from the provider's *key* in config.yml — the
+  # map key under auth.openid.providers, not the `name` field — which is
+  # `authentik`. See the vikunja-config ExternalSecret.
   allowed_redirect_uris = [
     {
       matching_mode     = "strict",
