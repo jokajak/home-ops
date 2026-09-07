@@ -12,12 +12,16 @@
 # the same contract Open WebUI uses. That wiring is per-credential and lives in
 # n8n's own UI, so there is nothing to declare here for it.
 #
-# ⚠️ NO SSO. n8n's SAML/OIDC support is an enterprise feature; the community
-# edition has local accounts only. The owner account is created interactively
-# on first visit — a genuine once-in-the-life-of-the-app step, not a GitOps
-# gap. Store the credentials in Bitwarden by hand afterwards. Until that
-# account exists n8n serves a setup form to anyone who reaches it, which is why
-# the ingress is `internal` (LAN only) and must stay that way.
+# ⚠️ NO SSO. n8n's SAML/OIDC support is an enterprise feature, so there is no
+# Authentik application here and the owner account is the only way in. It is
+# still fully declared: N8N_INSTANCE_OWNER_* (n8n >= 2.17.0) pre-provisions it
+# from the environment, terraform/bitwarden generates the password, and n8n
+# reasserts the account on every startup. Nobody types anything into a setup
+# form, and the form is never served — which matters, because before an owner
+# exists it is offered to whoever reaches the ingress first.
+#
+# The ingress is `internal` (LAN only) regardless, and should stay that way:
+# one local account with no MFA is not a thing to expose.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
@@ -106,6 +110,18 @@ spec:
               # hop of X-Forwarded-For. Without it n8n sees every request as
               # coming from the ingress controller.
               N8N_PROXY_HOPS: "1"
+              # Owner account comes from the environment rather than a setup
+              # form. This also LOCKS it: n8n overwrites the account on every
+              # startup, greys out the profile controls, and rejects API writes
+              # to it — so the Bitwarden item is authoritative and cannot drift.
+              # Same posture as Open WebUI's ENABLE_PERSISTENT_CONFIG=false.
+              #
+              # ⚠️ Requires n8n >= 2.17.0. On anything older these are unknown
+              # variables, silently ignored, and the instance comes up serving
+              # an open setup form. Do not downgrade past that line.
+              N8N_INSTANCE_OWNER_MANAGED_BY_ENV: "true"
+              N8N_INSTANCE_OWNER_FIRST_NAME: "Site"
+              N8N_INSTANCE_OWNER_LAST_NAME: "Admin"
               # Executions run in a separate task-runner process rather than in
               # the main event loop. Default in 2.x, set explicitly because a
               # workflow that blocks the main process also blocks the health
@@ -122,7 +138,8 @@ spec:
               N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
               N8N_HIRING_BANNER_ENABLED: "false"
             envFrom:
-              # DB_* and N8N_ENCRYPTION_KEY, assembled in the ExternalSecret.
+              # DB_*, N8N_ENCRYPTION_KEY and the owner's email + bcrypt password
+              # hash, all assembled in the ExternalSecret.
               - secretRef:
                   name: n8n-secret
             probes:

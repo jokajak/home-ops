@@ -635,25 +635,48 @@ resource "bitwarden_item_login" "open_webui" {
 ################################################################################
 # Workflow automation in the `ai` namespace (kubernetes/apps/ai/n8n).
 #
+# Two secrets, both generated, both consumed by the same ExternalSecret.
+#
 # ⚠️ THE ENCRYPTION KEY CANNOT BE ROTATED. It encrypts every credential n8n
 # stores in its database — the API tokens workflows use to reach anything else.
 # Tainting `random_password.n8n_encryption_key` makes all of them permanently
 # unreadable, exactly like litellm's salt key.
 #
-# Not covered here: n8n's owner account. The community edition has no SSO, so
-# that account is created interactively on first visit and its credentials are
-# stored in Bitwarden by hand. A once-per-lifetime step, not a gap.
+# The owner account is the instance's only login: n8n's SAML/OIDC support is an
+# enterprise feature, so there is no Authentik application for it and no
+# `terraform/authentik` resource. It is pre-provisioned from the environment
+# rather than typed into a setup form — see the HelmRelease for the env vars —
+# which is why the password is generated here like paperless's admin password
+# and authentik's bootstrap password, rather than being invented by a human.
 resource "random_password" "n8n_encryption_key" {
   length  = 64
   special = false
+}
+
+# Alphanumeric on purpose: this value is bcrypt-hashed below and also typed
+# into a login form, and n8n's own validator wants at least one digit and one
+# uppercase letter (8-64 chars). No special characters means nothing to escape
+# on the way through either path.
+resource "random_password" "n8n_owner_password" {
+  length      = 32
+  special     = false
+  min_numeric = 1
+  min_upper   = 1
 }
 
 resource "bitwarden_item_login" "n8n" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
 
-  name  = "n8n credentials"
-  notes = "Encrypts n8n's stored workflow credentials. Rotating it makes every one of them unreadable — do not."
+  name = "n8n credentials"
+
+  # The owner login. n8n keys the account on the email, so this is the one
+  # field that must match N8N_INSTANCE_OWNER_EMAIL exactly — the ExternalSecret
+  # reads it from here so there is only one place to change it.
+  username = "siteadmin@${local.domain}"
+  password = random_password.n8n_owner_password.result
+
+  notes = "n8n owner login, plus the key that encrypts its stored workflow credentials. Rotating encryption_key makes every one of those credentials unreadable — do not."
 
   uri {
     value = "https://n8n.${local.domain}"
@@ -668,6 +691,28 @@ resource "bitwarden_item_login" "n8n" {
   field {
     name   = "encryption_key"
     hidden = random_password.n8n_encryption_key.result
+  }
+
+  # n8n takes a pre-hashed password in N8N_INSTANCE_OWNER_PASSWORD_HASH; a
+  # plaintext value there does not fail loudly, it just makes login impossible.
+  # cost 10 matches n8n's own SALT_ROUNDS.
+  field {
+    name   = "owner_password_hash"
+    hidden = bcrypt(random_password.n8n_owner_password.result, 10)
+  }
+
+  lifecycle {
+    # bcrypt() salts randomly, so it returns a different hash on every single
+    # evaluation even though the password has not changed. Without this the
+    # item would show a diff on every plan and rewrite the hash on every apply
+    # — churning the Secret, and with reloader, restarting the pod. Hashing
+    # once at create time and never looking again is the whole point.
+    #
+    # ⚠️ This freezes every `field` on this item, encryption_key included.
+    # That is deliberate for the key (it must never change), but it does mean
+    # adding a new field here later requires tainting the item or setting it in
+    # Bitwarden by hand. Same trade the `open-webui litellm` item makes.
+    ignore_changes = [field]
   }
 }
 
