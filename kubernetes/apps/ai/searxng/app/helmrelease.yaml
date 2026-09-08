@@ -1,0 +1,122 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+#
+# SearXNG: metasearch for hearthai's web-fetch tool.
+#
+# Why self-hosted rather than a Brave/Tavily key — the household's searches
+# never reach a commercial provider, there is no account, no per-query cost, no
+# spend cap to police, and no credential to rotate. It aggregates from public
+# engines, so there is no upstream contract behind it either.
+#
+# No ingress, deliberately, following hearthmem: the only consumer is
+# hearthfetch over the cluster network. Adding one later is an `ingress:` block
+# and an entry in the internal class — worth doing only if someone actually
+# wants it as a browser search engine.
+#
+# ⚠️ Results are NOT trusted output. Titles and snippets are written by whoever
+# ranked for the query, so hearthfetch scrubs them on the same path as page
+# content. Nothing here should be read as making search results safe.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: searxng
+  namespace: ai
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      searxng:
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          securityContext:
+            # No runAsUser: the image declares its own non-root user, and
+            # pinning a uid here would only be a guess that breaks on a bump.
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+        containers:
+          app:
+            image:
+              repository: ghcr.io/searxng/searxng
+              tag: "2026.9.7-3e454637f"
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              # Read from /config, not the image's writable /etc/searxng.
+              SEARXNG_SETTINGS_PATH: /config/settings.yml
+              SEARXNG_BIND_ADDRESS: "0.0.0.0"
+              SEARXNG_PORT: "8080"
+              # Cluster-internal only; no ingress fronts this.
+              SEARXNG_BASE_URL: "http://searxng.ai.svc.cluster.local:8080/"
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+              # readOnlyRootFilesystem is deliberately NOT set. uwsgi's write
+              # paths in this image are unverified here — there is no cluster in
+              # the environment this was authored in to check against. Worth
+              # tightening once it has run: set it true, add emptyDirs for
+              # whatever CrashLoops, and keep the result.
+            probes:
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /healthz
+                    port: 8080
+                  initialDelaySeconds: 15
+                  periodSeconds: 30
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  initialDelaySeconds: 5
+                  periodSeconds: 15
+            resources:
+              requests:
+                cpu: 25m
+                memory: 128Mi
+              limits:
+                memory: 512Mi
+    service:
+      app:
+        controller: searxng
+        ports:
+          http:
+            port: 8080
+    persistence:
+      # The settings file, templated by the ExternalSecret so secret_key never
+      # lands in a ConfigMap. Mounted at /config rather than the image's
+      # default /etc/searxng, whose entrypoint writes into that directory on
+      # startup — a read-only mount there fails.
+      settings:
+        type: secret
+        name: searxng-settings
+        globalMounts:
+          - path: /config/settings.yml
+            subPath: settings.yml
+            readOnly: true
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

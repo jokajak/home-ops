@@ -20,3 +20,7 @@ resources:
   # Workflow automation, at n8n.<domain>. A trial (2026-09-06); here rather
   # than in productivity because litellm is the point of it.
   - ./n8n/ks.yaml
+  # Self-hosted metasearch, cluster-internal only. Exists to be hearthai's
+  # search provider instead of a commercial SERP key — no account, no per-query
+  # cost, and the household's queries stay off a vendor's logs.
+  - ./searxng/ks.yaml
