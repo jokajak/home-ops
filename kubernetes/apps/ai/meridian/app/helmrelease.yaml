@@ -5,20 +5,22 @@
 # for OpenAI. It bridges the Claude Agent SDK to a standard Anthropic API
 # endpoint, so a Claude subscription can back tools that expect an API.
 #
-# ⚠️ THIS IS INERT UNTIL SOMEONE LOGS IT IN, AND THE HOUSEHOLD HAS NO CLAUDE
-# SUBSCRIPTION TODAY. It authenticates by holding Claude Code credentials in
-# /home/claude/.claude — there is no API key to inject and nothing this repo
-# can hand it. Deployed now because it was asked for and because it is
-# harmless while unauthenticated: it starts, serves /health, and returns auth
-# errors on anything real.
+# ⚠️ THIS IS INERT UNTIL SOMEONE LOGS IT IN. It authenticates by holding Claude
+# Code credentials in /home/claude/.claude — there is no API key to inject and
+# nothing this repo can hand it. The login is interactive and happens once or
+# twice in this component's life, so it is written down rather than automated:
+# see "meridian: logging it in" in
+# docs/plans/2026-08-24-hermes-household-agents.md. Short version — get a
+# ~/.claude/.credentials.json from a host where `claude` is logged in and
+# `kubectl cp` it onto the meridian-auth volume, then restart the pod.
 #
 # ClusterIP only, no ingress. It is an API endpoint for other cluster
-# workloads, not a surface for a person. The intended consumer is LiteLLM: add
-# it as an anthropic/ model whose api_base points here, and both agents can
-# reach Claude models through the same router and the same virtual keys —
-# without either agent holding a credential. That wiring is deliberately NOT
-# in litellm's config yet, because a model entry that always 401s would be
-# probed every 300s by background health checks.
+# workloads, not a surface for a person. The consumer is LiteLLM: the
+# anthropic/ entries in litellm-config point their api_base at this service,
+# so anything behind the router can reach Claude models with the same virtual
+# keys it already uses for the ChatGPT ones, without holding a credential.
+# Those entries 401 and fail their 300s health check until the login above is
+# done — noisy, not harmful.
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:

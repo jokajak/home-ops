@@ -379,20 +379,75 @@ agent remembers.
 They need an account before they can be put in a group. Existing users log in through GitHub, so
 their `email` must match their GitHub primary email.
 
-## meridian, deployed but inert
+## meridian: logging it in
 
 `ghcr.io/rynfar/meridian` bridges the Claude Agent SDK to a standard Anthropic API endpoint — the
-Claude-side twin of what LiteLLM's `chatgpt/` provider does for OpenAI. It is deployed and it
-starts, but **the household has no Claude subscription, so it can do nothing yet**. It
-authenticates by holding Claude Code credentials on its PVC; there is no key this repo can inject.
+Claude-side twin of what LiteLLM's `chatgpt/` provider does for OpenAI. It authenticates by
+holding **Claude Code credentials** on its PVC. There is no key this repo can inject, and there is
+no `litellm-proxy auth login` equivalent to run inside LiteLLM: the credential belongs to
+meridian, and the login happens there.
 
-Two notes for when that changes. Log it in by getting a `~/.claude/.credentials.json` from a host
-where `claude login` has run, and `kubectl cp` it onto the `meridian-auth` volume. And the point
-of having it in-cluster is LiteLLM: add an `anthropic/` model whose `api_base` points at
-`http://meridian.ai.svc.cluster.local:3456`, and both agents can reach Claude models through the
-same router and the same virtual keys, without either holding a credential. That entry is
-deliberately **not** in LiteLLM's config yet — a model that always 401s would be probed every
-300s by background health checks.
+The wiring on LiteLLM's side is already in Git — three `anthropic/` entries in
+`litellm-config` whose `api_base` is `http://meridian.ai.svc.cluster.local:3456`, authenticating
+with `MERIDIAN_API_KEY`. They 401 and fail their 300s health check until this login is done.
+
+### The login (one-time, interactive)
+
+The container is headless and the Claude OAuth flow wants a browser, so the reliable path is to
+log in somewhere with a browser and move the resulting credential file in. This is a
+once-or-twice-in-the-component's-life step; it is written down rather than automated on purpose.
+
+1. On any machine where you can open a browser, install Claude Code and log in with the
+   subscription account (`claude` → `/login`). That writes `~/.claude/.credentials.json`.
+2. Copy it onto the `meridian-auth` volume:
+
+   ```sh
+   POD=$(kubectl -n ai get pod -l app.kubernetes.io/name=meridian -o name | head -1)
+   kubectl -n ai cp ~/.claude/.credentials.json "${POD#pod/}:/home/claude/.claude/.credentials.json"
+   ```
+
+3. Fix ownership and mode if `kubectl cp` did not preserve them — the image runs as uid 1000 and
+   the file holds a live OAuth token:
+
+   ```sh
+   kubectl -n ai exec "$POD" -- sh -c 'chmod 600 /home/claude/.claude/.credentials.json'
+   ```
+
+4. Restart so meridian re-reads it: `kubectl -n ai rollout restart deploy/meridian`.
+
+**The volume must stay writable.** meridian's `tokenRefresh.ts` renews the OAuth token in place
+and writes it back to that file; a read-only mount would work until the first expiry and then stop.
+The PVC is RWO `nfs-csi` and not VolSync-enrolled — losing it costs another login, and replicating
+a live credential to MinIO buys nothing.
+
+### Checking it worked
+
+```sh
+kubectl -n ai exec "$POD" -- claude auth status                 # from meridian's side
+kubectl -n ai exec deploy/litellm -- \
+  curl -s -X POST localhost:4000/v1/chat/completions \
+    -H "Authorization: Bearer $LITELLM_KEY" -H 'content-type: application/json' \
+    -d '{"model":"claude-opus-5","messages":[{"role":"user","content":"hi"}]}'
+```
+
+meridian also ships an interactive `claude auth login` it shells out to, which works over
+`kubectl exec -it` if you would rather not touch a credentials file — but it is the same OAuth
+flow, so you still need a browser to approve it and a terminal to paste the code back.
+
+### Which models it can serve
+
+Whatever Claude Code offers this subscription. Run `/model` inside Claude Code and treat that list
+as authoritative, exactly as `/model` in the codex CLI is authoritative for the `chatgpt/` entries.
+The three aliases in `litellm-config` (`claude-opus-5`, `claude-sonnet-5`, `claude-haiku-4-5`) are
+the capable / everyday / cheap tiers; add or drop entries there and nothing else changes.
+
+⚠️ **One subscription, more than one person** — the same caveat as the ChatGPT side, and worth
+checking against Anthropic's consumer terms before the household leans on it. Spend attribution
+still works: every caller comes through LiteLLM with its own virtual key.
+
+⚠️ **Cost figures on these models are wrong by construction.** LiteLLM prices `anthropic/` calls
+from its metered per-token map while the subscription is flat-rate, so the spend column is a usage
+weight, not dollars.
 
 Its image tags are worth a glance: the GHCR series (1.62.x) and the repo's git tags (v1.29.x) have
 diverged. Renovate follows the registry, which is what actually ships.
