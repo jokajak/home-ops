@@ -14,9 +14,12 @@ flux-operator, `OCIRepository` chart refs, Envoy Gateway, `flate`); see
 [`docs/plans/2026-08-04-upstream-template-realignment.md`](docs/plans/2026-08-04-upstream-template-realignment.md)
 for the phased map of that delta. Don't reintroduce template scaffolding.
 
-**Guiding principle — everything as code.** The whole system is meant to be reproducible from
-this Git repository: no click-ops, no manual `kubectl apply`, no console-configured infra. State
-lives in version control and is reconciled by machines, via two complementary engines:
+**Guiding principle — the steady state is code.** The whole system is meant to be reproducible
+from this Git repository: no click-ops, no manual `kubectl apply`, no console-configured infra.
+What that promises is the *destination* — check this repo out, point Flux and OpenTofu at it, and
+the system converges on what it describes. It does not promise that every journey between two
+described states is itself automated. State lives in version control and is reconciled by
+machines, via two complementary engines:
 
 - **GitOps (Flux)** for everything *inside* the cluster — a push to the tracked branch is the only
   thing that changes cluster state.
@@ -25,10 +28,32 @@ lives in version control and is reconciled by machines, via two complementary en
   this IaC; `.tf`/`.hcl` is OpenTofu code regardless of the directory name. Prefer `tofu` over
   `terraform` in new tooling/docs.
 
-When something can't yet be expressed as code, treat that as a gap to close, and call it out
-rather than papering over it with a manual step.
+When the **steady state** can't be expressed as code, treat that as a gap to close, and call it
+out rather than papering over it with a manual step.
 
-**Exception — steps that only ever happen once or twice.** The rule is aimed at what recurs:
+**Changes, though, may be procedural.** Getting *from* one described state *to* another is allowed
+to need hands. Reconcilers converge on a destination; they do not sequence a migration, and some
+sequences matter:
+
+- **Flux reconciles HEAD, not each commit.** Merging moves the whole branch at once, so "commit A,
+  then commit B" is not an ordering primitive — two commits in one merge are one change. When
+  order genuinely matters, that is two merges with a verification in between, and the pause
+  belongs to the owner. The case that forces it: a protective marker Flux reads from the **live
+  object** rather than from Git — `kustomize.toolkit.fluxcd.io/prune: disabled` on a PVC, say —
+  must already be in the cluster before the change that depends on it lands.
+- **Some transitions cannot be expressed at all**: restoring data into a new database, moving a
+  claim between Kustomizations without it being deleted in between, an upgrade whose old version
+  has to run a migration first.
+
+What this does *not* license is leaving the destination undescribed, or bundling a step that can
+destroy data into a change and hoping the ordering holds. The test is: when the procedure is over,
+the cluster matches this repo, and a from-scratch rebuild reaches the same place without the
+procedure. So write the sequence down where the next person will look — the cutover section of the
+plan doc in `docs/plans/`, plus a comment on whatever manifest is load-bearing for it — say what to
+verify between steps and what breaks if they run out of order, and hand the irreversible ones back
+to the owner rather than performing them.
+
+**Corollary — steps that only ever happen once or twice.** The rule is aimed at what recurs:
 anything reconciled continuously, rebuilt from scratch, or repeated on every deploy. A step
 taken once or twice in the life of a component is not a gap and does not need machinery built
 around it — an interactive OAuth device-code login, a first-boot bootstrap, a one-time data
@@ -39,9 +64,8 @@ person will look for it — the owner-steps section of the plan doc, or a commen
 HelmRelease it belongs to — and move on. If it turns out to be happening a third time, that is
 the signal to automate it.
 
-This exception is about automation effort only. It does not relax the secrets or network-details
-rules below: a one-off step still never justifies committing a real secret value, IP, or
-hostname.
+None of this relaxes the secrets or network-details rules below: a one-off step, or an ordered
+cutover, still never justifies committing a real secret value, IP, or hostname.
 
 The pieces:
 
@@ -134,7 +158,9 @@ sensitive — same posture as secrets.
 - This runs in an **ephemeral remote container with a fresh clone** — there is **no kubeconfig
   and no cluster access**. I cannot run `kubectl`, `flux`, or `talosctl` against the live
   cluster, and I should not assume I can observe runtime state. Changes take effect only after
-  the owner reconciles Flux from the pushed branch.
+  the owner reconciles Flux from the pushed branch. So an ordered cutover is not something I can
+  drive: push only the first step, say exactly what to check, and **wait** for the owner to
+  confirm it is live before pushing what depends on it.
 - Validation I *can* do locally: schema/lint checks the way CI does them — `flate`
   (see `.github/workflows/flate.yaml`), which covers schema validation and
   Kustomization/HelmRelease rendering in one pass, plus `yamllint` and the `pre-commit`
