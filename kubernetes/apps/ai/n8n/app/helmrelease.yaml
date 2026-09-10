@@ -8,7 +8,7 @@
 #
 # It sits in `ai` rather than `productivity` because the interesting half is
 # the LLM nodes, and litellm is already here: n8n's OpenAI-compatible nodes can
-# be pointed at http://litellm.ai.svc.cluster.local:4000/v1 with a virtual key,
+# be pointed at http://hearthai-litellm:4000/v1 with a virtual key,
 # the same contract Open WebUI uses. That wiring is per-credential and lives in
 # n8n's own UI, so there is nothing to declare here for it.
 #

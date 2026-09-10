@@ -1,0 +1,193 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/helm.toolkit.fluxcd.io/helmrelease_v2.json
+#
+# The household AI stack, as one release.
+#
+# Open WebUI, LiteLLM, meridian and hearthmem used to be four app directories
+# here, each with its own HelmRelease, image pin, probes and wiring between
+# them. They are one product with one compatibility surface, so hearthai now
+# packages them together and this repo supplies only what a cluster can:
+# hostnames, Secrets, claims, and a database. See
+# docs/plans/2026-09-10-hearthai-single-release.md for the split and the cutover.
+#
+# The division of labour, concretely:
+#
+#   hearthai owns   images and their versions, probes, resource requests, the
+#                   LiteLLM model catalogue, Open WebUI's environment, the
+#                   meridian network policy, and how the four talk to each other
+#                   (Open WebUI's OPENAI_API_BASE_URLS and LiteLLM's meridian
+#                   api_base are generated from the release name, not configured
+#                   here).
+#   home-ops owns   the public URLs, the identity provider, every Secret, the
+#                   PersistentVolumeClaims (app/pvc.yaml), the ingress class,
+#                   node placement, and Postgres.
+#
+# ⚠️ POSTGRES IS OURS, NOT THE CHART'S. The chart will render its own
+# single-instance CNPG Cluster if asked (postgres.enabled, default true). This
+# cluster already runs a shared Postgres in the `database` namespace with a
+# `litellm` database and role on it — holding the proxy's virtual keys, budgets
+# and spend history — so that stays where it is and `postgres.enabled: false`
+# keeps the chart's hands off it. LiteLLM then takes DATABASE_URL from
+# litellm-secret (app/externalsecret.yaml) and keeps its postgres-init init
+# container, exactly as before. Switching to the bundled instance would be a
+# backup/restore cutover, not a value flip; see the 2026-08-24 CNPG
+# consolidation plan for why the shared cluster won that argument.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: hearthai
+  namespace: ai
+spec:
+  interval: 30m
+  # Longer than the usual 10m: one release now starts Open WebUI, whose first
+  # boot downloads an embedding model, and LiteLLM, whose first boot runs Prisma
+  # migrations.
+  timeout: 15m
+  chart:
+    spec:
+      # A path in the GitRepository, not a packaged chart — hearthai has not cut
+      # a tagged release yet. reconcileStrategy: Revision so a new source commit
+      # is an upgrade even though the chart version in Chart.yaml has not moved.
+      # This becomes an OCIRepository + version once the first tag publishes
+      # oci://ghcr.io/jokajak/charts/hearthai.
+      chart: ./deploy/charts/hearthai
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: hearthai
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    # The one door. Also derives the OIDC callback
+    # (https://chat.<domain>/oauth/oidc/callback), which must match the redirect
+    # URI in terraform/authentik/application_openwebui.tf.
+    url: "https://chat.${SECRET_DOMAIN:=internal}"
+    timezone: "${TIMEZONE:=America/New_York}"
+
+    # ── Secrets ───────────────────────────────────────────────────────────────
+    # Every one of these is an ExternalSecret target in app/externalsecret.yaml;
+    # the chart reads named keys out of them and never sees a value in Helm
+    # release metadata. Key names are the chart defaults and match what the
+    # ExternalSecret templates already produced: WEBUI_SECRET_KEY,
+    # OPENAI_API_KEYS, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET.
+    sessionSecret:
+      name: open-webui-secret
+    llm:
+      # baseUrl is deliberately unset: LiteLLM is in-release, so the chart wires
+      # Open WebUI to it. This key is only Open WebUI's virtual key for it.
+      apiKeySecret:
+        name: open-webui-secret
+    auth:
+      # Authentik is the only way in. No local password accounts exist to fall
+      # back on — the application's policy bindings
+      # (terraform/authentik/application_openwebui.tf) decide who can sign in.
+      mode: oidc
+      oidc:
+        providerName: Authentik
+        discoveryUrl: "https://auth.${SECRET_DOMAIN:=internal}/application/o/open-webui/.well-known/openid-configuration"
+        credentialsSecret:
+          name: open-webui-oidc-secret
+
+    # ── Open WebUI ────────────────────────────────────────────────────────────
+    openwebui:
+      # This cluster has two RPi4s, and Open WebUI pulls a sentence-transformers
+      # embedding model on first boot and runs it on CPU. Scheduling that onto a
+      # Pi is not a good day for anyone.
+      nodeSelector:
+        kubernetes.io/arch: amd64
+      deploymentAnnotations:
+        reloader.stakater.com/auto: "true"
+      persistence:
+        existingClaim: open-webui-data
+    ingress:
+      className: internal
+      annotations:
+        hajimari.io/icon: mdi:message-text
+        # Turns run long and responses stream. Without these the connection is
+        # cut mid-answer.
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-body-size: "0"
+        nginx.ingress.kubernetes.io/proxy-buffering: "off"
+
+    # ── LiteLLM ───────────────────────────────────────────────────────────────
+    # The model catalogue moved into the chart (files/litellm-config.yaml, a
+    # byte-for-byte copy of the ConfigMap this repo used to carry). Adding a
+    # model is now a hearthai change plus a bump of the pinned commit in
+    # kubernetes/flux/repositories/git/hearthai.yaml.
+    litellm:
+      existingSecret: litellm-secret
+      # ⚠️ VERSION OVERRIDE, NOT A PREFERENCE. The chart pins v1.99.1 — the
+      # version this cluster ran when hearthai imported it — and Renovate has
+      # since moved this cluster to v1.100.1 (#1268). Without the override the
+      # packaging change is a downgrade, and the `-database` image applies its
+      # own Prisma migrations at startup: rolling it back against an
+      # already-migrated database is not a safe no-op. Renovate keeps bumping
+      # it here, in the same image.repository/tag shape it already tracks
+      # everywhere else in this repo. Drop this once the chart's own pin has
+      # caught up.
+      image:
+        repository: ghcr.io/berriai/litellm-database
+        tag: v1.100.1
+      persistence:
+        existingClaim: litellm-token
+      # Kept, so other in-cluster consumers and the admin UI keep the hostname
+      # they already have. The Service behind it is now hearthai-litellm:4000.
+      ingress:
+        enabled: true
+        className: internal
+        host: "llm.${SECRET_DOMAIN:=internal}"
+
+    # ── Postgres ──────────────────────────────────────────────────────────────
+    # See the warning at the top of this file. The shared cluster in the
+    # `database` namespace serves the litellm database; the chart renders no
+    # CNPG Cluster of its own, and LiteLLM keeps its postgres-init container and
+    # DATABASE_URL from litellm-secret.
+    postgres:
+      enabled: false
+
+    # ── meridian ──────────────────────────────────────────────────────────────
+    # ⚠️ INERT UNTIL SOMEONE LOGS IT IN. It authenticates by holding Claude Code
+    # credentials on the meridian-auth claim; there is no API key to inject and
+    # nothing this repo can hand it. That login is interactive and happens once
+    # or twice in this component's life, so it is written down rather than
+    # automated: see "meridian: logging it in" in
+    # docs/plans/2026-08-24-hermes-household-agents.md.
+    meridian:
+      # Same override, same reason: the chart pins 1.68.0 and this cluster is
+      # on 1.71.1 (#1269). ⚠️ Unlike litellm's, this is the chart's single
+      # `image:` string rather than a repository/tag pair, which Renovate's
+      # helm-values manager may not recognise — check the next Renovate run,
+      # and if it is invisible, fix it in the chart rather than adding a custom
+      # manager here.
+      image: ghcr.io/rynfar/meridian:1.71.1
+      # MERIDIAN_API_KEY. Its own auth check is opt-in — no key, no gate — so
+      # this is what stops any pod that can reach :3456 from spending the
+      # subscription anonymously. The same value is in litellm-secret, which is
+      # the caller's half of the same gate.
+      existingSecret: meridian-secret
+      persistence:
+        existingClaim: meridian-auth
+      # The chart renders the CiliumNetworkPolicy this repo used to own, with
+      # release-scoped selectors: only this release's LiteLLM pods, plus node
+      # probes, may reach it.
+      networkPolicy:
+        enabled: true
+
+    # ── hearthmem ─────────────────────────────────────────────────────────────
+    # The shared-memory store, as a subchart. No ingress: a store's token is a
+    # bearer capability that cannot be revoked, so it stays on the cluster
+    # network. Its claim is backed up by VolSync from ks.yaml.
+    hearthmem:
+      persistence:
+        existingClaim: hearthmem-data

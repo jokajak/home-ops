@@ -2,7 +2,7 @@
 ## Authentik Application - Open WebUI
 ##
 ## The household assistant at https://chat.<domain>
-## (kubernetes/apps/ai/open-webui). Since the Hermes agents were removed
+## (kubernetes/apps/ai/hearthai). Since the Hermes agents were removed
 ## (2026-09-04) this is the only thing on that host, and the only OIDC
 ## application in the ai namespace.
 ##
@@ -65,8 +65,8 @@ resource "authentik_provider_oauth2" "openwebui" {
 resource "authentik_application" "openwebui" {
   name = "Open WebUI"
   # The slug IS the issuer path: https://auth.<domain>/application/o/<slug>/.
-  # OPENID_PROVIDER_URL in the HelmRelease hardcodes "open-webui", so renaming
-  # this breaks discovery.
+  # auth.oidc.discoveryUrl in the hearthai HelmRelease hardcodes "open-webui",
+  # so renaming this breaks discovery.
   slug               = "open-webui"
   protocol_provider  = authentik_provider_oauth2.openwebui.id
   group              = authentik_group.home.name

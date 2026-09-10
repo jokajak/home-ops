@@ -1,0 +1,53 @@
+---
+# One release, one endpoint ConfigMap. The two checks that existed when Open
+# WebUI and LiteLLM were separate apps are kept as-is; only the in-cluster
+# Service names moved, since the chart names its resources after the release
+# (`hearthai-web`, `hearthai-litellm`).
+#
+# Bespoke rather than the shared templates/gatus/guarded ConfigMap: that one
+# probes `/` and asserts 200, and neither of these serves a useful
+# unauthenticated 200 there — Open WebUI's is /health and LiteLLM's is
+# /health/liveliness (upstream's spelling).
+#
+# meridian and hearthmem are deliberately unprobed: both are ClusterIP-only
+# with no ingress, and meridian answers 401 to anything without the API key,
+# so a probe would report a permanent failure rather than a health signal.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hearthai-gatus-ep
+  namespace: ai
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      # HTTP rather than TCP: /health is outside Open WebUI's auth gate and does
+      # not care which Host header it arrives with, so an in-cluster probe gets
+      # a straight answer.
+      - name: "open-webui"
+        group: internal
+        url: "http://hearthai-web.ai.svc.cluster.local:8080/health"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"
+      # DNS must not resolve outside...
+      - name: "litellm Exposure"
+        group: internal-guarded
+        url: 1.1.1.1
+        interval: 1m
+        ui:
+          hide-hostname: true
+          hide-url: true
+        dns:
+          query-name: "llm.${SECRET_DOMAIN:=internal}"
+          query-type: A
+        conditions:
+          - "len([BODY]) == 0"
+      # ...and the service must answer inside.
+      - name: "litellm"
+        group: internal
+        url: "https://llm.${SECRET_DOMAIN:=internal}/health/liveliness"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"
