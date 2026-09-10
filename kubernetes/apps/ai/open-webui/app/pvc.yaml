@@ -11,11 +11,18 @@
 # nfs-csi for the same reason every volume in this namespace is: no pod welded
 # to a node. Open WebUI is a single-writer app, so the concurrency this costs
 # does not matter here.
+#
+# ⚠️ prune: disabled — Flux must never delete this claim. Removing the app from
+# kubernetes/apps/ai/kustomization.yaml, renaming its Kustomization, or moving
+# the claim into another one all put a PVC delete on the table, and nfs-csi has
+# reclaimPolicy: Delete behind it. Deleting this is a manual act, deliberately.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: open-webui-data
   namespace: ai
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce

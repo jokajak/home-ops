@@ -12,11 +12,18 @@
 #
 # Not enrolled in VolSync, for the same reason as LiteLLM's: re-obtainable by
 # logging in again.
+#
+# ⚠️ prune: disabled — Flux must never delete this claim. Removing the app from
+# kubernetes/apps/ai/kustomization.yaml, renaming its Kustomization, or moving
+# the claim into another one all put a PVC delete on the table, and nfs-csi has
+# reclaimPolicy: Delete behind it. Deleting this is a manual act, deliberately.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: meridian-auth
   namespace: ai
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
   accessModes:
     - ReadWriteOnce
