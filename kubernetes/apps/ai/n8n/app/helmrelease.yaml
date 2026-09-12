@@ -90,7 +90,7 @@ spec:
           app:
             image:
               repository: docker.io/n8nio/n8n
-              tag: 2.37.10
+              tag: 2.39.4
             env:
               TZ: "${TIMEZONE:=America/New_York}"
               # n8n reads its own timezone separately from TZ; this is the one
