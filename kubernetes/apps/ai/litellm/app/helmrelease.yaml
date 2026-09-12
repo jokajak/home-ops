@@ -71,7 +71,7 @@ spec:
             # releases automatically.
             image:
               repository: ghcr.io/berriai/litellm-database
-              tag: v1.99.1
+              tag: v1.100.1
             args: ["--config", "/config/config.yaml", "--port", "4000"]
             env:
               # DATABASE_URL is assembled in the ExternalSecret and arrives via
