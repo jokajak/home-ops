@@ -45,7 +45,7 @@ spec:
               type: RuntimeDefault
           containers:
             - name: dump
-              image: docker.io/library/mariadb:11.8.9
+              image: docker.io/library/mariadb:12.3.3
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
