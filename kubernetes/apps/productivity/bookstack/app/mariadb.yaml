@@ -41,7 +41,7 @@ spec:
           app:
             image:
               repository: docker.io/library/mariadb
-              tag: 11.8.9
+              tag: 12.3.3
             args:
               # BookStack requires utf8mb4 end to end; the server defaults
               # differ by image version, so pin them rather than inherit.
