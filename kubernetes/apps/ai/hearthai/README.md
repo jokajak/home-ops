@@ -80,12 +80,16 @@ pasted into the Bitwarden `open-webui litellm` item over its `replace-me` sentin
 
 ## Upgrading
 
-The chart is pinned by **commit** in
+While the chart is under active development it **floats on `main`** in
 [`kubernetes/flux/repositories/git/hearthai.yaml`](../../../flux/repositories/git/hearthai.yaml)
-— hearthai has cut no tag yet, and reconciling a moving branch would deploy whatever landed on
-`main`. Bumping an image or adding a model is therefore a hearthai change plus a bump of that
-SHA. Once hearthai publishes `oci://ghcr.io/jokajak/charts/hearthai`, that file becomes an
-`OCIRepository` with a version range and Renovate can track it; nothing tracks a bare SHA.
+— no `commit:` pin. Every push to hearthai's `main` becomes a new source revision, and
+`reconcileStrategy: Revision` in `app/helmrelease.yaml` turns each one into an upgrade (chart
+version `0.1.0+<sha>`). Bumping an image or adding a model is therefore just a hearthai change:
+push it, the cluster follows. The trade-off is that whatever lands on `main` deploys unreviewed —
+fine for a single-household lab whose chart owner is the one pushing. Pin it back to a `commit:`
+(or an `OCIRepository` + version range once hearthai publishes
+`oci://ghcr.io/jokajak/charts/hearthai`, which is also what lets Renovate track it) once the
+chart stabilises.
 
 **Two images are overridden in `app/helmrelease.yaml`, and are meant to come back out.** The
 chart pins litellm v1.99.1 and meridian 1.68.0 — the versions this cluster ran when hearthai

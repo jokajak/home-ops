@@ -8,12 +8,16 @@
 # hostnames, the Secrets, the claims, and the Postgres database. See
 # docs/plans/2026-09-10-hearthai-single-release.md.
 #
-# ⚠️ Pinned to a commit, not a branch. Reconciling a moving branch would deploy
-# whatever landed on main since, unreviewed. hearthai has published no tag yet;
-# the chart is packaged to oci://ghcr.io/jokajak/charts/hearthai on the first
-# tagged release, and this file should become an OCIRepository with a version
-# range then — which is also what gets Renovate tracking it, since nothing
-# tracks a bare commit SHA.
+# ⚠️ Floating on main, intentionally, while the chart is under active
+# development. Every push to jokajak/hearthai main becomes a new source
+# revision, and reconcileStrategy: Revision in the HelmRelease turns each one
+# into an upgrade (chart version 0.1.0+<sha>) — that is the dev loop: push the
+# chart, the cluster follows. The cost is that whatever lands on main deploys
+# unreviewed, which is acceptable only because this is a single-household lab
+# and the chart's owner is the one pushing. Pin this back to `commit:` (or,
+# better, an OCIRepository + version range once hearthai cuts a tag to
+# oci://ghcr.io/jokajak/charts/hearthai — which is also what lets Renovate
+# track it) as soon as the chart stabilises.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -23,9 +27,7 @@ spec:
   interval: 30m
   url: "https://github.com/jokajak/hearthai.git"
   ref:
-    # branch only narrows the fetch; commit is what is checked out.
     branch: "main"
-    commit: "b92bfdab9dae8b2773c265cd8aa48b4f34c37c32"
   ignore: |
     # exclude all
     /*
