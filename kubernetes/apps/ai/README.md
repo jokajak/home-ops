@@ -6,9 +6,9 @@ Design notes and the longer-range thinking live in [`docs/ai-platform`](../../..
 
 | App | Description | Manifest |
 | --- | --- | --- |
-| [litellm](https://github.com/BerriAI/litellm) | The household's inference router: one upstream subscription, one virtual key per consumer. Own role on the shared CNPG Postgres. Everything else here talks to it rather than to a provider directly. | [ks.yaml](./litellm/ks.yaml) |
-| [meridian](https://github.com/rkjdev/meridian) | Claude-subscription bridge for litellm: serves Claude Code credentials as an Anthropic API on a ClusterIP, and litellm's `anthropic/` models point at it. Inert until someone completes the interactive login — see its HelmRelease. | [ks.yaml](./meridian/ks.yaml) |
+| [hearthai](https://github.com/jokajak/hearthai) | The stack itself, as **one Helm release**: Open WebUI at `chat.${SECRET_DOMAIN}`, the litellm inference router behind it at `llm.${SECRET_DOMAIN}`, meridian's Claude-subscription bridge, and the hearthmem shared-memory store. hearthai owns the images, probes and the wiring between them; this repo supplies the URLs, Secrets, claims and the Postgres database. Collapsed from four separate app directories on 2026-09-10 — see [its README](./hearthai/README.md). | [ks.yaml](./hearthai/ks.yaml) |
 | [n8n](https://n8n.io/) | Workflow automation at `n8n.${SECRET_DOMAIN}`. A trial started 2026-09-06; it sits here rather than in `productivity` because litellm is the point of it. | [ks.yaml](./n8n/ks.yaml) |
 | [searxng](https://github.com/searxng/searxng) | Self-hosted metasearch, cluster-internal (no ingress). The search provider for hearthai's web-fetch tool: no account, no per-query cost, and the household's queries never reach a commercial provider. Results are untrusted input and are scrubbed by the consumer. | [ks.yaml](./searxng/ks.yaml) |
-| [open-webui](https://github.com/open-webui/open-webui) | The household assistant at `chat.${SECRET_DOMAIN}`. Talks to litellm directly; the per-person Hermes agents it used to front were removed 2026-09-04. | [ks.yaml](./open-webui/ks.yaml) |
-| hearthmem | The hearthai shared-memory store. **Currently has no consumers** — they were the Hermes agents' shared-memory skill — and is kept while its future as a store of record is decided. See [its README](./hearthmem/README.md). | [ks.yaml](./hearthmem/ks.yaml) |
+
+Anything in this namespace that wants a model talks to litellm at `hearthai-litellm:4000` with
+its own virtual key, never to a provider directly.

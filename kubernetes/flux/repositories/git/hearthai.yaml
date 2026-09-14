@@ -1,0 +1,36 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/gitrepository_v1.json
+# The hearthai repository, as a Helm chart source.
+#
+# hearthai packages Open WebUI, LiteLLM, meridian and hearthmem into one chart
+# (deploy/charts/hearthai) — it owns the images, probes, config and the version
+# compatibility between them. This cluster supplies only site inputs: the
+# hostnames, the Secrets, the claims, and the Postgres database. See
+# docs/plans/2026-09-10-hearthai-single-release.md.
+#
+# ⚠️ Pinned to a commit, not a branch. Reconciling a moving branch would deploy
+# whatever landed on main since, unreviewed. hearthai has published no tag yet;
+# the chart is packaged to oci://ghcr.io/jokajak/charts/hearthai on the first
+# tagged release, and this file should become an OCIRepository with a version
+# range then — which is also what gets Renovate tracking it, since nothing
+# tracks a bare commit SHA.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: hearthai
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: "https://github.com/jokajak/hearthai.git"
+  ref:
+    # branch only narrows the fetch; commit is what is checked out.
+    branch: "main"
+    commit: "b92bfdab9dae8b2773c265cd8aa48b4f34c37c32"
+  ignore: |
+    # exclude all
+    /*
+    # include deploy/ — the chart, its local hearthmem dependency, and the
+    # examples. One level, like home-kubernetes' own rule: gitignore semantics
+    # cannot re-include a path whose parent directory is excluded, so
+    # "!/deploy/charts" on its own would silently produce an empty artifact.
+    !/deploy

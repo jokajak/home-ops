@@ -3,18 +3,18 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cluster-apps-hearthmem
+  name: cluster-apps-hearthai
   namespace: flux-system
 spec:
   targetNamespace: ai
   commonMetadata:
     labels:
-      app.kubernetes.io/name: hearthmem
+      app.kubernetes.io/name: hearthai
   components:
     - ../../../../components/volsync
   interval: 30m
   timeout: 5m
-  path: "./kubernetes/apps/ai/hearthmem/app"
+  path: "./kubernetes/apps/ai/hearthai/app"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -22,6 +22,12 @@ spec:
   wait: false
   postBuild:
     substitute:
+      # ⚠️ APP is NOT the app name here — it is the VolSync backup identity, and
+      # it stays "hearthmem" on purpose. The component derives the restic
+      # repository path from it (s3://backups/volsync/${APP}), so renaming it to
+      # "hearthai" would silently start a new repository and orphan every
+      # existing snapshot of the memory store. Only one claim in this release is
+      # backed up; the rest are re-obtainable (see app/pvc.yaml).
       APP: hearthmem
       VOLSYNC_CLAIM: hearthmem-data
       VOLSYNC_CAPACITY: 5Gi
@@ -36,3 +42,7 @@ spec:
   dependsOn:
     - name: cluster-apps-external-secrets
     - name: cluster-apps-external-secrets-bitwarden
+    # The shared cluster, not the operator: this release has no CNPG resources
+    # of its own (postgres.enabled: false), it just needs postgres-rw to be
+    # answering before LiteLLM's init-db container runs.
+    - name: cluster-apps-cloudnative-pg-cluster
