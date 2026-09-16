@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: productivity
+labels:
+  - pairs:
+      app.kubernetes.io/name: mygarage
+      app.kubernetes.io/instance: mygarage
+      app.kubernetes.io/part-of: mygarage
+resources:
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+  - ../../../../templates/gatus/guarded

@@ -1,0 +1,167 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mygarage
+  namespace: productivity
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      mygarage:
+        # single writer against the NFS data tree, and the app runs
+        # `--workers 1` because APScheduler needs single-process mode
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the mygarage database and role on the shared cluster if
+          # they are not there yet, then does nothing on every subsequent start.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: mygarage-pg-secret
+        containers:
+          app:
+            image:
+              repository: ghcr.io/homelabforge/mygarage
+              tag: 3.4.0
+            env:
+              # The app's own `timezone` config field is vestigial (nothing
+              # reads it); display timezone is a Settings-UI value in the
+              # database. This is the ordinary container TZ.
+              TZ: "${TIMEZONE:=America/New_York}"
+              # Reminders, recall checks and telemetry housekeeping are all
+              # APScheduler jobs, and register_jobs() returns early unless this
+              # is exactly "true". Without it the app serves fine and silently
+              # never nags about an oil change, which is the entire point.
+              SCHEDULER_ENABLED: "true"
+              # The SPA is served same-origin from this host; setting this
+              # replaces the built-in localhost dev origins rather than adding
+              # to them, which is what we want on a published instance.
+              MYGARAGE_CORS_ORIGINS: https://garage.${SECRET_DOMAIN:=internal}
+              # OIDC discovery is fetched server-side through an SSRF guard
+              # that refuses private address space unless the host is listed
+              # here. Authentik lives on the internal load-balancer range, so
+              # without this the issuer URL is rejected at save time.
+              MYGARAGE_TRUSTED_HOSTS: auth.${SECRET_DOMAIN:=internal}
+            envFrom:
+              # MYGARAGE_DATABASE_URL
+              - secretRef:
+                  name: mygarage-pg-secret
+              # MYGARAGE_SECRET_KEY
+              - secretRef:
+                  name: mygarage-fields-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /health
+                    port: 8686
+                  # first boot runs the numbered migrations
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 30
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 25m
+                memory: 256Mi
+              limits:
+                # pandas + matplotlib + pymupdf get pulled in on the PDF
+                # analytics and document paths
+                memory: 1Gi
+    defaultPodOptions:
+      # A Service named `mygarage` makes the kubelet inject
+      # MYGARAGE_PORT=tcp://<clusterIP>:<port>, which collides exactly with the
+      # app's `MYGARAGE_` settings prefix and its integer `port` field. Recent
+      # versions ignore the malformed value and warn, but there is no reason to
+      # hand the app a variable it has to defend against.
+      enableServiceLinks: false
+      # the image runs rootless as uid 1000 with no internal remapping, so the
+      # NFS data tree must be owned by 1000:1000
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: &runAsGroup 1000
+        fsGroup: *runAsGroup
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: mygarage
+        ports:
+          http:
+            port: 8686
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        hosts:
+          - host: &host garage.${SECRET_DOMAIN:=internal}
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert-tls
+    persistence:
+      # Uploaded photos, attachments, documents and generated backups. Every
+      # vehicle, service visit, fill-up and reminder lives in Postgres. Claim
+      # name is mygarage-data, which is what VOLSYNC_CLAIM in ks.yaml points
+      # the restic mover at.
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /data
