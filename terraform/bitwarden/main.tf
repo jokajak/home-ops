@@ -873,3 +873,68 @@ resource "bitwarden_item_login" "bookstack_dbcreds" {
     hidden = random_password.bookstack_db_root_password.result
   }
 }
+
+################################################################################
+# mygarage pgcreds
+################################################################################
+# MyGarage's role on the SHARED database/postgres cluster. postgres-init
+# reconciles the role against this item on every start, so rotating the
+# password here actually takes effect.
+resource "random_password" "mygarage_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "mygarage_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "mygarage pgcreds"
+  username = "mygarage"
+  password = random_password.mygarage_pgpass.result
+
+  notes = "MyGarage's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+################################################################################
+# mygarage credentials
+################################################################################
+# Signs MyGarage's session JWTs and encrypts the settings rows it marks
+# `encrypted` — the OIDC client secret among them. Left unset the app mints one
+# into /data/secret.key, which couples the Postgres restore path to the NFS
+# one; pinning it here keeps them independent. Write-once: rotating it logs
+# everyone out and orphans every encrypted setting. MyGarage has no local admin
+# to bootstrap — accounts come from Authentik — so this item carries no login
+# pair.
+resource "random_password" "mygarage_secret_key" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "mygarage" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "mygarage credentials"
+
+  uri {
+    value = "https://garage.${local.domain}"
+    match = "host"
+  }
+
+  field {
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "secret_key"
+    hidden = random_password.mygarage_secret_key.result
+  }
+}

@@ -6,6 +6,7 @@ resources:
   - ./bookstack/ks.yaml
   - ./forgejo/ks.yaml
   - ./mealie/ks.yaml
+  - ./mygarage/ks.yaml
   - ./paperless/ks.yaml
   - ./vikunja/ks.yaml
   - ./wallos/ks.yaml
