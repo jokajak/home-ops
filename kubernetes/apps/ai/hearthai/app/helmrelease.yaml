@@ -170,7 +170,7 @@ spec:
       # helm-values manager may not recognise — check the next Renovate run,
       # and if it is invisible, fix it in the chart rather than adding a custom
       # manager here.
-      image: ghcr.io/rynfar/meridian:1.71.1
+      image: ghcr.io/rynfar/meridian:1.73.0
       # MERIDIAN_API_KEY. Its own auth check is opt-in — no key, no gate — so
       # this is what stops any pod that can reach :3456 from spending the
       # subscription anonymously. The same value is in litellm-secret, which is
