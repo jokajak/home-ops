@@ -49,7 +49,7 @@ spec:
           app:
             image:
               repository: ghcr.io/homelabforge/mygarage
-              tag: 3.4.0
+              tag: 3.5.0
             env:
               # The app's own `timezone` config field is vestigial (nothing
               # reads it); display timezone is a Settings-UI value in the
