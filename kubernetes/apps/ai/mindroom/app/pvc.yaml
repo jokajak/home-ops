@@ -1,6 +1,5 @@
 ---
-# Databases stay on local storage. See ../README.md for offline recovery;
-# live Direct-copy backups are not a consistency guarantee for these files.
+# Tuwunel RocksDB stays local. Shared workspaces use NFS below.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -17,7 +16,21 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: mindroom-data
+  name: mindroom-workspace
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Runtime-only SQLite WAL journal and Matrix crypto/sync state.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-state
   labels:
     kustomize.toolkit.fluxcd.io/prune: disabled
 spec:
@@ -25,4 +38,4 @@ spec:
   storageClassName: openebs-hostpath
   resources:
     requests:
-      storage: 20Gi
+      storage: 5Gi

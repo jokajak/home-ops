@@ -22,16 +22,20 @@ They reuse their workspaces and are not fresh pods per tool invocation.
 
 ## Storage and recovery
 
-Tuwunel's RocksDB and Mindroom's SQLite/session/crypto state use separate
-`openebs-hostpath` PVCs. Runtime workers colocate with the runtime automatically
-so its RWO local volume remains usable. A failed node requires recovery rather
-than automatic failover; that is acceptable for this household trial.
+Dedicated workers and the runtime share `mindroom-workspace`, an NFS-backed
+ReadWriteMany claim. Workers are not pinned to the runtime node. This follows the
+upstream dedicated-worker storage model and the owner's request to start with RWX.
 
-Do not claim that live VolSync Direct copies of these databases are consistent
-backups. The app README supplies an offline backup/restore procedure. Automated,
-application-consistent backups remain a prerequisite before treating this trial
-as the only copy of important household information. Claims are protected from
-Flux pruning; that protection does not protect against node loss.
+Tuwunel's RocksDB stays on `mindroom-matrix-data` (local RWO). The runtime mounts
+`mindroom-state` (local RWO) over `tracking/`, which contains its SQLite WAL event
+journal. The chart also overlays encryption keys and sync continuity from that
+state claim. Agent session databases use upstream's rollback-journal configuration
+on the NFS workspace; keep one primary runtime and verify NFS locking in use.
+Workers may run on other nodes; the primary still depends on its state PV's node.
+
+Claims are prune-protected. There are no scheduled backups yet: take a consistent
+offline copy of all three claims before treating the trial as durable household
+infrastructure. See the app README for recovery and the fresh-install assumption.
 
 ## Bootstrap and owner steps
 

@@ -9,7 +9,8 @@ pins its image by digest. No SaaS platform, Supabase, or second model gateway.
 | --- | --- | --- |
 | Mindroom Chat | `https://mindroom.${SECRET_DOMAIN}` | Browser; Matrix owns history |
 | Tuwunel | `https://matrix.${SECRET_DOMAIN}` | `mindroom-matrix-data`, 20Gi local RWO |
-| Mindroom runtime | `mindroom:8765` in `ai`; no ingress | `mindroom-data`, 20Gi local RWO |
+| Mindroom runtime + workers | `mindroom:8765` in `ai`; no ingress | `mindroom-workspace`, 20Gi NFS RWX |
+| Runtime journal + Matrix client state | Runtime only | `mindroom-state`, 5Gi local RWO |
 | Existing LiteLLM | `http://hearthai-litellm.ai.svc.cluster.local:4000/v1` | Unchanged |
 
 The Matrix identity domain is `${SECRET_DOMAIN}`, for example
@@ -62,8 +63,9 @@ runtime deployment.
    first. On a restore of an existing database, retain the original identities;
    there is no new first-user step.
 7. Log into Mindroom Chat as the owner. Ask Hearth a question, then exercise a
-   harmless Python or file tool. Verify a worker appears on the runtime's node,
-   can use its workspace, and later scales to zero. Add the next human account
+   harmless Python or file tool. Verify a worker can use its workspace and later scales to zero. Workers
+   can now schedule on another node; no runtime-node colocation is configured.
+   Add the next human account
    and invite it to Household; verify access before expanding the trial.
 
 ## Behavior and limits
@@ -104,12 +106,40 @@ not exposed through the household ingress. Matrix chat works independently of it
 
 ## Backup and restore
 
-Local storage is deliberate: these volumes contain RocksDB, SQLite, Matrix crypto
-state, and sessions. Do not move them onto the NFS class just to permit rescheduling,
-and do not assume a live file copy is a consistent database backup. **There is no
-scheduled backup in this trial.** Before upgrades and before relying on it for
-important household data, take an offline copy of both claims to the NAS. Automated
-consistent backups are follow-up work; node loss without a copy loses this state.
+The runtime and dedicated workers share `mindroom-workspace` on `nfs-csi` with
+ReadWriteMany. Workers mount only their selected subdirectories and can run across
+nodes. The primary stays single-replica; RWX is for worker access, not multiple
+concurrent primary runtimes.
+
+Two kinds of state remain local:
+
+- `mindroom-matrix-data`: Tuwunel's RocksDB and media.
+- `mindroom-state`: the runtime's `tracking/` directory, including its SQLite WAL
+  event journal, plus encryption keys and sync continuity. The upstream
+  `stateStorage` chart mounts the claim at `/app/agent_data/tracking` and overlays
+  its `encryption_keys` and `sync_continuity` subdirectories at the normal paths.
+  Workers do not mount this claim.
+
+Mindroom explicitly disables Agno's default WAL mode for its session databases,
+which remain on the NFS workspace with rollback journaling. This still depends on
+correct NFS locking; verify concurrent worker operations and runtime restarts on
+the actual NAS. The primary remains tied to its local state PV's node even though
+workers can move freely.
+
+**There is no scheduled backup in this trial.** Copy all three claims consistently
+while the runtime, workers, and homeserver are stopped. NFS storage survives loss of
+a compute node, but is not itself a backup. Node loss without a copy of the local
+state can still lose journal/crypto or homeserver data.
+
+This update assumes a fresh installation of the unmerged PR. It uses a new
+`mindroom-workspace` claim instead of changing the immutable storage class of
+`mindroom-data`. If the earlier manifests were already deployed, stop here and
+perform an offline migration: copy the old data tree onto the NFS workspace, copy
+`tracking/` contents into the root of `mindroom-state`, and copy `encryption_keys/`
+and `sync_continuity/` into their matching subdirectories on that state claim.
+Retain the old claim until restored encrypted conversations and worker files have
+been verified. Never start the new runtime with empty crypto/journal state against
+an existing homeserver expecting it to recover the old identity automatically.
 
 Offline procedure (owner maintenance, not part of normal reconciliation):
 
@@ -120,7 +150,7 @@ Offline procedure (owner maintenance, not part of normal reconciliation):
    stop `mindroom-tuwunel`. Wait for all their pods to terminate before copying.
 3. Mount each claim read-only in a temporary maintenance pod in `ai` and copy its
    **entire directory**, including hidden files, onto the NAS. Process the claims
-   separately: their local PVs can be on different nodes. Let the scheduler follow
+   separately: the local PVs can be on different nodes. Let the scheduler follow
    each bound PVC's node affinity; never force a maintenance pod onto another node.
    Preserve ownership and permissions. Record the Git commit and image digests with
    the copies. Treat them as sensitive: they include conversations and credentials.
@@ -129,7 +159,8 @@ Offline procedure (owner maintenance, not part of normal reconciliation):
    conversation and a tool call still work.
 
 Restore with the releases/workers stopped. Provision replacement claims if the
-original node is lost, restore each whole directory with its original ownership,
+original node is lost, restore all three whole directories with their original
+ownership,
 and use the same server name, Bitwarden credentials, and image versions first.
 Start Tuwunel before Mindroom. Never replace the runtime's crypto/session directory
 with an empty one while expecting access to old encrypted conversations. The claims

@@ -55,7 +55,15 @@ spec:
         existingSecret: mindroom-matrix-secret
     storage:
       create: false
-      existingClaim: mindroom-data
+      existingClaim: mindroom-workspace
+      accessModes: [ReadWriteMany]
+    # Upstream places its SQLite WAL journal in tracking/. Keep that directory
+    # local, together with the chart-managed crypto/sync subdirectory overlays.
+    stateStorage:
+      enabled: true
+      create: false
+      existingClaim: mindroom-state
+      mountPath: /app/agent_data/tracking
     runtime:
       timezone: ${TIMEZONE:=America/New_York}
     env:
@@ -68,7 +76,7 @@ spec:
         proxyToken:
           existingSecret: mindroom-secret
       kubernetes:
-        colocateWithControlPlaneNode: true
+        colocateWithControlPlaneNode: false
         extraLabels:
           home-ops/component: mindroom-worker
     podSecurityContext:
