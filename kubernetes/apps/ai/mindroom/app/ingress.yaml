@@ -1,0 +1,91 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mindroom-chat
+  annotations:
+    hajimari.io/icon: mdi:robot
+spec:
+  ingressClassName: internal
+  rules:
+    - host: mindroom.${SECRET_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mindroom-chat
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - mindroom.${SECRET_DOMAIN}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mindroom-matrix
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+spec:
+  ingressClassName: internal
+  rules:
+    - host: matrix.${SECRET_DOMAIN}
+      http:
+        paths:
+          # Do not expose server administration or federation paths.
+          - path: /_matrix/client
+            pathType: Prefix
+            backend:
+              service:
+                name: mindroom-tuwunel
+                port:
+                  number: 8008
+          - path: /_matrix/media
+            pathType: Prefix
+            backend:
+              service:
+                name: mindroom-tuwunel
+                port:
+                  number: 8008
+          - path: /.well-known/matrix/client
+            pathType: Exact
+            backend:
+              service:
+                name: mindroom-tuwunel
+                port:
+                  number: 8008
+  tls:
+    - hosts:
+        - matrix.${SECRET_DOMAIN}
+---
+# Matrix IDs use the apex domain even though the homeserver uses a subdomain.
+# This only claims the discovery path; it does not replace an apex website.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mindroom-matrix-discovery
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "false"
+spec:
+  ingressClassName: internal
+  rules:
+    - host: ${SECRET_DOMAIN}
+      http:
+        paths:
+          - path: /.well-known/matrix/client
+            pathType: Exact
+            backend:
+              service:
+                name: mindroom-tuwunel
+                port:
+                  number: 8008
+  tls:
+    - hosts:
+        - ${SECRET_DOMAIN}

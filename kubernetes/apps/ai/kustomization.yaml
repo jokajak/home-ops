@@ -16,3 +16,4 @@ resources:
   # search provider instead of a commercial SERP key — no account, no per-query
   # cost, and the household's queries stay off a vendor's logs.
   - ./searxng/ks.yaml
+  - ./mindroom/ks.yaml

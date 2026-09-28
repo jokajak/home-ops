@@ -1,0 +1,28 @@
+---
+# Databases stay on local storage. See ../README.md for offline recovery;
+# live Direct-copy backups are not a consistency guarantee for these files.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-matrix-data
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-data
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 20Gi

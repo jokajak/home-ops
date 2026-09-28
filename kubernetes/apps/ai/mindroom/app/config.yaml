@@ -1,0 +1,71 @@
+# Git owns this config; dashboard edits to the mount do not persist.
+# One shared room/persona. No private personal context is loaded here.
+administrators:
+  - "@${MINDROOM_OWNER_LOCALPART:=josh}:${SECRET_DOMAIN}"
+authorization:
+  config_command_enabled: false
+room_defaults:
+  join_policy: invite
+  listed: false
+  encrypted: true
+  invite_users:
+    - "@${MINDROOM_OWNER_LOCALPART:=josh}:${SECRET_DOMAIN}"
+  admins:
+    - "@${MINDROOM_OWNER_LOCALPART:=josh}:${SECRET_DOMAIN}"
+rooms:
+  household:
+    display_name: Household
+agents:
+  household:
+    display_name: Hearth
+    role: A practical household assistant for everyone in this room.
+    instructions:
+      - >-
+        This room and its workspace are shared by its members.
+        Do not treat them as private personal storage.
+      - >-
+        Ask before taking an external action or saving sensitive
+        household information.
+    model: default
+    rooms: [household]
+    # Access is determined by the audience of this room, not a user allowlist.
+    access:
+      current_room_members: true
+      members_of_rooms: []
+      users: []
+    # Adding another audience for shared context is a config decision.
+    accept_invites: false
+    include_default_tools: false
+    tools:
+      - name: shell
+      - name: python
+      - name: file
+    memory_backend: none
+    learning: false
+defaults:
+  tools: []
+  worker_tools: [shell, python, file]
+  worker_scope: user_agent
+  worker_grantable_credentials: []
+  allow_self_config: false
+  learning: false
+router:
+  model: default
+  accept_invites: false
+  access:
+    current_room_members: true
+    members_of_rooms: []
+    users: []
+models:
+  default:
+    provider: openai
+    id: gpt-5.6-sol
+    api: responses
+    extra_kwargs:
+      base_url: http://hearthai-litellm.ai.svc.cluster.local:4000/v1
+# Start with conversation history only. Shared long-term memory is a separate
+# policy decision; none avoids automatic extraction or embedding costs.
+memory:
+  backend: none
+event_journal:
+  backend: sqlite
