@@ -1,4 +1,4 @@
-# Git owns this config; dashboard edits to the mount do not persist.
+# First-start seed only. Dashboard edits persist in the workspace PVC.
 # One shared room/persona. No private personal context is loaded here.
 administrators:
   - "@${MINDROOM_OWNER_LOCALPART:=josh}:${SECRET_DOMAIN}"
