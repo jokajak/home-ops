@@ -3,8 +3,8 @@
 ##
 ## The household assistant at https://chat.<domain>
 ## (kubernetes/apps/ai/hearthai). Since the Hermes agents were removed
-## (2026-09-04) this is the only thing on that host, and the only OIDC
-## application in the ai namespace.
+## (2026-09-04) this is the only thing on that host. Mindroom has a separate OIDC
+## application for Matrix login.
 ##
 ## The policy bindings below are who may sign in AT ALL — bound to each
 ## person's own single-member group, OR'd together via

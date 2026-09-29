@@ -33,7 +33,8 @@ runtime deployment.
    `cluster-secrets` if using another account. `SECRET_DOMAIN` is deliberately
    required, with no fallback that could accidentally create permanent identities
    on `internal`.
-2. Apply `terraform/bitwarden` with the normal owner-managed OpenTofu workflow.
+2. Apply `terraform/bitwarden` and `terraform/authentik` with the normal
+   owner-managed OpenTofu workflow.
    This creates the following items; no values are committed here.
 
    | Bitwarden item | Field | Purpose |
@@ -41,6 +42,7 @@ runtime deployment.
    | `mindroom credentials` | `registration_token` | Token-gated human and agent registration |
    | `mindroom credentials` | `api_key` | Runtime dashboard/API login |
    | `mindroom credentials` | `sandbox_proxy_token` | Runtime-to-worker authentication |
+   | `authentik-client-mindroom` | Login username/password | Generated OIDC client ID/secret |
    | `mindroom litellm` | `litellm_api_key` | Dedicated LiteLLM virtual key; replace `replace-me` |
 
 3. Mint the Mindroom virtual key in the existing LiteLLM UI, allowing
@@ -51,12 +53,12 @@ runtime deployment.
    Check `https://matrix.<domain>/_matrix/client/versions` and
    `https://<domain>/.well-known/matrix/client` from a household device. The latter
    must advertise `https://matrix.<domain>` and permit cross-origin discovery.
-5. Register the owner account **before starting Mindroom**, using a Matrix client
-   that supports registration-token signup and the `registration_token` field.
-   Match `MINDROOM_OWNER_LOCALPART` exactly. If the bundled client's registration
-   UI does not offer a token field, use another Matrix client's registration flow
-   against the same homeserver. Confirm the human owner is invited into Tuwunel's
-   admin room. Keep this token private; possession permits creating accounts.
+5. Open Mindroom Chat and choose **Household SSO**, then authenticate through
+   Authentik. This creates `@<authentik-username>:<domain>` on first login; no Matrix
+   password or registration token is needed for SSO. Confirm that username matches
+   `MINDROOM_OWNER_LOCALPART` (default `josh`) **before enabling the runtime**.
+   Confirm the owner is invited into the homeserver admin room. If a password-based
+   account already exists, follow the linking procedure below first.
 6. Set `spec.suspend: false` in `app/runtime.yaml` in Git and reconcile that change.
    Mindroom provisions its own Matrix accounts and the encrypted Household room,
    then invites the owner. Do not bypass the bootstrap by letting a bot register
@@ -67,6 +69,46 @@ runtime deployment.
    can now schedule on another node; no runtime-node colocation is configured.
    Add the next human account
    and invite it to Household; verify access before expanding the trial.
+
+## Authentik SSO
+
+Apply `terraform/authentik` before reconciling this change. It creates the Mindroom
+OIDC provider/application and writes `authentik-client-mindroom` to Bitwarden.
+ExternalSecrets supplies the client ID to Helm and mounts the client secret into
+Tuwunel. No additional Flux substitution variable is needed. The issuer is
+`https://auth.${SECRET_DOMAIN}/application/o/mindroom/`; the exact callback is
+`https://matrix.${SECRET_DOMAIN}/_matrix/client/unstable/login/sso/callback/<client-id>`.
+The existing Matrix client ingress already routes both SSO endpoints.
+
+Access is limited to the existing `Hermes Josh` and `Hermes Partner` groups, as for
+Open WebUI. Authentik's username maps to the Matrix localpart. Random fallback
+usernames and automatic matching to existing accounts are disabled. Keep usernames
+stable and verify the owner localpart; admission through SSO does not automatically
+grant Mindroom platform administration. Password login and token-gated registration
+remain available for the runtime's managed agent accounts. The operator dashboard
+continues to use its API key, independently of Matrix SSO.
+
+If you already registered a password-based Matrix account, keep that session open.
+From its homeserver admin room, associate your Authentik identity before SSO login:
+
+```text
+!admin query oauth associate <client-id> @josh:<domain> --claim sub=<authentik-sub>
+```
+
+Use the generated client ID from Bitwarden and the `sub` from Authentik's provider
+Preview for your user. Complete SSO login before restarting Tuwunel: the pending
+association is held in memory. Do not enable broad `trusted` account matching to
+work around a collision. If no human administrator exists, complete the original
+token-based owner registration first, then associate that account.
+
+Verify `https://matrix.<domain>/_matrix/client/v3/login` advertises `m.login.sso`,
+then sign in through Mindroom Chat. Confirm the resulting Matrix ID and admin-room
+membership; also verify an Authentik user outside the two allowed groups is denied.
+Only then enable the suspended runtime. If the owner username differs from `josh`,
+set `MINDROOM_OWNER_LOCALPART` to that actual username in cluster settings first.
+
+References: [Tuwunel Authentik setup](https://matrix-construct.github.io/tuwunel/authentication/providers/authentik.html),
+[account association](https://matrix-construct.github.io/tuwunel/authentication/providers.html).
 
 ## Behavior and limits
 
