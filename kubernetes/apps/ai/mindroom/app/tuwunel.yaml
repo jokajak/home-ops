@@ -25,6 +25,11 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
+  valuesFrom:
+    - kind: Secret
+      name: mindroom-oidc-secret
+      valuesKey: OIDC_CLIENT_ID
+      targetPath: tuwunel.oidc.clientId
   values:
     fullnameOverride: mindroom-tuwunel
     image:
@@ -40,6 +45,18 @@ spec:
     tuwunel:
       serverName: ${SECRET_DOMAIN}
       clientBaseUrl: https://matrix.${SECRET_DOMAIN}
+      oidc:
+        enabled: true
+        brand: Authentik
+        name: Household SSO
+        issuer: https://auth.${SECRET_DOMAIN}/application/o/mindroom/
+        clientSecret:
+          existingSecret: mindroom-oidc-secret
+        scope: [openid, profile, email]
+        extraConfig: |
+          userid_claims = ["preferred_username"]
+          unique_id_fallbacks = false
+          trusted = false
       registrationToken:
         existingSecret: mindroom-matrix-secret
       wellKnown:
