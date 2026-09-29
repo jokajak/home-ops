@@ -41,9 +41,44 @@ spec:
       kubernetes.io/arch: amd64
     deploymentAnnotations:
       reloader.stakater.com/auto: "true"
+    # Git supplies a first-start seed; dashboard edits then own the live file.
     config:
+      source: file
+      path: /app/agent_data/config/config.yaml
       create: false
-      existingConfigMap: mindroom-config
+    extraVolumes:
+      - name: config-seed
+        configMap:
+          name: mindroom-config
+    initContainers:
+      - name: seed-config
+        # Same pinned image as the runtime; no separate utility dependency.
+        # yamllint disable-line rule:line-length
+        image: ghcr.io/mindroom-ai/mindroom@sha256:ca71a11d9d3a8a975cfb9fdebbbc400f46920c72f2981b4390a871e5c49c9a66
+        command: [/app/.venv/bin/python, -c]
+        args:
+          - |
+            from pathlib import Path
+            import os
+            import shutil
+
+            target = Path("/app/agent_data/config/config.yaml")
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                temporary = target.with_suffix(".yaml.tmp")
+                shutil.copyfile("/config-seed/config.yaml", temporary)
+                temporary.chmod(0o600)
+                os.replace(temporary, target)
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: [ALL]
+        volumeMounts:
+          - name: config-seed
+            mountPath: /config-seed
+            readOnly: true
+          - name: storage
+            mountPath: /app/agent_data
     eventCache:
       backend: sqlite
       postgres:

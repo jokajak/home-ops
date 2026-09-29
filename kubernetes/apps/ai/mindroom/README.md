@@ -117,9 +117,11 @@ References: [Tuwunel Authentik setup](https://matrix-construct.github.io/tuwunel
   the shared persona does not carry its context to another audience by accident.
 - Only the configured owner is a Mindroom administrator. Matrix room membership
   grants conversation access, not platform administration or provider credentials.
-- Git owns `app/config.yaml`. ConfigMap changes restart the runtime via Reloader;
-  the dashboard cannot persist edits to that read-only mount. Add personas,
-  rooms, models, and tools in Git.
+- `app/config.yaml` is a first-start seed. The runtime reads the writable
+  `/app/agent_data/config/config.yaml` on `mindroom-workspace`. Configure personas,
+  rooms, models, and tools in the dashboard; edits survive restarts, upgrades, and
+  Flux reconciliation. Changes to the Git seed do not replace an existing live file.
+  Infrastructure and secret delivery remain Git-managed.
 - Shell, Python, and file tools use upstream Kubernetes workers with `user_agent`
   workspace scope, no worker service-account token, and no grantable shared
   credentials. This **intentionally bypasses the proposed ai-jobs integration**
@@ -143,6 +145,32 @@ internal ingress and log in with the `api_key` from the Bitwarden item
 origin for browser authentication. The hostname must resolve to internal ingress;
 TLS uses its existing wildcard certificate. The dashboard becomes available after
 the runtime bootstrap gate is lifted. Matrix chat works independently of it.
+
+## Dashboard-managed configuration
+
+On the first restart with writable configuration enabled, the `seed-config` init
+container copies the current Git seed to the workspace PVC only if the live file
+is absent. It runs as the same UID/GID as the runtime and publishes the file with
+an atomic rename. Later starts preserve all dashboard edits. The runtime remains
+single-replica with Recreate updates.
+
+The live file is `/app/agent_data/config/config.yaml`; back up the entire `config/`
+directory along with the workspace. Treat this directory as sensitive, including
+any adjacent files the dashboard creates. Bitwarden-injected environment secrets
+remain supplied by ExternalSecrets.
+
+To save a configuration snapshot locally:
+
+```sh
+kubectl -n ai exec deployment/mindroom -c mindroom -- \
+  cat /app/agent_data/config/config.yaml > mindroom-config-snapshot.yaml
+```
+
+Review snapshots for credentials and real domains before committing anything to
+Git. Returning to Git ownership is a separate change: export the desired live
+configuration, replace sensitive values with references, then switch the chart
+back to `config.source: configMap`. Do not delete the live file as a routine reset;
+an absent file is reinitialized from the seed on the next pod start.
 
 ## Backup and restore
 
