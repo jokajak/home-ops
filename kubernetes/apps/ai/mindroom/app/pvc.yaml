@@ -1,0 +1,41 @@
+---
+# Tuwunel RocksDB stays local. Shared workspaces use NFS below.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-matrix-data
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-workspace
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: nfs-csi
+  resources:
+    requests:
+      storage: 20Gi
+---
+# Runtime-only SQLite WAL journal and Matrix crypto/sync state.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mindroom-state
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: openebs-hostpath
+  resources:
+    requests:
+      storage: 5Gi

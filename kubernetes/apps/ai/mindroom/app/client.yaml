@@ -1,0 +1,42 @@
+---
+# Chart and images are pinned together; see ../README.md for upgrades.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mindroom-chat
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: ./cluster/k8s/client
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: mindroom
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  values:
+    fullnameOverride: mindroom-chat
+    image:
+      repository: ghcr.io/mindroom-ai/mindroom-chat
+      tag: latest
+      # yamllint disable-line rule:line-length
+      digest: sha256:51ca7db22e1aa14e276781cec8e5a0498704bb00eef50068391e44e9e2de73cb
+      pullPolicy: IfNotPresent
+    nodeSelector:
+      kubernetes.io/arch: amd64
+    deploymentAnnotations:
+      reloader.stakater.com/auto: 'true'
+    matrix:
+      homeserverUrl: https://matrix.${SECRET_DOMAIN}
+      allowCustomHomeservers: false

@@ -1,0 +1,91 @@
+---
+# Chart and images are pinned together; see ../README.md for upgrades.
+# Bootstrap gate: register the human owner before setting spec.suspend to false.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mindroom
+  namespace: ai
+spec:
+  interval: 30m
+  timeout: 15m
+  chart:
+    spec:
+      chart: ./cluster/k8s/runtime
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: mindroom
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  suspend: true
+  dependsOn:
+    - name: mindroom-tuwunel
+  values:
+    fullnameOverride: mindroom
+    image:
+      repository: ghcr.io/mindroom-ai/mindroom
+      tag: latest
+      # yamllint disable-line rule:line-length
+      digest: sha256:ca71a11d9d3a8a975cfb9fdebbbc400f46920c72f2981b4390a871e5c49c9a66
+      pullPolicy: IfNotPresent
+    nodeSelector:
+      kubernetes.io/arch: amd64
+    deploymentAnnotations:
+      reloader.stakater.com/auto: 'true'
+    config:
+      create: false
+      existingConfigMap: mindroom-config
+    eventCache:
+      backend: sqlite
+      postgres:
+        create: false
+    matrix:
+      homeserverUrl: http://mindroom-tuwunel.ai.svc.cluster.local:8008
+      serverName: ${SECRET_DOMAIN}
+      registrationToken:
+        existingSecret: mindroom-matrix-secret
+    storage:
+      create: false
+      existingClaim: mindroom-workspace
+      accessModes: [ReadWriteMany]
+    # Upstream places its SQLite WAL journal in tracking/. Keep that directory
+    # local, together with the chart-managed crypto/sync subdirectory overlays.
+    stateStorage:
+      enabled: true
+      create: false
+      existingClaim: mindroom-state
+      mountPath: /app/agent_data/tracking
+    runtime:
+      timezone: ${TIMEZONE:=America/New_York}
+    env:
+      extra:
+        - name: MINDROOM_PUBLIC_URL
+          value: https://mindroom-dashboard.${SECRET_DOMAIN}
+      envFrom:
+        - secretRef:
+            name: mindroom-secret
+    workers:
+      backend: kubernetes
+      sandbox:
+        proxyToken:
+          existingSecret: mindroom-secret
+      kubernetes:
+        colocateWithControlPlaneNode: false
+        extraLabels:
+          home-ops/component: mindroom-worker
+    podSecurityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch
+      seccompProfile:
+        type: RuntimeDefault

@@ -1,0 +1,15 @@
+---
+# Upstream standalone charts; upgrade this pin together with the image digests.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: mindroom
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://github.com/mindroom-ai/mindroom.git
+  ref:
+    commit: 5e7c1569f468e79cdeb6d24a91a64071b628fb83
+  ignore: |
+    /*
+    !/cluster
