@@ -7,7 +7,7 @@ pins its image by digest. No SaaS platform, Supabase, or second model gateway.
 
 | Component | Address | State |
 | --- | --- | --- |
-| Mindroom Chat | `https://mindroom.${SECRET_DOMAIN}` | Browser; Matrix owns history |
+| Mindroom Chat | `https://chat.${SECRET_DOMAIN}` | Browser; Matrix owns history |
 | Tuwunel | `https://matrix.${SECRET_DOMAIN}` | `mindroom-matrix-data`, 20Gi local RWO |
 | Mindroom runtime + workers | `https://mindroom-dashboard.${SECRET_DOMAIN}` | `mindroom-workspace`, 20Gi NFS RWX |
 | Runtime journal + Matrix client state | Runtime only | `mindroom-state`, 5Gi local RWO |
@@ -20,6 +20,12 @@ homeserver.** Client discovery is served at the apex's `/.well-known/matrix/clie
 The existing internal ingress certificate covers the apex and wildcard. The apex
 must resolve to that ingress for clients using identity-domain discovery; the
 bundled client is explicitly configured with the homeserver URL as well.
+
+The previous `https://mindroom.${SECRET_DOMAIN}` URL remains a temporary alias
+for existing browser sessions. The new chat hostname has separate browser storage:
+sign in with SSO and verify the new Matrix session from the old session, or use
+your recovery key/backup. Keep the old session until encrypted history is readable.
+See `docs/plans/2026-09-29-chat-hostnames.md` for the cutover.
 
 ## Before enabling the runtime
 

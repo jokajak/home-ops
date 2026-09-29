@@ -615,7 +615,7 @@ resource "bitwarden_item_login" "open_webui" {
   notes = "Signs Open WebUI session cookies. Rotating it logs everyone out and destroys nothing."
 
   uri {
-    value = "https://chat.${local.domain}"
+    value = "https://chatgpt.${local.domain}"
     match = "host"
   }
 

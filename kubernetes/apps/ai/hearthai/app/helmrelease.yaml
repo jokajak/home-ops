@@ -69,9 +69,9 @@ spec:
     keepHistory: false
   values:
     # The one door. Also derives the OIDC callback
-    # (https://chat.<domain>/oauth/oidc/callback), which must match the redirect
+    # (https://chatgpt.<domain>/oauth/oidc/callback). It must match the redirect
     # URI in terraform/authentik/application_openwebui.tf.
-    url: "https://chat.${SECRET_DOMAIN:=internal}"
+    url: "https://chatgpt.${SECRET_DOMAIN:=internal}"
     timezone: "${TIMEZONE:=America/New_York}"
 
     # ── Secrets ───────────────────────────────────────────────────────────────
