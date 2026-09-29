@@ -10,8 +10,9 @@ household AI foundation, not a migration of existing conversations or memory.
 
 Use the existing `internal` NGINX ingress, which is what this repository currently
 runs for AI applications. Matrix is at `matrix.${SECRET_DOMAIN}`, the client at
-`mindroom.${SECRET_DOMAIN}`. The runtime dashboard stays cluster-internal and is
-available by port-forward with API-key authentication. No public federation or
+`mindroom.${SECRET_DOMAIN}`, and the runtime dashboard at
+`mindroom-dashboard.${SECRET_DOMAIN}` with API-key authentication. The runtime
+public URL matches the dashboard HTTPS origin. No public federation or
 open registration. Use `${SECRET_DOMAIN}` as the permanent Matrix server name;
 serve client discovery at that domain's well-known path.
 

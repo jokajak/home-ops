@@ -9,7 +9,7 @@ pins its image by digest. No SaaS platform, Supabase, or second model gateway.
 | --- | --- | --- |
 | Mindroom Chat | `https://mindroom.${SECRET_DOMAIN}` | Browser; Matrix owns history |
 | Tuwunel | `https://matrix.${SECRET_DOMAIN}` | `mindroom-matrix-data`, 20Gi local RWO |
-| Mindroom runtime + workers | `mindroom:8765` in `ai`; no ingress | `mindroom-workspace`, 20Gi NFS RWX |
+| Mindroom runtime + workers | `https://mindroom-dashboard.${SECRET_DOMAIN}` | `mindroom-workspace`, 20Gi NFS RWX |
 | Runtime journal + Matrix client state | Runtime only | `mindroom-state`, 5Gi local RWO |
 | Existing LiteLLM | `http://hearthai-litellm.ai.svc.cluster.local:4000/v1` | Unchanged |
 
@@ -28,7 +28,7 @@ initially suspended**, preventing an automatically registered bot from taking th
 first-user server-admin role. This is a one-time bootstrap gate, not an unfinished
 runtime deployment.
 
-1. Review `tuwunel.serverName`, the two ingress hostnames, and the owner localpart.
+1. Review `tuwunel.serverName`, the ingress hostnames, and the owner localpart.
    `MINDROOM_OWNER_LOCALPART` defaults to `josh`; set it in `cluster-settings` or
    `cluster-secrets` if using another account. `SECRET_DOMAIN` is deliberately
    required, with no fallback that could accidentally create permanent identities
@@ -95,14 +95,12 @@ runtime deployment.
   only client/media and discovery paths. Existing Open WebUI, HearthAI, n8n,
   and SearXNG are unchanged.
 
-For operator access:
-
-```sh
-kubectl -n ai port-forward service/mindroom 8765:8765
-```
-
-Open `http://localhost:8765` and use the `api_key` from Bitwarden. The dashboard is
-not exposed through the household ingress. Matrix chat works independently of it.
+For operator access, open `https://mindroom-dashboard.${SECRET_DOMAIN}` through
+internal ingress and log in with the `api_key` from the Bitwarden item
+`mindroom credentials`. The runtime's `MINDROOM_PUBLIC_URL` matches this HTTPS
+origin for browser authentication. The hostname must resolve to internal ingress;
+TLS uses its existing wildcard certificate. The dashboard becomes available after
+the runtime bootstrap gate is lifted. Matrix chat works independently of it.
 
 ## Backup and restore
 

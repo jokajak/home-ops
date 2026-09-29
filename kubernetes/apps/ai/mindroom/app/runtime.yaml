@@ -67,6 +67,9 @@ spec:
     runtime:
       timezone: ${TIMEZONE:=America/New_York}
     env:
+      extra:
+        - name: MINDROOM_PUBLIC_URL
+          value: https://mindroom-dashboard.${SECRET_DOMAIN}
       envFrom:
         - secretRef:
             name: mindroom-secret
