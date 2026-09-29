@@ -1,7 +1,7 @@
 ## -----------------------------------------------------------------------------
 ## Authentik Application - Open WebUI
 ##
-## The household assistant at https://chat.<domain>
+## The household assistant at https://chatgpt.<domain>
 ## (kubernetes/apps/ai/hearthai). Since the Hermes agents were removed
 ## (2026-09-04) this is the only thing on that host. Mindroom has a separate OIDC
 ## application for Matrix login.
@@ -57,7 +57,7 @@ resource "authentik_provider_oauth2" "openwebui" {
     {
       matching_mode     = "strict",
       redirect_uri_type = "authorization",
-      url               = "https://chat.${var.domain}/oauth/oidc/callback"
+      url               = "https://chatgpt.${var.domain}/oauth/oidc/callback"
     }
   ]
 }
@@ -72,7 +72,7 @@ resource "authentik_application" "openwebui" {
   group              = authentik_group.home.name
   open_in_new_tab    = true
   meta_icon          = "https://raw.githubusercontent.com/open-webui/open-webui/refs/heads/main/static/favicon.png"
-  meta_launch_url    = "https://chat.${var.domain}"
+  meta_launch_url    = "https://chatgpt.${var.domain}"
   policy_engine_mode = "any"
 }
 

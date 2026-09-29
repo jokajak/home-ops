@@ -15,7 +15,7 @@ repo supplies what only a cluster can. See
 
 | hearthai (the chart) | home-ops (here) |
 | --- | --- |
-| Images and their versions | Public URLs (`chat.`, `llm.`) and the ingress class |
+| Images and their versions | Public URLs (`chatgpt.`, `llm.`) and the ingress class |
 | Probes, resources, security contexts | Every Secret, via `ExternalSecret` → Bitwarden |
 | The LiteLLM model catalogue | The four `PersistentVolumeClaim`s and their backup policy |
 | Open WebUI's environment and auth mode | The identity provider and its client |
@@ -37,7 +37,7 @@ Moving to the chart's bundled instance later would be a backup/restore cutover, 
 
 ## What the release contains
 
-- **Open WebUI** at `chat.${SECRET_DOMAIN}` — the household assistant. Authentik is the only way
+- **Open WebUI** at `chatgpt.${SECRET_DOMAIN}` — the household assistant. Authentik is the only way
   in; the application's policy bindings (`terraform/authentik/application_openwebui.tf`) decide
   who may sign in.
 - **LiteLLM** at `llm.${SECRET_DOMAIN}`, and at `hearthai-litellm:4000` in-cluster — the

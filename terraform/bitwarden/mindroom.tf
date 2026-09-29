@@ -13,7 +13,7 @@ resource "bitwarden_item_login" "mindroom" {
   notes           = "Matrix registration token, Mindroom dashboard API key, and worker proxy token. Register the human owner before enabling the runtime."
 
   uri {
-    value = "https://mindroom.${local.domain}"
+    value = "https://chat.${local.domain}"
     match = "host"
   }
 

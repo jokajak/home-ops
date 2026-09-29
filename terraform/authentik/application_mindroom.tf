@@ -42,7 +42,7 @@ resource "authentik_application" "mindroom" {
   protocol_provider  = authentik_provider_oauth2.mindroom.id
   group              = authentik_group.home.name
   open_in_new_tab    = true
-  meta_launch_url    = "https://mindroom.${var.domain}"
+  meta_launch_url    = "https://chat.${var.domain}"
   policy_engine_mode = "any"
 }
 
