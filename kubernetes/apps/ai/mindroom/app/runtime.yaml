@@ -26,7 +26,7 @@ spec:
     cleanupOnFail: true
     remediation:
       retries: 3
-  suspend: true
+  suspend: false
   dependsOn:
     - name: mindroom-tuwunel
   values:
@@ -40,7 +40,7 @@ spec:
     nodeSelector:
       kubernetes.io/arch: amd64
     deploymentAnnotations:
-      reloader.stakater.com/auto: 'true'
+      reloader.stakater.com/auto: "true"
     config:
       create: false
       existingConfigMap: mindroom-config
