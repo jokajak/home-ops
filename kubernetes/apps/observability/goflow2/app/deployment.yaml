@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: goflow2
-          image: netsampler/goflow2:v2.2.6
+          image: netsampler/goflow2:v2.2.7
           args:
             - -listen
             - "netflow://:2055"
