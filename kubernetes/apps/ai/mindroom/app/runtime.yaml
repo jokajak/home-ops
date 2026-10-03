@@ -54,7 +54,7 @@ spec:
       - name: seed-config
         # Same pinned image as the runtime; no separate utility dependency.
         # yamllint disable-line rule:line-length
-        image: ghcr.io/mindroom-ai/mindroom@sha256:3b8a3e3427afd037ffd82201d061b8fa2f781d81654e4719c4d47b95519df19b
+        image: ghcr.io/mindroom-ai/mindroom@sha256:fe114d2b12a0f849cd4f1b4092ec779804a1b79835221492dcb4b641f88dc378
         command: [/app/.venv/bin/python, -c]
         args:
           - |
