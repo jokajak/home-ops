@@ -138,7 +138,7 @@ spec:
       # caught up.
       image:
         repository: ghcr.io/berriai/litellm-database
-        tag: v1.104.0
+        tag: v1.104.2
       persistence:
         existingClaim: litellm-token
       # Kept, so other in-cluster consumers and the admin UI keep the hostname
