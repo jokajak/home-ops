@@ -159,12 +159,14 @@ been wedged for 49 days, so the kubelet image came from `topf.yaml` instead.
 
 At the Media VLAN cutover on 2026-10-11, the owner reported Talos v1.13.4
 rejecting topf's Kubernetes v1.37.0 image while nodes ran Kubernetes v1.36.4.
-The tuppr upgrade job had failed permanently, so its Talos v1.14.0 /
-Kubernetes v1.37.1 targets were not a safe prerequisite to assume. `topf.yaml`
-now pins Kubernetes v1.36.4 to allow a compatible config diff/apply. Before any
-future `topf apply`, compare the running versions with `topf.yaml` and review
-the diff for image changes; after a successful OS/Kubernetes upgrade, update
-this version to match the running cluster to avoid a rollback by `topf`.
+The `TalosUpgrade` targeting v1.14.0 was observed waiting for its next
+maintenance window with no failed nodes; a reported failed tuppr Job needs
+separate diagnosis and does not describe this resource's current status.
+`topf.yaml` pins Kubernetes v1.36.4 to allow a compatible config diff/apply
+before the OS upgrade. Before any future `topf apply`, compare running
+versions with `topf.yaml` and review the diff for image changes. After an
+OS/Kubernetes upgrade, update this version to match the running cluster
+to avoid a rollback by `topf`.
 
 The SOPS creation rule for `topf.yaml` uses `mac_only_encrypted: true`. This
 keeps the encrypted addresses authenticated while allowing Renovate to update

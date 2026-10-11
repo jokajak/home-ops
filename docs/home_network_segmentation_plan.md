@@ -348,8 +348,9 @@ sandbox creation until Talos is updated; do not use a manual Kubernetes apply.
 2. Run `task talos:render`, then `task talos:diff node=<node>`. Compare actual
    node Talos/Kubernetes versions with `topf.yaml` first. Talos 1.13 rejects
    Kubernetes 1.37 images; at this cutover the nodes ran Kubernetes 1.36.4
-   and the tuppr upgrade job had failed. Stop if the diff proposes unrelated
-   image/version changes. On each eligible node, run
+   and the Talos v1.14 upgrade was waiting for its next maintenance window.
+   Stop if the diff proposes unrelated image/version changes. On each
+   eligible node, run
    `task talos:apply node=<node>` and confirm `ethSel0.<id>` exists and is up
    (`talosctl -n <node> get links`). No host address or default route should be
    added by this VLAN.
