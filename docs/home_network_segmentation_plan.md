@@ -264,13 +264,14 @@ graph TD
 
 ---
 
-## 12. Home Assistant & Matter (Kubernetes + IoT VLAN)
+## 12. Home Assistant & Matter (Kubernetes + IoT / Media VLANs)
 
-Home Assistant requires **L2 adjacency** with IoT devices to support:
+Home Assistant requires **L2 adjacency** with device VLANs to support:
 
 - mDNS-based discovery
 - Matter commissioning and operation
 - IPv6 + multicast traffic
+- media-device discovery and control where those devices live outside IoT
 
 This is intentionally handled **inside Kubernetes** using Multus.
 
@@ -279,52 +280,83 @@ This is intentionally handled **inside Kubernetes** using Multus.
 ### 12.1 Design Overview
 
 - Home Assistant runs as a Kubernetes workload
-- The pod is **dual-homed**:
+- The pod is **multi-homed**:
   - **Primary interface**: Cilium (cluster / LAN-facing)
   - **Secondary interface**: Multus attachment on IoT VLAN
-- Home Assistant is treated as a **first-class IoT device**, not infrastructure
+  - **Secondary interface**: Multus attachment on Media VLAN
+- Home Assistant is treated as a **first-class device on those VLANs**, not infrastructure
 
-No other workloads are allowed L2 access to the IoT VLAN.
+No other workloads are allowed L2 access to the IoT or Media VLANs by default.
 
 ---
 
-### 12.2 Multus Network Attachment (Placeholder)
+### 12.2 Multus Network Attachments
 
-> Static IPs are strongly recommended for Matter.
+The repo keeps Kubernetes-side network declarations in
+`kubernetes/apps/network-system/multus/config/`:
 
-```yaml
-apiVersion: k8s.cni.cncf.io/v1
-kind: NetworkAttachmentDefinition
-metadata:
-  name: iot-net
-spec:
-  config: |
-    {
-      "cniVersion": "0.3.1",
-      "type": "macvlan",
-      "master": "<IOT_INTERFACE>",
-      "mode": "bridge",
-      "ipam": {
-        "type": "static",
-        "addresses": [
-          {
-            "address": "<HA_IOT_IP>/<IOT_PREFIX>",
-            "gateway": "<IOT_GW>"
-          }
-        ]
-      }
-    }
-```
+- `networkattachment-iot.yaml` declares `network-system/iot-vlan`
+- `networkattachment-media.yaml` declares `network-system/media-vlan`
+
+The Media VLAN attachment deliberately uses Flux substitution variables instead
+of real topology values:
+
+- `MEDIA_VLAN_ID` — VLAN ID used to form the host-side Talos VLAN interface
+  `ethSel0.${MEDIA_VLAN_ID}`
+- `MEDIA_CIDR` — Media VLAN CIDR used by Whereabouts
+- `MEDIA_GATEWAY` — Media VLAN gateway address, excluded from allocation
+
+Those values belong in `kubernetes/flux/vars/cluster-settings.sops.yaml`, matching
+the existing IoT network substitutions. The host-side VLAN link must exist before
+Home Assistant reconciles with the `media-vlan` attachment.
 
 ---
 
 ### 12.3 Home Assistant Pod Annotation
 
+Home Assistant attaches both secondary networks through the Multus JSON
+annotation:
+
 ```yaml
-k8s.v1.cni.cncf.io/networks: iot-net
+k8s.v1.cni.cncf.io/networks: |
+  [
+    { "name": "iot-vlan", "namespace": "network-system", "interface": "eth0.50" },
+    { "name": "media-vlan", "namespace": "network-system", "interface": "eth0.${MEDIA_VLAN_ID}" }
+  ]
 ```
 
+With `MEDIA_VLAN_ID` set to the owner's Media VLAN ID, the pod-side name
+renders as `eth0.<id>`. The VLAN attachment itself is selected by the NAD's
+host-side `master` (`ethSel0.<id>`), not by the pod-side interface name.
+
 This annotation is **exclusive** to Home Assistant.
+
+### 12.3.1 Ordered cutover (owner)
+
+Flux reconciles the full tracked HEAD, so two commits in one merge cannot
+guarantee that Talos creates the host link before Home Assistant is restarted.
+The owner must apply Talos from this checkout **before merging the Kubernetes
+Media NAD and Home Assistant annotation**:
+
+1. Set `data.mediaVlanId` in `talos/topf.yaml` to the Media VLAN ID. This
+   Talos field stays plaintext like the existing `data.vlanId`; do not change
+   the SOPS regex just to encrypt it. Use the matching encrypted
+   `MEDIA_VLAN_ID`, `MEDIA_CIDR`, and `MEDIA_GATEWAY` in the
+   `cluster-settings.sops.yaml` ConfigMap. Verify the switch trunk carries
+   that VLAN on every node that may run Home Assistant.
+2. Run `task talos:render`, then `task talos:diff node=<node>`. On each eligible
+   node, run `task talos:apply node=<node>` and confirm the `ethSel0.<id>` link
+   exists and is up (`talosctl -n <node> get links`). No host address or default
+   route should be added by this VLAN config.
+3. Only after the host link exists on all eligible nodes, merge/reconcile the
+   Kubernetes manifests. Confirm Home Assistant is Ready and its Multus
+   network-status annotation lists `network-system/media-vlan` on `eth0.<id>`
+   with an address from the Media VLAN. If the steps run out of order, Multus
+   cannot find its `master` on the node and Home Assistant fails pod sandbox
+   creation.
+
+This is an ordered one-time migration, not a new recurring reconciliation
+loop. From-scratch rebuilds use the Talos template and the Flux manifests.
 
 ---
 

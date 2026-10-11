@@ -18,6 +18,7 @@ data:
     nodeCIDR: ENC[AES256_GCM,data:3qqIpMxxkr+FQDkMus6IVA==,iv:+A7NEbzNqhu70+LfVOXlAxSzP/+wGc2KFtfvogpjn9g=,tag:+ykarckgxtDPXA7H7TJ58Q==,type:str]
     vlanCIDR: ENC[AES256_GCM,data:G3PTbKgPMbhsNPz6DSA=,iv:EeTkrXXUqBcm1pgPc8quuwA4rXazDOkgQJFonn8Zekk=,tag:v1lXG6EI6Cde2ppYqcXfyA==,type:str]
     vlanId: 50
+    mediaVlanId: 40
     mtu: 1500
     prefix: 24
     nameservers:
@@ -97,8 +98,8 @@ sops:
             eWRQMnozamp6VXprUDFVcjN4TGJILzgKMR5ODfRjsM0tpnVde8OGdO4ag5vJUUBA
             16IUxem2cnve75ZeG5e6CEVs+TtISWADO7ZkZHZnimqzmSEL0NRcsg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-08-27T12:47:37Z"
-    mac: ENC[AES256_GCM,data:YnUmYaw4gN2my4b5j/tx/Ue7xZMkNfLPHH0UubjHkuW0mCRTdTF9c1MFnVxeSR3yQKWtul5W3RzHy4nxw2dhmalfKcsMtreQ+0pCg9efhYM/bbazyvgyXGtflwtuNHnIL8yQVpdLgrjb78kfOskCuhVKI0jSCn4E+RpMtY94PxM=,iv:aTs7Yz3XbYhla0S99NAQOLbD8AaYAh7+fQ1+3iF5AV0=,tag:H+GpHntUaJC4PrbBQnB7wQ==,type:str]
+    lastmodified: "2026-10-11T17:03:33Z"
+    mac: ENC[AES256_GCM,data:GNBK8zzlhZUN4RpzdBaPWFetIOJe2VWCnBPKbPX/Rz6g9SHz1YHRONtVYhMrrEqAMn/vZIYI4pQIrfjvftr0Bq5RtI9OIFkpg+ZI0+gCdON/dattQCXpsJBYf0Vev+7dPtU9H+qOPT8/jZsCE7eN39qs5DjeVntSJqqylXg2AE4=,iv:cbLGT6XlRnLkwStrajAkCSlY9wSpATQ+fiPJvgjxbXU=,tag:emQacOG/0SAG7s4Xv4QoXg==,type:str]
     encrypted_regex: ^(ip|clusterEndpoint|vip|gateway|apiDNS|nodeCIDR|vlanCIDR|nameservers|vlanAddress)$
     mac_only_encrypted: true
     version: 3.12.2

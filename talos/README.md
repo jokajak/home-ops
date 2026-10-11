@@ -64,6 +64,31 @@ task talos:schematic-ids   # resolved image factory schematic IDs
 `task talos:render` and `task talos:diff` touch no node and are the right way to
 check a change before applying it.
 
+## Media VLAN host link
+
+`all/23-media-vlan.yaml.tpl` declares a VLAN link on the existing `ethSel0`
+parent on every node. It uses `.Data.mediaVlanId` from `topf.yaml` to name the
+link `ethSel0.<id>` and set `vlanID`. It deliberately assigns no host IP or route:
+the Home Assistant pod obtains its address via the Media Multus attachment.
+The node's switch port must carry the Media VLAN tag.
+
+The existing IoT `all/22-vlan.yaml.tpl` uses the same `VLANConfig` type but
+retains `.Node.Data.vlanAddress`: Matter Hub runs with `hostNetwork: true` and
+explicitly uses `ethSel0.50` for mDNS. Do not drop the IoT node addresses merely
+to make these two VLAN declarations identical.
+
+**Owner prerequisite:** put `data.mediaVlanId` in `talos/topf.yaml` with the
+Media VLAN ID. This field is intentionally plaintext, like the existing
+`data.vlanId`; no re-encryption or change to `sops.encrypted_regex` is required
+for this field. Keep `MEDIA_VLAN_ID` in the encrypted
+`kubernetes/flux/vars/cluster-settings.sops.yaml` equal to the Talos value.
+`MEDIA_CIDR` and `MEDIA_GATEWAY` remain encrypted there. Until `mediaVlanId`
+is supplied, `topf render` cannot render the new template.
+
+Apply and verify this host link *before* merging or reconciling the Media NAD
+and Home Assistant pod annotation; the ordered procedure is in
+`docs/home_network_segmentation_plan.md` §12.3.
+
 ## Image factory schematics
 
 Schematic IDs are computed **locally** from the schematic files — no factory

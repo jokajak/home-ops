@@ -1,0 +1,32 @@
+---
+apiVersion: "k8s.cni.cncf.io/v1"
+kind: NetworkAttachmentDefinition
+metadata:
+  name: media-vlan
+spec:
+  # The VLAN ID and addressing are Flux substitutions, matching the existing
+  # IoT pattern while avoiding committed real topology. The host-side VLAN link
+  # must already exist before this NAD can attach a pod interface.
+  config: |
+    {
+      "cniVersion": "0.3.1",
+      "plugins": [
+        {
+          "type": "macvlan",
+          "master": "ethSel0.${MEDIA_VLAN_ID:=0}",
+          "mode": "bridge",
+          "ipam": {
+            "type": "whereabouts",
+            "range": "${MEDIA_CIDR:=192.0.2.0/24}",
+            "gateway": "${MEDIA_GATEWAY:=192.0.2.1}",
+            "exclude": [
+              "${MEDIA_GATEWAY:=192.0.2.1}/32"
+            ]
+          }
+        },
+        {
+          "capabilities": { "mac": true },
+          "type": "tuning"
+        }
+      ]
+    }
