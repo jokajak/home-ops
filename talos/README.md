@@ -157,6 +157,15 @@ As of 2026-08-16 they match: `talosVersion: v1.13.4` and
 finally moved `foyer-dell-3040` off v1.34.1 — tuppr's `KubernetesUpgrade` had
 been wedged for 49 days, so the kubelet image came from `topf.yaml` instead.
 
+At the Media VLAN cutover on 2026-10-11, the owner reported Talos v1.13.4
+rejecting topf's Kubernetes v1.37.0 image while nodes ran Kubernetes v1.36.4.
+The tuppr upgrade job had failed permanently, so its Talos v1.14.0 /
+Kubernetes v1.37.1 targets were not a safe prerequisite to assume. `topf.yaml`
+now pins Kubernetes v1.36.4 to allow a compatible config diff/apply. Before any
+future `topf apply`, compare the running versions with `topf.yaml` and review
+the diff for image changes; after a successful OS/Kubernetes upgrade, update
+this version to match the running cluster to avoid a rollback by `topf`.
+
 The SOPS creation rule for `topf.yaml` uses `mac_only_encrypted: true`. This
 keeps the encrypted addresses authenticated while allowing Renovate to update
 the intentionally plaintext version fields without breaking the MAC. No

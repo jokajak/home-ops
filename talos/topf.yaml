@@ -32,13 +32,6 @@ nodes:
         busPath: 0*
         vlanAddress: ENC[AES256_GCM,data:dwQUN7slQT41Ii7Y/UWL,iv:8PUNn63QsiMCtsiGExnMaEfoln8uVR3P+Mn5CaEVwh0=,tag:GwqS0SNUZxJuefm00TDsVA==,type:str]
         installerAnnotation: true
-    - host: basement-hp-800g2
-      ip: ENC[AES256_GCM,data:EuOiFhNyDYqVlIjUuwI=,iv:UaJ6G2wBqPha2ZMtccPP6bbycl7hWI/Vzcq7ICSngIY=,tag:Qyb4HxhGZFKdK/0iLKxBmQ==,type:str]
-      role: worker
-      data:
-        busPath: 0*
-        vlanAddress: ENC[AES256_GCM,data:tZTGrsyttYi8rnUIcGLT,iv:KUv0Jx7r29/KS2IIRxU+4JFsnOe56xyCnmmHcbhlWyQ=,tag:pd2evGZxGXTRCu/tcz5RmQ==,type:str]
-        installerAnnotation: true
     - host: basement-dell-sff
       ip: ENC[AES256_GCM,data:IsOxh2Xb3jJWh8dnWAg=,iv:PHqG1MBzkfHT7yiyZnQ/Lss5DGXdZ2oPT8R9m9jHDxM=,tag:lIOFWqrK6Uw1zqCTNUyGoQ==,type:str]
       role: worker
@@ -98,8 +91,8 @@ sops:
             eWRQMnozamp6VXprUDFVcjN4TGJILzgKMR5ODfRjsM0tpnVde8OGdO4ag5vJUUBA
             16IUxem2cnve75ZeG5e6CEVs+TtISWADO7ZkZHZnimqzmSEL0NRcsg==
             -----END AGE ENCRYPTED FILE-----
-    lastmodified: "2026-10-11T17:03:33Z"
-    mac: ENC[AES256_GCM,data:GNBK8zzlhZUN4RpzdBaPWFetIOJe2VWCnBPKbPX/Rz6g9SHz1YHRONtVYhMrrEqAMn/vZIYI4pQIrfjvftr0Bq5RtI9OIFkpg+ZI0+gCdON/dattQCXpsJBYf0Vev+7dPtU9H+qOPT8/jZsCE7eN39qs5DjeVntSJqqylXg2AE4=,iv:cbLGT6XlRnLkwStrajAkCSlY9wSpATQ+fiPJvgjxbXU=,tag:emQacOG/0SAG7s4Xv4QoXg==,type:str]
+    lastmodified: "2026-10-11T17:36:24Z"
+    mac: ENC[AES256_GCM,data:DVyUSRA6HDqQXTQcof3SZy0jNBZFtPcQzLxu0XR/gVIMqby3cG4N9L6D3GWMzy3sfNLzrd8XkUFpCcKzbX+Vu85WFnmGAHTJ2OtobIX74IjQcPNqCUJB6kRCTQyXsx0APINr/0TLzQrnXDXaXpRsXIXt67jEiOJouUrKO4Za5SU=,iv:JxhQgwXyjVXMEMBEro0vlJUmDsvoeln/TgHYfUXTIuM=,tag:9Wp6So1DgHGRgY88dqoBCg==,type:str]
     encrypted_regex: ^(ip|clusterEndpoint|vip|gateway|apiDNS|nodeCIDR|vlanCIDR|nameservers|vlanAddress)$
     mac_only_encrypted: true
     version: 3.12.2

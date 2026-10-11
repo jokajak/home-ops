@@ -335,8 +335,9 @@ This annotation is **exclusive** to Home Assistant.
 
 Flux reconciles the full tracked HEAD, so two commits in one merge cannot
 guarantee that Talos creates the host link before Home Assistant is restarted.
-The owner must apply Talos from this checkout **before merging the Kubernetes
-Media NAD and Home Assistant annotation**:
+Apply Talos before merging the Kubernetes Media NAD and pod annotation. If
+those manifests are already on the tracked branch, Home Assistant may fail
+sandbox creation until Talos is updated; do not use a manual Kubernetes apply.
 
 1. Set `data.mediaVlanId` in `talos/topf.yaml` to the Media VLAN ID. This
    Talos field stays plaintext like the existing `data.vlanId`; do not change
@@ -344,16 +345,19 @@ Media NAD and Home Assistant annotation**:
    `MEDIA_VLAN_ID`, `MEDIA_CIDR`, and `MEDIA_GATEWAY` in the
    `cluster-settings.sops.yaml` ConfigMap. Verify the switch trunk carries
    that VLAN on every node that may run Home Assistant.
-2. Run `task talos:render`, then `task talos:diff node=<node>`. On each eligible
-   node, run `task talos:apply node=<node>` and confirm the `ethSel0.<id>` link
-   exists and is up (`talosctl -n <node> get links`). No host address or default
-   route should be added by this VLAN config.
-3. Only after the host link exists on all eligible nodes, merge/reconcile the
-   Kubernetes manifests. Confirm Home Assistant is Ready and its Multus
-   network-status annotation lists `network-system/media-vlan` on `eth0.<id>`
-   with an address from the Media VLAN. If the steps run out of order, Multus
-   cannot find its `master` on the node and Home Assistant fails pod sandbox
-   creation.
+2. Run `task talos:render`, then `task talos:diff node=<node>`. Compare actual
+   node Talos/Kubernetes versions with `topf.yaml` first. Talos 1.13 rejects
+   Kubernetes 1.37 images; at this cutover the nodes ran Kubernetes 1.36.4
+   and the tuppr upgrade job had failed. Stop if the diff proposes unrelated
+   image/version changes. On each eligible node, run
+   `task talos:apply node=<node>` and confirm `ethSel0.<id>` exists and is up
+   (`talosctl -n <node> get links`). No host address or default route should be
+   added by this VLAN.
+3. Once the host link exists on all eligible nodes, confirm Home Assistant is
+   Ready and its Multus network-status annotation lists
+   `network-system/media-vlan` on `eth0.<id>` with an address from the Media
+   VLAN. If the steps run out of order, Multus cannot find its `master` on the
+   node and Home Assistant fails pod sandbox creation.
 
 This is an ordered one-time migration, not a new recurring reconciliation
 loop. From-scratch rebuilds use the Talos template and the Flux manifests.
