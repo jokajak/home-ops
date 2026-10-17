@@ -74,8 +74,21 @@ spec:
                   timeoutSeconds: 5
                   failureThreshold: 3
               readiness: *probes
+              # The web server (and with it /health) only starts listening once
+              # MatterController.create() returns, which on first boot includes the
+              # CSA DCL certificate fetch. The image's own HEALTHCHECK allows a
+              # 900s start-period for this; without a startup probe the liveness
+              # probe above kills the pod after ~90s and it never finishes.
               startup:
-                enabled: false
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: *port
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 90
             securityContext:
               allowPrivilegeEscalation: false
               capabilities: { drop: ["ALL"] }
