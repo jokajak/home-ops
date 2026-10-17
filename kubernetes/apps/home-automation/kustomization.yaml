@@ -4,5 +4,6 @@ kind: Kustomization
 resources:
   - ./namespace.yaml
   - ./home-assistant-matter-hub/ks.yaml
+  - ./matter-server/ks.yaml
   - ./mosquitto/ks.yaml
   - ./rtl-433/ks.yaml

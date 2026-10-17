@@ -1,0 +1,130 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: &app matter-server
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+  maxHistory: 2
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  # Matter controller for Home Assistant (the inverse of home-assistant-matter-hub,
+  # which exposes HA entities *to* other Matter controllers). HA's Matter integration
+  # connects to ws://matter-server.home-automation.svc.cluster.local:5580/ws -- that
+  # integration entry is created once in the HA UI, not here.
+  values:
+    controllers:
+      *app :
+        type: statefulset
+        annotations:
+          reloader.stakater.com/auto: "true"
+        pod:
+          annotations:
+            # Matter discovers and talks to devices over IPv6 link-local + mDNS on
+            # the devices' L2 segment. whereabouts only hands out IPv4, but the kernel
+            # still gives the macvlan interface an fe80:: address, which is what
+            # Matter uses -- so no hostNetwork, unlike matter-hub.
+            # printf '02:00:00:%02X:%02X:%02X\n' $((RANDOM%256)) $((RANDOM%256)) $((RANDOM%256))
+            # 02 indicates a locally administered address
+            k8s.v1.cni.cncf.io/networks: |
+              [
+                {
+                  "name": "iot-vlan",
+                  "interface": "net1",
+                  "namespace": "network-system",
+                  "mac": "02:00:00:9E:AB:BC"
+                }
+              ]
+        containers:
+          app:
+            image:
+              repository: ghcr.io/matter-js/matterjs-server
+              tag: 1.4.0
+            env:
+              TZ: America/New_York
+            args:
+              - --storage-path=/data
+              # Pin Matter traffic to the IoT VLAN attachment, not the cluster eth0.
+              - --primary-interface=net1
+            probes:
+              liveness: &probes
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /health
+                    port: &port 5580
+                  periodSeconds: 30
+                  timeoutSeconds: 5
+                  failureThreshold: 3
+              readiness: *probes
+              startup:
+                enabled: false
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 10m
+                memory: 128Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      priorityClassName: household-critical
+      securityContext:
+        # Kept here, not under controllers.*.pod: app-template replaces rather than
+        # merges securityContext, which would drop the runAs* settings below.
+        sysctls:
+          # Accept the Route Information Options a Thread border router puts in
+          # its RAs, so Thread devices (behind the border router) are routable.
+          # Kernel default 0 accepts only ::/0. NOT in Kubernetes' safe-sysctl
+          # set, so the kubelet must allow it (talos/all/03-kubelet.yaml.tpl);
+          # until that is applied the pod is rejected with SysctlForbidden.
+          # Wi-Fi/Ethernet Matter devices work without it, so dropping it is the
+          # fallback if it causes trouble.
+          - name: net.ipv6.conf.net1.accept_ra_rt_info_max_plen
+            value: "64"
+        # 1000 matches the volsync mover's default UID, so backups can read /data.
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: *app
+        ports:
+          http:
+            port: *port
+    persistence:
+      # Rendered as PVC "matter-server-data" (VOLSYNC_CLAIM in ks.yaml).
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 1Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /data
+      tmp:
+        type: emptyDir
+        globalMounts:
+          - path: /tmp

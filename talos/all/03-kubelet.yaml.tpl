@@ -11,6 +11,11 @@ machine:
     extraConfig:
       featureGates:
         UserNamespacesSupport: true
+      allowedUnsafeSysctls:
+        # matter-server: accept Thread border-router route advertisements on its
+        # multus interface (net1). See
+        # kubernetes/apps/home-automation/matter-server/app/helmrelease.yaml.
+        - net.ipv6.conf.net1.accept_ra_rt_info_max_plen
     nodeIP:
       validSubnets:
         - "{{ .Data.nodeCIDR }}"
