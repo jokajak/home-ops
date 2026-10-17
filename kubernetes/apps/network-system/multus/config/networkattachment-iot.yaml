@@ -9,6 +9,9 @@ spec:
   # alias ethSel0), so the interface is ethSel0.50 and eth0.50 no longer exists.
   # Verified on foyer-hp-800g3. Nodes that have not had topf applied yet still
   # present eth0.50, so IoT attachment stays broken on those until they migrate.
+  # No static route to ${LAN_CIDR}: it made pods reply to node-sourced traffic
+  # (kubelet probes) out net1 instead of eth0, black-holing the probes. Pods that
+  # need the LAN reach it over eth0 (cluster network).
   config: |
     {
       "cniVersion": "0.3.1",
@@ -23,12 +26,6 @@ spec:
             "gateway": "${IOT_GATEWAY:=192.168.1.1}",
             "exclude": [
               "${IOT_GATEWAY:=192.168.1.1}/32"
-            ],
-            "routes": [
-              {
-                "dst": "${LAN_CIDR:=192.168.1.0/24}",
-                "gw": "${IOT_GATEWAY:=192.168.1.1}"
-              }
             ]
           }
         },

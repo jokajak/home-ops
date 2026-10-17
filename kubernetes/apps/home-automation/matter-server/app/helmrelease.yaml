@@ -62,33 +62,14 @@ spec:
               - --storage-path=/data
               # Pin Matter traffic to the IoT VLAN attachment, not the cluster eth0.
               - --primary-interface=net1
+            # Probes are off: the IoT NAD used to route the LAN CIDR via net1, so
+            # replies to node-sourced kubelet probes left the wrong interface and
+            # timed out. Re-enabling is possible now that route is gone, but needs a
+            # startup probe (first boot's DCL cert fetch delays /health up to ~900s).
             probes:
-              liveness: &probes
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /health
-                    port: &port 5580
-                  periodSeconds: 30
-                  timeoutSeconds: 5
-                  failureThreshold: 3
-              readiness: *probes
-              # The web server (and with it /health) only starts listening once
-              # MatterController.create() returns, which on first boot includes the
-              # CSA DCL certificate fetch. The image's own HEALTHCHECK allows a
-              # 900s start-period for this; without a startup probe the liveness
-              # probe above kills the pod after ~90s and it never finishes.
-              startup:
-                enabled: true
-                custom: true
-                spec:
-                  httpGet:
-                    path: /health
-                    port: *port
-                  periodSeconds: 10
-                  timeoutSeconds: 5
-                  failureThreshold: 90
+              liveness: { enabled: false }
+              readiness: { enabled: false }
+              startup: { enabled: false }
             securityContext:
               allowPrivilegeEscalation: false
               capabilities: { drop: ["ALL"] }
@@ -125,7 +106,7 @@ spec:
         controller: *app
         ports:
           http:
-            port: *port
+            port: 5580
     persistence:
       # Rendered as PVC "matter-server-data" (VOLSYNC_CLAIM in ks.yaml).
       data:
