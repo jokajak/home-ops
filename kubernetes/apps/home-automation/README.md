@@ -8,6 +8,7 @@ live in [`default`](../default/README.md) for now — see the
 | --- | --- | --- |
 | [mosquitto](https://mosquitto.org/) | MQTT broker. Cluster-internal transport between `rtl-433` and Home Assistant. No web UI and no ingress; credentials seeded at pod start from the "mqtt credentials" Bitwarden item. | [ks.yaml](./mosquitto/ks.yaml) |
 | [home-assistant-matter-hub](https://github.com/t0bst4r/home-assistant-matter-hub) | Bridges Home Assistant entities to the Matter smart-home protocol. Data backed up via VolSync. | [ks.yaml](./home-assistant-matter-hub/ks.yaml) |
+| [matter-server](https://github.com/matter-js/matterjs-server) | Matter controller for Home Assistant's Matter integration (the inverse of matter-hub). Joins the IoT VLAN via multus; the fabric credentials on its PVC are backed up via VolSync. No web UI ingress -- HA connects to `ws://matter-server.home-automation.svc.cluster.local:5580/ws`. | [ks.yaml](./matter-server/ks.yaml) |
 | [rtl-433](https://github.com/merbanan/rtl_433) | Receives 319.5 MHz Interlogix security sensors on an RTL-SDR dongle and publishes decodes to MQTT. | [ks.yaml](./rtl-433/ks.yaml) |
 
 ## The SDR receive path

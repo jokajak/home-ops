@@ -1,0 +1,33 @@
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-matter-server
+  namespace: flux-system
+spec:
+  targetNamespace: home-automation
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: matter-server
+  components:
+    - ../../../../components/volsync
+  interval: 10m
+  path: "./kubernetes/apps/home-automation/matter-server/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  postBuild:
+    substitute:
+      APP: matter-server
+      # The Matter fabric (root CA, node credentials) lives on this PVC. Lose it and
+      # every device has to be factory-reset and re-commissioned, so it is backed up.
+      VOLSYNC_CLAIM: matter-server-data
+      VOLSYNC_CAPACITY: 1Gi
+      VOLSYNC_STORAGECLASS: nfs-csi
+    substituteFrom:
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
