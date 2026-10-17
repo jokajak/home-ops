@@ -62,8 +62,11 @@ spec:
               SCHEDULER_ENABLED: "true"
               # The SPA is served same-origin from this host; setting this
               # replaces the built-in localhost dev origins rather than adding
-              # to them, which is what we want on a published instance.
-              MYGARAGE_CORS_ORIGINS: https://garage.${SECRET_DOMAIN:=internal}
+              # to them, which is what we want on a published instance. It is a
+              # list field, so pydantic-settings parses the env var as JSON: a
+              # bare URL crashes startup with "error parsing value for field
+              # cors_origins".
+              MYGARAGE_CORS_ORIGINS: '["https://garage.${SECRET_DOMAIN:=internal}"]'
               # OIDC discovery is fetched server-side through an SSRF guard
               # that refuses private address space unless the host is listed
               # here. Authentik lives on the internal load-balancer range, so
