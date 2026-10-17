@@ -94,7 +94,7 @@ spec:
           # Accept the Route Information Options a Thread border router puts in
           # its RAs, so Thread devices (behind the border router) are routable.
           # Kernel default 0 accepts only ::/0. NOT in Kubernetes' safe-sysctl
-          # set, so the kubelet must allow it (talos/all/11-kubelet-sysctls.yaml);
+          # set, so the kubelet must allow it (talos/all/03-kubelet.yaml.tpl);
           # until that is applied the pod is rejected with SysctlForbidden.
           # Wi-Fi/Ethernet Matter devices work without it, so dropping it is the
           # fallback if it causes trouble.
