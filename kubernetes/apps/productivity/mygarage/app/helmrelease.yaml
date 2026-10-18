@@ -123,6 +123,8 @@ spec:
       # versions ignore the malformed value and warn, but there is no reason to
       # hand the app a variable it has to defend against.
       enableServiceLinks: false
+      nodeSelector:
+        kubernetes.io/arch: amd64
       # the image runs rootless as uid 1000 with no internal remapping, so the
       # NFS data tree must be owned by 1000:1000
       securityContext:
