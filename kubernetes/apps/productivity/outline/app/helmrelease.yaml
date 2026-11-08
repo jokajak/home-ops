@@ -63,6 +63,10 @@ spec:
               # from the export CronJob — to https. The sample env documents
               # exactly this case as the reason to turn it off.
               FORCE_HTTPS: "false"
+              # ...and because it does, trust the ingress's X-Forwarded-*
+              # headers so Outline sees the original https scheme and client IP.
+              # This is Outline's default; set explicitly to record the intent.
+              PROXY_HEADERS_TRUSTED: "true"
               # Shared dragonfly; 0 authentik, 1 immich, 2 paperless, 3-5 forgejo.
               # Outline's queues need allow-undeclared-keys, which the
               # dragonfly cluster already runs with.

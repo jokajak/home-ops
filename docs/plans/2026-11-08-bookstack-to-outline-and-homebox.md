@@ -130,7 +130,10 @@ engine, one backup path. Each gets its own database and unprivileged role via `p
 exactly like mygarage. Homebox: `HBOX_DATABASE_DRIVER=postgres` plus `HBOX_DATABASE_{HOST,PORT,
 USERNAME,PASSWORD,DATABASE,SSL_MODE}` (default `SSL_MODE` is `require`; CNPG serves TLS).
 Outline: a single `DATABASE_URL`, assembled in the ExternalSecret template with `urlquery`
-escaping, as mygarage does. Outline runs its migrations on container start.
+escaping, as mygarage does. No `sslmode`/`PGSSLMODE` is set: in production Outline connects
+with TLS and `rejectUnauthorized: false` unless `PGSSLMODE=disable` (`server/storage/database.ts`,
+checked at v1.12.0), which is what CNPG's self-signed server certificate needs. If a future
+release starts verifying the certificate, the fix is mounting CNPG's CA, not disabling TLS. Outline runs its migrations on container start.
 
 **D2 — Outline file storage is `local` on an `nfs-csi` claim, not MinIO.** Outline's S3 mode
 uses presigned uploads: the *browser* uploads straight to the bucket, which means MinIO would
@@ -156,7 +159,9 @@ likewise uses its default `/data` (local `HBOX_STORAGE_CONN_STRING`); the rootle
   against JWKS, so it keeps the HS256 default, per the "only where needed" rule in
   `terraform/authentik/main.tf`.
 - Outline runs with `FORCE_HTTPS=false`: TLS terminates at the ingress, and the default
-  would redirect the export CronJob's in-cluster http calls to https.
+  would redirect the export CronJob's in-cluster http calls to https. `PROXY_HEADERS_TRUSTED=true` is set
+  alongside it (Outline's default, made explicit) so the app trusts the ingress's
+  `X-Forwarded-*` headers for scheme and client IP.
 
 **D4 — Outline on dragonfly DB index 6.** `REDIS_URL: redis://dragonfly.database.svc.cluster.local.:6379/6`.
 The lua flag Outline's queues need is already set cluster-wide.
