@@ -1,0 +1,44 @@
+---
+# A STATIC NFS path, not a dynamic nfs-csi claim, because a person has to find
+# this without the cluster: dynamic claims land in pvc-<uuid> directories. The
+# weekly markdown exports sit in <nfs-share>/outline-export on the NAS, readable
+# from any laptop when the cluster is down — that is the whole point of them.
+#
+# Not volsync-backed: it is already a copy of Postgres + the attachments claim,
+# both of which are backed up. The NAS's own RAID/snapshots cover it.
+#
+# The directory must exist on the NAS and be writable by uid/gid 1001 before the
+# first export runs (owner step in the plan doc).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nfs-outline-export
+spec:
+  storageClassName: nfs-outline-export
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: ${SECRET_NFS_SERVER:=192.168.1.1}
+    path: "${SECRET_NFS_PATH:=/data}/outline-export"
+  mountOptions:
+    - nfsvers=4.1
+    - tcp
+    - hard
+    - noatime
+    - nodiratime
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: outline-export
+  namespace: productivity
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: nfs-outline-export

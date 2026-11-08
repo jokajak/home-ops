@@ -1,0 +1,174 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/bjw-s/helm-charts/main/charts/other/app-template/schemas/helmrelease-helm-v2beta2.schema.json
+# Outline — the household knowledge base. Procedures, runbooks and the spouse
+# handover live here; facts about individual things (model, serial, warranty)
+# live in Homebox and are linked from here. See
+# docs/plans/2026-11-08-bookstack-to-outline-and-homebox.md.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: outline
+  namespace: productivity
+spec:
+  interval: 30m
+  chart:
+    spec:
+      chart: app-template
+      version: 3.7.3
+      sourceRef:
+        kind: HelmRepository
+        name: bjw-s
+        namespace: flux-system
+      interval: 30m
+  maxHistory: 2
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+  uninstall:
+    keepHistory: false
+  values:
+    controllers:
+      outline:
+        # single writer against the attachments claim; migrations run inside
+        # the app's own startup, so two pods racing them is never wanted
+        strategy: Recreate
+        annotations:
+          reloader.stakater.com/auto: "true"
+        initContainers:
+          # Creates the outline database and role on the shared cluster if they
+          # are not there yet, then does nothing on every subsequent start.
+          init-db:
+            image:
+              repository: ghcr.io/home-operations/postgres-init
+              tag: 18.6
+            envFrom:
+              - secretRef:
+                  name: outline-pg-secret
+        containers:
+          app:
+            image:
+              repository: docker.io/outlinewiki/outline
+              tag: 1.12.0
+            env:
+              TZ: "${TIMEZONE:=America/New_York}"
+              URL: https://wiki.${SECRET_DOMAIN:=internal}
+              PORT: "3000"
+              # TLS terminates at the ingress. Left at its default (true) Outline
+              # redirects any plain-http request — including in-cluster calls
+              # from the export CronJob — to https. The sample env documents
+              # exactly this case as the reason to turn it off.
+              FORCE_HTTPS: "false"
+              # Shared dragonfly; 0 authentik, 1 immich, 2 paperless, 3-5 forgejo.
+              # Outline's queues need allow-undeclared-keys, which the
+              # dragonfly cluster already runs with.
+              REDIS_URL: redis://dragonfly.database.svc.cluster.local.:6379/6
+              # Attachments on the claim below rather than MinIO: Outline's S3
+              # mode uses presigned uploads, i.e. the *browser* talks to the
+              # bucket directly, which would mean exposing MinIO to every client
+              # with CORS for this origin.
+              FILE_STORAGE: local
+              FILE_STORAGE_LOCAL_ROOT_DIR: /var/lib/outline/data
+              # OIDC is the only way in: Outline has no password login, and its
+              # email magic links need SMTP, which this cluster does not have.
+              # Endpoints come from discovery; the callback is
+              # ${URL}/auth/oidc.callback, registered in application_outline.tf.
+              OIDC_ISSUER_URL: https://auth.${SECRET_DOMAIN:=internal}/application/o/outline-provider/
+              OIDC_DISPLAY_NAME: Authentik
+              OIDC_SCOPES: openid profile email
+              DEFAULT_LANGUAGE: en_US
+              # alias of TELEMETRY: the phone-home update check and usage ping
+              ENABLE_UPDATES: "false"
+            envFrom:
+              # DATABASE_URL
+              - secretRef:
+                  name: outline-pg-secret
+              # OIDC_CLIENT_ID / OIDC_CLIENT_SECRET
+              - secretRef:
+                  name: outline-oidc-secret
+              # SECRET_KEY / UTILS_SECRET
+              - secretRef:
+                  name: outline-fields-secret
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: &probe
+                    path: /_health
+                    port: 3000
+                  # first boot runs every migration
+                  initialDelaySeconds: 10
+                  periodSeconds: 10
+                  failureThreshold: 30
+              liveness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+              readiness:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet: *probe
+                  periodSeconds: 30
+                  failureThreshold: 5
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities: { drop: ["ALL"] }
+            resources:
+              requests:
+                cpu: 25m
+                memory: 384Mi
+              limits:
+                memory: 1Gi
+    defaultPodOptions:
+      # the image runs as `nodejs` (uid/gid 1001), so the NFS data tree must be
+      # owned by 1001:1001
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: &runAsGroup 1001
+        fsGroup: *runAsGroup
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile: { type: RuntimeDefault }
+    service:
+      app:
+        controller: outline
+        ports:
+          http:
+            port: 3000
+    ingress:
+      app:
+        enabled: true
+        className: internal
+        hosts:
+          - host: &host wiki.${SECRET_DOMAIN:=internal}
+            paths:
+              - path: /
+                pathType: Prefix
+                service:
+                  identifier: app
+                  port: http
+        tls:
+          - hosts:
+              - *host
+            secretName: wildcard-cert-tls
+    persistence:
+      # Uploaded images and attachments. Claim name is outline-data, which is
+      # what VOLSYNC_CLAIM in ks.yaml points the restic mover at.
+      data:
+        enabled: true
+        type: persistentVolumeClaim
+        accessMode: ReadWriteOnce
+        size: 10Gi
+        storageClass: nfs-csi
+        retain: true
+        globalMounts:
+          - path: /var/lib/outline/data

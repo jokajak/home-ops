@@ -22,7 +22,7 @@ resource "authentik_provider_oauth2" "mygarage_oauth" {
   # MyGarage verifies the id_token against the provider's JWKS with joserfc and
   # accepts only EdDSA and RS256 — an HS256 token is signed with the client
   # secret and has no JWKS entry at all, so the callback fails. Same
-  # requirement as Vikunja and BookStack; see the data source in main.tf.
+  # requirement as Vikunja and Homebox; see the data source in main.tf.
   signing_key = data.authentik_certificate_key_pair.default_signing.id
 
   # grant_types has no useful default (Authentik's OAuth2Provider model
@@ -69,7 +69,7 @@ resource "authentik_application" "mygarage_application" {
 ## -----------------------------------------
 # All users get MyGarage. Admin is not group-driven here: the app has an
 # oidc_admin_group setting, but it is left empty and the first account to sign
-# in becomes the admin, the same way BookStack and Vikunja are handled.
+# in becomes the admin, the same way Outline and Vikunja are handled.
 resource "authentik_policy_binding" "mygarage_users" {
   target = authentik_application.mygarage_application.uuid
   group  = authentik_group.users.id

@@ -21,7 +21,7 @@ resource "authentik_provider_oauth2" "vikunja_oauth" {
 
   # Vikunja verifies the id_token with go-oidc, which only accepts RS256 and
   # fails the callback with "unexpected signature algorithm HS256" against the
-  # unsigned default. Same requirement as BookStack and Open WebUI; see the data
+  # unsigned default. Same requirement as Homebox and Open WebUI; see the data
   # source in main.tf.
   signing_key = data.authentik_certificate_key_pair.default_signing.id
 

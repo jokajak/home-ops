@@ -110,16 +110,16 @@ Homebox mirror rooms.
 | `kubernetes/apps/productivity/bookstack/` | **Delete** (ks, HelmReleases, dump CronJob, PVC, ExternalSecrets) |
 | `kubernetes/apps/productivity/outline/ks.yaml` | New — `GATUS_SUBDOMAIN: wiki`, volsync on `outline-data`, depends on external-secrets, cloudnative-pg-cluster, dragonfly, csi-driver-nfs |
 | `kubernetes/apps/productivity/outline/app/helmrelease.yaml` | New — app-template, `outlinewiki/outline` pinned, `postgres-init` initContainer, internal ingress |
-| `kubernetes/apps/productivity/outline/app/externalsecret.yaml` | New — `outline pgcreds` (DATABASE_URL + init vars), `outline credentials` (SECRET_KEY, UTILS_SECRET, export API key), `authentik-client-outline` |
+| `kubernetes/apps/productivity/outline/app/externalsecret.yaml` | New — `outline pgcreds` (DATABASE_URL + init vars), `outline credentials` (SECRET_KEY, UTILS_SECRET), `outline export` (admin API key), `authentik-client-outline` |
 | `kubernetes/apps/productivity/outline/app/export-cronjob.yaml` | New — weekly `collections.export_all` → NAS claim |
-| `kubernetes/apps/productivity/outline/app/pvc.yaml` | New — `outline-export` claim on `nfs-csi` (not volsync'd; it *is* a copy) |
+| `kubernetes/apps/productivity/outline/app/export-pv.yaml` | New — static NFS PV + claim at `${SECRET_NFS_PATH}/outline-export`, so a person can find it on the NAS (dynamic claims land in `pvc-<uuid>`); not volsync'd — it *is* a copy |
 | `kubernetes/apps/productivity/homebox/ks.yaml` | New — `GATUS_SUBDOMAIN: inventory`, volsync on `homebox-data` |
 | `kubernetes/apps/productivity/homebox/app/{helmrelease,externalsecret,kustomization}.yaml` | New — `ghcr.io/sysadminsmedia/homebox` rootless variant pinned |
 | `kubernetes/apps/productivity/kustomization.yaml` | Swap `bookstack` for `homebox` + `outline` |
 | `kubernetes/apps/productivity/README.md` | Drop the BookStack row and the MariaDB exception paragraph; add both apps |
 | `terraform/authentik/application_bookstack.tf` | **Delete** |
-| `terraform/authentik/application_{outline,homebox}.tf` | New — same shape as `application_mygarage.tf` (RS256 signing key, `users` binding) |
-| `terraform/bitwarden/main.tf` | Remove the two `bookstack` items; add `outline pgcreds`, `outline credentials`, `homebox pgcreds`, `homebox credentials` |
+| `terraform/authentik/application_{outline,homebox}.tf` | New — same shape as `application_mygarage.tf` (`users` binding; RS256 signing key on Homebox only) |
+| `terraform/bitwarden/main.tf` | Remove the two `bookstack` items; add `outline pgcreds`, `outline credentials`, `outline export` (`replace-me` sentinel + `ignore_changes`), `homebox pgcreds`, `homebox credentials` |
 | `docs/plans/2026-09-07-vikunja-and-bookstack.md` | Add a one-line "BookStack superseded by" pointer |
 
 ## Key Design Decisions
@@ -150,7 +150,12 @@ likewise uses its default `/data` (local `HBOX_STORAGE_CONN_STRING`); the rootle
   `HBOX_OPTIONS_HOSTNAME=inventory.${SECRET_DOMAIN}` (hostname only, no scheme),
   `HBOX_OPTIONS_ALLOW_LOCAL_LOGIN=false`, `HBOX_OIDC_AUTO_REDIRECT=true`. Callback:
   `/api/v1/users/login/oidc/callback`.
-- Both providers need `signing_key` set (RS256), the same fix as every other app here.
+- Only Homebox gets `signing_key` (RS256): it verifies the id_token with go-oidc, which
+  rejects HS256. Outline only *decodes* the id_token for missing claims and never checks it
+  against JWKS, so it keeps the HS256 default, per the "only where needed" rule in
+  `terraform/authentik/main.tf`.
+- Outline runs with `FORCE_HTTPS=false`: TLS terminates at the ingress, and the default
+  would redirect the export CronJob's in-cluster http calls to https.
 
 **D4 — Outline on dragonfly DB index 6.** `REDIS_URL: redis://dragonfly.database.svc.cluster.local.:6379/6`.
 The lua flag Outline's queues need is already set cluster-wide.
@@ -165,9 +170,12 @@ encrypted integration settings; rotating the Homebox pepper invalidates every is
 when the cluster is not, so a copy of the wiki must live outside it. `POST
 /api/collections.export_all` with `format: outline-markdown, includeAttachments: true` starts an
 async export (admin-only, rate-limited to 5/hour); the CronJob polls `fileOperations.info` and
-downloads via `fileOperations.redirect` into the `outline-export` claim, keeping the last few.
+downloads via `fileOperations.redirect` (a signed URL on the public origin, rewritten to the
+in-cluster Service) into the `outline-export` static NFS path, keeping the last eight. It runs
+on the Outline image itself (node has `fetch`), so there is no extra image to pin.
 This recurs, so it is automated (per `CLAUDE.md`); the admin API key it uses is minted once in
-Outline's UI (owner step) and stored in Bitwarden as `outline credentials` → `export_api_key`.
+Outline's UI (owner step) and pasted into Bitwarden `outline export` → `api_key`, over a
+`replace-me` sentinel — the same pattern as `open-webui litellm`.
 The NAS share is readable from any laptop without the cluster, and is what gets printed.
 
 **D7 — Agents read through Outline's MCP endpoint with a scoped API key.** Outline mounts an MCP
@@ -199,22 +207,26 @@ Bitwarden items exist; nothing is lost if they run out of order.
    - Settings → Security: restrict sign-in to the household domain/Authentik and turn **on**
      the MCP preference (D7).
    - Settings → API: mint an **admin** key for the export CronJob → Bitwarden
-     `outline credentials` / `export_api_key`; mint a **read-scoped** key for agents →
-     wherever the agent stack reads it (new Bitwarden property; tell Claude the name to wire).
-2. **Sign in to Homebox first**; check whether the spouse's first OIDC login lands in the same
-   household group or needs an invite, and invite if so.
-3. **Spouse signs in to both once**, so the accounts exist before they are needed.
-4. **Populate**: Homebox locations = rooms; 20 appliances + 20 Z-Wave devices with breaker,
+     `outline export` / `api_key` (overwrite `replace-me`; never delete the field). Mint a
+     **read-scoped** key for agents when an agent is ready to use it — that wiring is not
+     part of this change.
+2. **Sign in to Homebox first.** Every user's first OIDC sign-in creates a fresh, empty "Home"
+   group for them (`LoginOIDC` in `service_user.go`), so after the spouse's first sign-in,
+   invite them into the owner's group from Homebox's UI.
+3. **Create `<nfs-share>/outline-export` on the NAS**, writable by uid/gid 1001, before the
+   first Sunday run (or trigger the CronJob by hand to test).
+4. **Spouse signs in to both once**, so the accounts exist before they are needed.
+5. **Populate**: Homebox locations = rooms; 20 appliances + 20 Z-Wave devices with breaker,
    node ID, manual PDF, and Outline-page URL fields. Outline: one collection for the house,
    one for the network/homelab, one for the handover (structured from the eol-dr checklist).
-5. **Labels**: Homebox QR/asset-ID labels on appliances, each with the one critical line
+6. **Labels**: Homebox QR/asset-ID labels on appliances, each with the one critical line
    printed as text (the QR code is dead when the cluster is). Z-Wave switches get a single card
    at the breaker panel, not stickers on faceplates.
-6. **Outside the repo, on purpose**: real network topology and credentials go in Bitwarden
+7. **Outside the repo, on purpose**: real network topology and credentials go in Bitwarden
    secure notes (with Emergency Access granted to the spouse), not in Outline's export path
    unless that NAS share is access-controlled, and never in this repo. Print the handover
    yearly from the NAS export.
-7. Optionally prune the old `volsync/bookstack` restic repository in MinIO.
+8. Optionally prune the old `volsync/bookstack` restic repository in MinIO.
 
 ## Verification
 
@@ -242,7 +254,7 @@ Bitwarden items exist; nothing is lost if they run out of order.
 - **The NAS export is plain text of the handover.** If the handover ends up containing anything
   sensitive, the NAS share's access control is what protects it — keep credentials in Bitwarden
   and reference them by item name instead.
-- **Homebox OIDC group/provisioning behaviour** (whether a new OIDC user joins the existing
-  household or gets a fresh one) was not confirmed from docs; owner step 2 checks it.
+- **Homebox gives each new OIDC user their own group**, so a household member who skips the
+  invite ends up with a private, empty inventory rather than an error. Owner step 2.
 - **Single Zooz stick node** remains a single point of failure for all Z-Wave automation; it
   belongs in the handover, not in this change.

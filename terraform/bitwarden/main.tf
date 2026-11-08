@@ -794,25 +794,55 @@ resource "bitwarden_item_login" "vikunja" {
 }
 
 ################################################################################
-# bookstack credentials
+# outline pgcreds
 ################################################################################
-# Laravel APP_KEY. Encrypts session cookies and anything BookStack stores
-# encrypted, so rotating it logs everyone out — write-once. No login pair: the
-# first user in via Authentik becomes the admin, per application_bookstack.tf.
-# Laravel's Encrypter takes the key as raw bytes and aes-256-cbc needs exactly
-# 32 of them, so this is 32 chars wrapped in the `base64:` form that
-# `artisan key:generate` emits. A longer string fails at boot with
-# "Unsupported cipher or incorrect key length".
-resource "random_password" "bookstack_app_key" {
-  length  = 32
-  special = false
+# Outline's role on the SHARED database/postgres cluster. postgres-init
+# reconciles the role against this item on every start, so rotating the
+# password here actually takes effect.
+resource "random_password" "outline_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
 }
 
-resource "bitwarden_item_login" "bookstack" {
+resource "bitwarden_item_login" "outline_pgcreds" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
 
-  name = "bookstack credentials"
+  name     = "outline pgcreds"
+  username = "outline"
+  password = random_password.outline_pgpass.result
+
+  notes = "Outline's role on the shared database/postgres cluster"
+
+  field {
+    name    = "terraform"
+    boolean = true
+  }
+}
+
+################################################################################
+# outline credentials
+################################################################################
+# SECRET_KEY signs sessions and encrypts integration secrets at rest; Outline
+# wants it as 32 random bytes, hex-encoded (`openssl rand -hex 32`), hence
+# random_id rather than random_password. Write-once: rotating it logs everyone
+# out and orphans anything encrypted. UTILS_SECRET authenticates Outline's
+# internal utility endpoints; same shape for simplicity. No login pair:
+# accounts come from Authentik and the first one in becomes the admin.
+resource "random_id" "outline_secret_key" {
+  byte_length = 32
+}
+
+resource "random_id" "outline_utils_secret" {
+  byte_length = 32
+}
+
+resource "bitwarden_item_login" "outline" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "outline credentials"
 
   uri {
     value = "https://wiki.${local.domain}"
@@ -825,52 +855,111 @@ resource "bitwarden_item_login" "bookstack" {
   }
 
   field {
-    name   = "app_key"
-    hidden = "base64:${base64encode(random_password.bookstack_app_key.result)}"
+    name   = "secret_key"
+    hidden = random_id.outline_secret_key.hex
+  }
+
+  field {
+    name   = "utils_secret"
+    hidden = random_id.outline_utils_secret.hex
   }
 }
 
 ################################################################################
-# bookstack dbcreds
+# outline export
 ################################################################################
-# BookStack runs its own MariaDB rather than a role on the shared postgres
-# cluster, hence `dbcreds` and not `pgcreds`. root_password is a custom field
-# read through the bitwarden-login store, the same way `authentik credentials`
-# exposes secret_key.
+# The admin API key the weekly export CronJob presents. Same chicken-and-egg
+# as "open-webui litellm": Outline mints it, so it cannot exist before Outline
+# runs, but ESO has no per-key "optional" and one unresolvable entry blocks the
+# whole Secret. So terraform owns the ITEM and the human owns the VALUE: it is
+# created with a `replace-me` sentinel and `ignore_changes` keeps a pasted key
+# across every later apply. Until then the export Job fails with a 401.
 #
-# ⚠️ The mariadb image only reads MARIADB_* on an empty datadir, so rotating
-# these after first boot does NOT change what MariaDB accepts — that needs a
-# manual ALTER USER. See kubernetes/apps/productivity/bookstack/app/externalsecret.yaml.
-resource "random_password" "bookstack_dbpass" {
-  length           = 32
-  special          = true
-  override_special = "_=+-,~"
-}
-
-resource "random_password" "bookstack_db_root_password" {
-  length           = 32
-  special          = true
-  override_special = "_=+-,~"
-}
-
-resource "bitwarden_item_login" "bookstack_dbcreds" {
+# ⚠️ EDIT the api_key field, never DELETE it — a missing property fails the
+# ExternalSecret.
+#
+# Mint it in Outline (Settings → API & Apps) as the admin; export_all is
+# admin-only. A separate item from "outline credentials" so that item can stay
+# fully terraform-managed.
+resource "bitwarden_item_login" "outline_export" {
   organization_id = var.terraform_organization
   collection_ids  = [var.collection_id]
 
-  name     = "bookstack dbcreds"
-  username = "bookstack"
-  password = random_password.bookstack_dbpass.result
+  name  = "outline export"
+  notes = "Outline admin API key for the weekly markdown export CronJob. Minted in Outline's UI, then pasted over the replace-me sentinel in api_key."
 
-  notes = "BookStack's role on its own MariaDB instance in productivity"
+  field {
+    name = "api_key"
+    # NOT empty: an empty hidden field is dropped rather than stored, leaving
+    # no api_key property at all, which fails the whole ExternalSecret.
+    hidden = "replace-me"
+  }
+
+  lifecycle {
+    # Terraform creates this once and then never looks at the value again, so a
+    # pasted key survives every subsequent apply.
+    ignore_changes = [field]
+  }
+}
+
+################################################################################
+# homebox pgcreds
+################################################################################
+# Homebox's role on the SHARED database/postgres cluster. postgres-init
+# reconciles the role against this item on every start, so rotating the
+# password here actually takes effect.
+resource "random_password" "homebox_pgpass" {
+  length           = 32
+  special          = true
+  override_special = "_=+-,~"
+}
+
+resource "bitwarden_item_login" "homebox_pgcreds" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name     = "homebox pgcreds"
+  username = "homebox"
+  password = random_password.homebox_pgpass.result
+
+  notes = "Homebox's role on the shared database/postgres cluster"
 
   field {
     name    = "terraform"
     boolean = true
   }
+}
+
+################################################################################
+# homebox credentials
+################################################################################
+# HMAC pepper for stored API-key hashes. Homebox refuses to start if it is
+# shorter than 32 bytes. Write-once: rotating it invalidates every issued API
+# key. No login pair: accounts come from Authentik (local login is disabled).
+resource "random_password" "homebox_api_key_pepper" {
+  length  = 64
+  special = false
+}
+
+resource "bitwarden_item_login" "homebox" {
+  organization_id = var.terraform_organization
+  collection_ids  = [var.collection_id]
+
+  name = "homebox credentials"
+
+  uri {
+    value = "https://inventory.${local.domain}"
+    match = "host"
+  }
 
   field {
-    name   = "root_password"
-    hidden = random_password.bookstack_db_root_password.result
+    name    = "terraform managed"
+    boolean = true
+  }
+
+  field {
+    name   = "api_key_pepper"
+    hidden = random_password.homebox_api_key_pepper.result
   }
 }
 

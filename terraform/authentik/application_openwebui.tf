@@ -22,7 +22,7 @@
 ## Authlib fetches JWKS unconditionally and errors with "Missing expected key
 ## 'keys' in OAuth response" against the HS256 default, so this provider needs
 ## an explicit RS256 signing key. The data source lives in main.tf, shared with
-## BookStack, which fails the same way.
+## Vikunja, MyGarage and Homebox, which fail the same way.
 
 module "openwebui_oidc_creds" {
   source          = "./oidc_creds"

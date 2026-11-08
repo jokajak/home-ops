@@ -1,0 +1,16 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: productivity
+labels:
+  - pairs:
+      app.kubernetes.io/name: outline
+      app.kubernetes.io/instance: outline
+      app.kubernetes.io/part-of: outline
+resources:
+  - ./externalsecret.yaml
+  - ./helmrelease.yaml
+  - ./export-pv.yaml
+  - ./export-cronjob.yaml
+  - ../../../../templates/gatus/guarded

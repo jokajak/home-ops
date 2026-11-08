@@ -1,5 +1,9 @@
 # Vikunja (tasks) and BookStack (wiki)
 
+> **BookStack was removed on 2026-11-08** (it never held data) and replaced by Outline +
+> Homebox — see [`2026-11-08-bookstack-to-outline-and-homebox.md`](2026-11-08-bookstack-to-outline-and-homebox.md).
+> The Vikunja half of this doc is current.
+
 **Date:** 2026-09-07
 **References:** <https://vikunja.io/docs/> · <https://www.bookstackapp.com/docs/>
 
