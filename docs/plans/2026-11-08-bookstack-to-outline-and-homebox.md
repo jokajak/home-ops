@@ -1,7 +1,8 @@
 # Replace BookStack with Outline (knowledge) + Homebox (inventory)
 
 **Date:** 2026-11-08
-**Supersedes:** the BookStack half of [`2026-09-07-vikunja-and-bookstack.md`](2026-09-07-vikunja-and-bookstack.md)
+**Supersedes:** BookStack, deployed alongside Vikunja on 2026-09-07; its design notes were
+removed from [`2026-09-07-vikunja.md`](2026-09-07-vikunja.md) and remain in git history.
 **References:** <https://docs.getoutline.com/s/hosting> · <https://github.com/outline/outline> ·
 <https://homebox.software> · <https://github.com/sysadminsmedia/homebox> ·
 <https://github.com/pro4tlzz/eol-dr>
@@ -120,7 +121,7 @@ Homebox mirror rooms.
 | `terraform/authentik/application_bookstack.tf` | **Delete** |
 | `terraform/authentik/application_{outline,homebox}.tf` | New — same shape as `application_mygarage.tf` (`users` binding; RS256 signing key on Homebox only) |
 | `terraform/bitwarden/main.tf` | Remove the two `bookstack` items; add `outline pgcreds`, `outline credentials`, `outline export` (`replace-me` sentinel + `ignore_changes`), `homebox pgcreds`, `homebox credentials` |
-| `docs/plans/2026-09-07-vikunja-and-bookstack.md` | Add a one-line "BookStack superseded by" pointer |
+| `docs/plans/2026-09-07-vikunja-and-bookstack.md` | Renamed to `2026-09-07-vikunja.md`, BookStack content removed (it lives in git history) |
 
 ## Key Design Decisions
 
