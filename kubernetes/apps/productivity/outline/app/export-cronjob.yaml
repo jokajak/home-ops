@@ -1,0 +1,140 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/cronjob-batch-v1.json
+# Weekly offline copy of the whole wiki onto the NAS (export-pv.yaml).
+#
+# The spouse handover has to be readable when the cluster is not, so a copy of
+# Outline must live outside it. This recurs forever, so it is automated rather
+# than a "remember to click Export" step. It is also the plain-file fallback
+# local AI agents can read with no running service.
+#
+# Flow, against Outline's own API (all POST, bearer auth):
+#   collections.export_all {format: outline-markdown, includeAttachments: true}
+#     -> a FileOperation, built asynchronously (admin-only, 5/hour limit)
+#   fileOperations.info {id} until state == complete
+#   fileOperations.redirect {id} -> 302 to ${URL}/api/files.get?sig=...
+# The signed download URL carries the public origin (URL), which pods may not
+# resolve; the signature is host-independent, so the origin is swapped for the
+# in-cluster Service.
+#
+# Runs on the Outline image itself: it already has node (with global fetch), so
+# there is no extra image to pin, and Renovate moves it with the app.
+#
+# Substitution is disabled because the script uses JS template literals that
+# Flux's envsubst would otherwise eat. Nothing in here needs a cluster variable.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: outline-export
+  namespace: productivity
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
+spec:
+  # Sunday 03:17 — off the hour, and not while anyone is editing
+  schedule: "17 3 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            fsGroup: 1001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: export
+              image: docker.io/outlinewiki/outline:1.12.0
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+              env:
+                - name: OUTLINE_INTERNAL_URL
+                  value: http://outline.productivity.svc.cluster.local:3000
+                # how many weekly zips to keep on the NAS
+                - name: KEEP
+                  value: "8"
+              envFrom:
+                # OUTLINE_API_KEY
+                - secretRef:
+                    name: outline-export-secret
+              command:
+                - node
+                - -e
+                - |
+                  const fs = require("node:fs");
+                  const path = require("node:path");
+                  const base = process.env.OUTLINE_INTERNAL_URL;
+                  const key = process.env.OUTLINE_API_KEY;
+                  const dir = "/export";
+                  const keep = Number(process.env.KEEP);
+
+                  async function api(method, body) {
+                    const res = await fetch(`${base}/api/${method}`, {
+                      method: "POST",
+                      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+                      body: JSON.stringify(body),
+                      redirect: "manual",
+                    });
+                    if (res.status >= 300 && res.status < 400) return res.headers.get("location");
+                    if (!res.ok) throw new Error(`${method}: HTTP ${res.status} ${await res.text()}`);
+                    return (await res.json()).data;
+                  }
+
+                  (async () => {
+                    const { fileOperation } = await api("collections.export_all", {
+                      format: "outline-markdown",
+                      includeAttachments: true,
+                    });
+                    let op = fileOperation;
+                    for (let i = 0; op.state !== "complete"; i++) {
+                      if (op.state === "error" || op.state === "expired") throw new Error(`export ${op.state}: ${op.error ?? ""}`);
+                      if (i > 120) throw new Error("export did not complete within 30 minutes");
+                      await new Promise((r) => setTimeout(r, 15000));
+                      op = await api("fileOperations.info", { id: op.id });
+                    }
+
+                    const signed = new URL(await api("fileOperations.redirect", { id: op.id }));
+                    const res = await fetch(`${base}${signed.pathname}${signed.search}`);
+                    if (!res.ok) throw new Error(`download: HTTP ${res.status}`);
+
+                    // .part first, so a run that dies midway cannot leave a
+                    // truncated zip that looks like a good export
+                    const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..*/, "Z");
+                    const out = path.join(dir, `outline-${stamp}.zip`);
+                    fs.writeFileSync(`${out}.part`, Buffer.from(await res.arrayBuffer()));
+                    fs.renameSync(`${out}.part`, out);
+                    console.log(`wrote ${out}`);
+
+                    // newest first; prune everything past KEEP
+                    const zips = fs.readdirSync(dir).filter((f) => /^outline-.*\.zip$/.test(f)).sort().reverse();
+                    for (const old of zips.slice(keep)) {
+                      fs.unlinkSync(path.join(dir, old));
+                      console.log(`pruned ${old}`);
+                    }
+
+                    // the export is now on disk; tidy it out of Outline's own list
+                    await api("fileOperations.delete", { id: op.id }).catch((e) => console.warn(e.message));
+                  })().catch((e) => {
+                    console.error(e.message);
+                    process.exit(1);
+                  });
+              volumeMounts:
+                - name: export
+                  mountPath: /export
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: export
+              persistentVolumeClaim:
+                claimName: outline-export

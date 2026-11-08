@@ -24,12 +24,12 @@ data "bitwarden_item_login" "github_oidc_creds" {
 ## Providers default to signing_key = null, which Authentik signs as HS256 and
 ## then has no public key to publish, so /jwks/ returns no keys. Clients that
 ## verify against JWKS break on that rather than falling back — Open WebUI's
-## Authlib with "Missing expected key 'keys'", BookStack with a jwks_url error,
-## Vikunja's go-oidc with "unexpected signature algorithm HS256". All three
+## Authlib with "Missing expected key 'keys'", Vikunja's and Homebox's go-oidc
+## with "unexpected signature algorithm HS256", MyGarage's joserfc. They
 ## reference this to get an RS256 key instead.
 ##
 ## Only wire it into a provider whose client actually needs it. Others (e.g.
-## grafana, paperless) tolerate the HS256 default and are deliberately left alone.
+## grafana, paperless, outline) tolerate the HS256 default and are deliberately left alone.
 data "authentik_certificate_key_pair" "default_signing" {
   name = "authentik Self-signed Certificate"
 }

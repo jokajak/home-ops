@@ -1,0 +1,41 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-homebox
+  namespace: flux-system
+spec:
+  targetNamespace: productivity
+  interval: 10m
+  path: "./kubernetes/apps/productivity/homebox/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: true
+  components:
+    - ../../../../components/volsync
+  postBuild:
+    substitute:
+      APP: homebox
+      GATUS_SUBDOMAIN: inventory
+      # The app-template claim for the `data` persistence key: item photos,
+      # manuals, receipts. Every item, location and label lives in Postgres
+      # (CNPG -> MinIO); this volume is only blobs.
+      VOLSYNC_CLAIM: homebox-data
+      VOLSYNC_CAPACITY: 10Gi
+      # the rootless image runs as `nonroot` (uid/gid 65532)
+      VOLSYNC_PUID: "65532"
+      VOLSYNC_PGID: "65532"
+    substituteFrom:
+      - kind: ConfigMap
+        name: cluster-settings
+      - kind: Secret
+        name: cluster-secrets
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    # the shared cluster, not the operator: Homebox only needs postgres-rw
+    # answering before init-db runs
+    - name: cluster-apps-cloudnative-pg-cluster
+    - name: cluster-apps-csi-driver-nfs

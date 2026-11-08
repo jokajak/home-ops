@@ -3,12 +3,12 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: cluster-apps-bookstack
+  name: cluster-apps-outline
   namespace: flux-system
 spec:
   targetNamespace: productivity
   interval: 10m
-  path: "./kubernetes/apps/productivity/bookstack/app"
+  path: "./kubernetes/apps/productivity/outline/app"
   prune: true
   sourceRef:
     kind: GitRepository
@@ -18,15 +18,16 @@ spec:
     - ../../../../components/volsync
   postBuild:
     substitute:
-      APP: bookstack
+      APP: outline
       GATUS_SUBDOMAIN: wiki
-      # One claim carrying both /config and the MariaDB dumps — see pvc.yaml.
-      # The MariaDB datadir itself is deliberately not replicated.
-      VOLSYNC_CLAIM: bookstack-data
-      # the linuxserver image's s6 init owns /config as root before dropping to
-      # PUID/PGID, so the restic mover reads the tree as root
-      VOLSYNC_PUID: "0"
-      VOLSYNC_PGID: "0"
+      # The app-template claim for the `data` persistence key: uploaded images
+      # and attachments (FILE_STORAGE=local). Every document lives in Postgres
+      # (CNPG -> MinIO); this volume is only blobs.
+      VOLSYNC_CLAIM: outline-data
+      VOLSYNC_CAPACITY: 10Gi
+      # the image runs as `nodejs` (uid/gid 1001) with no internal remapping
+      VOLSYNC_PUID: "1001"
+      VOLSYNC_PGID: "1001"
     substituteFrom:
       - kind: ConfigMap
         name: cluster-settings
@@ -34,6 +35,8 @@ spec:
         name: cluster-secrets
   dependsOn:
     - name: cluster-apps-external-secrets
+    # the shared cluster, not the operator: Outline only needs postgres-rw
+    # answering before init-db runs
+    - name: cluster-apps-cloudnative-pg-cluster
+    - name: dragonfly-cluster
     - name: cluster-apps-csi-driver-nfs
-    # node-local PV for the MariaDB datadir
-    - name: openebs
