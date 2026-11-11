@@ -159,6 +159,15 @@ spec:
           - path: /config/packages/pollen.yaml
             subPath: pollen.yaml
             readOnly: true
+      # Timer/script/automations behind the Pi-hole pause badges on the Home
+      # dashboard (the badges themselves are still UI-managed).
+      pihole-config:
+        type: configMap
+        name: home-assistant-pihole
+        globalMounts:
+          - path: /config/packages/pihole.yaml
+            subPath: pihole.yaml
+            readOnly: true
       # Pollen/mold panel. Two mounts off one ConfigMap: the package registers the
       # dashboard with Lovelace, the dashboard file holds the cards. Both have to
       # be on disk before HA starts -- a YAML dashboard is read at setup, not on

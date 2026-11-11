@@ -1,0 +1,87 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-pihole
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # Mounted at /config/packages/pihole.yaml; picked up via
+  # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
+  #
+  # Backend for the "pause Pi-hole for 5 minutes" badges on the Home dashboard.
+  # The badges themselves are still hand-edited in the UI dashboard (not yet in
+  # code); they key off exactly two entities defined/used here:
+  #   - switch.pi_hole       -- from the UI-configured pi_hole integration
+  #   - timer.pihole_pause   -- defined below; drives the orange countdown badge
+  #
+  # The timer is purely cosmetic: Pi-hole itself re-enables blocking when the
+  # `duration` passed to pi_hole.disable runs out. The timer only mirrors that
+  # window so the dashboard can show a countdown.
+  pihole.yaml: |
+    timer:
+      pihole_pause:
+        name: Pi-hole pause
+        duration: "00:05:00"
+        icon: mdi:pi-hole
+        # Survive an HA restart mid-pause, so the countdown doesn't vanish while
+        # Pi-hole is still disabled.
+        restore: true
+
+    script:
+      pihole_pause_5m:
+        alias: Pause Pi-hole for 5 minutes
+        icon: mdi:pi-hole
+        # Double-taps while running are dropped without a log warning.
+        mode: single
+        max_exceeded: silent
+        sequence:
+          # Only pause from the "blocking on" state; otherwise do nothing.
+          - condition: state
+            entity_id: switch.pi_hole
+            state: "on"
+          - action: pi_hole.disable
+            target:
+              entity_id: switch.pi_hole
+            data:
+              duration: "00:05:00"
+          - action: timer.start
+            target:
+              entity_id: timer.pihole_pause
+            data:
+              duration: "00:05:00"
+
+    automation:
+      # A manual re-enable (or any other path back to "on") clears the countdown,
+      # so the orange badge never lingers over a green state.
+      - id: pihole_pause_cancel_on_enable
+        alias: Pi-hole pause - cancel timer when blocking re-enabled
+        mode: single
+        triggers:
+          - trigger: state
+            entity_id: switch.pi_hole
+            to: "on"
+        actions:
+          - action: timer.cancel
+            target:
+              entity_id: timer.pihole_pause
+
+      # Pi-hole re-enables itself when the pause expires, but HA only notices on
+      # the integration's next poll, so switch.pi_hole can read "off" for a while
+      # after the timer ends -- which would show the red "disabled elsewhere"
+      # badge. Turning the switch on at expiry is idempotent and forces the state
+      # to refresh immediately.
+      - id: pihole_pause_reenable_on_expiry
+        alias: Pi-hole pause - re-enable blocking when timer finishes
+        mode: single
+        triggers:
+          - trigger: event
+            event_type: timer.finished
+            event_data:
+              entity_id: timer.pihole_pause
+        actions:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.pi_hole
