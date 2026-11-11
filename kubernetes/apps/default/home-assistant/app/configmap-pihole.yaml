@@ -11,7 +11,7 @@ data:
   # Mounted at /config/packages/pihole.yaml; picked up via
   # `homeassistant: packages: !include_dir_named packages` in configuration.yaml.
   #
-  # Backend for the "pause Pi-hole for 5 minutes" badges on the Home dashboard.
+  # Backend for the "pause Pi-hole" badges on the Home dashboard.
   # The badges themselves are still hand-edited in the UI dashboard (not yet in
   # code); they key off exactly two entities defined/used here:
   #   - switch.pi_hole       -- from the UI-configured pi_hole integration
@@ -24,15 +24,29 @@ data:
     timer:
       pihole_pause:
         name: Pi-hole pause
-        duration: "00:05:00"
+        # No duration here: script.pihole_pause always passes one, taken from
+        # input_number.pihole_pause_minutes, so there is a single source of truth.
         icon: mdi:pi-hole
         # Survive an HA restart mid-pause, so the countdown doesn't vanish while
         # Pi-hole is still disabled.
         restore: true
 
+    # Pause length, adjustable from the UI. No `initial:` on purpose: without it
+    # HA restores the last value across restarts; with it, every restart would
+    # reset the value. On a fresh install it starts at `min` until set.
+    input_number:
+      pihole_pause_minutes:
+        name: Pi-hole pause length
+        icon: mdi:timer-cog-outline
+        min: 1
+        max: 60
+        step: 1
+        unit_of_measurement: min
+        mode: box
+
     script:
-      pihole_pause_5m:
-        alias: Pause Pi-hole for 5 minutes
+      pihole_pause:
+        alias: Pause Pi-hole
         icon: mdi:pi-hole
         # Double-taps while running are dropped without a log warning.
         mode: single
@@ -42,16 +56,23 @@ data:
           - condition: state
             entity_id: switch.pi_hole
             state: "on"
+          # Read the length once so Pi-hole and the timer get the same value.
+          # pi_hole.disable wants an "HH:MM:SS" string. Falls back to 5 min if
+          # the helper is briefly unavailable (e.g. at startup).
+          - variables:
+              pause: >-
+                {% set m = states('input_number.pihole_pause_minutes') | int(5) %}
+                {{ '%02d:%02d:00' | format(m // 60, m % 60) }}
           - action: pi_hole.disable
             target:
               entity_id: switch.pi_hole
             data:
-              duration: "00:05:00"
+              duration: "{{ pause }}"
           - action: timer.start
             target:
               entity_id: timer.pihole_pause
             data:
-              duration: "00:05:00"
+              duration: "{{ pause }}"
 
     automation:
       # A manual re-enable (or any other path back to "on") clears the countdown,
