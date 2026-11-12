@@ -12,7 +12,9 @@ one predictable pattern. Display names are what the family sees and stay casual.
 - **area** — the HA area slug, always first, so a room's entities sort together and the
   dashboard YAML for a room is guessable. Assign the entity to that HA area too.
 - **thing** — what it is, generic noun, singular: `lamp`, `fan`, `fan_light`, `tv`, `roku`,
-  `hvac`.
+  `hvac`. Compound device names stay whole, in natural English order (`fan_light`,
+  `ceiling_fan`, not `light_fan`), so a device's parts sort together
+  (`fan.primary_bedroom_fan`, `light.primary_bedroom_fan_light`).
 - **qualifier** — optional; distinguishes several of the same thing (`_emily`, `_left`,
   `_ceiling`). Owner names go here, never first.
 - **groups** — plural of the thing, no qualifier: `light.<area>_lamps`.
