@@ -98,14 +98,12 @@ data:
                   navigation_path: "#bedroom"
 
           # --- Bedroom pop-up --------------------------------------------------
-          - type: vertical-stack
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#bedroom"
+            name: Bedroom
+            icon: mdi:bed-king
             cards:
-              - type: custom:bubble-card
-                card_type: pop-up
-                hash: "#bedroom"
-                name: Bedroom
-                icon: mdi:bed-king
-
               - type: custom:bubble-card
                 card_type: separator
                 name: Lights
@@ -242,13 +240,12 @@ data:
 
           # --- Bedroom Roku remote pop-up --------------------------------------
           # Kept off the main pop-up so the everyday screen stays short.
-          - type: vertical-stack
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#bedroom-remote"
+            name: Bedroom Roku
+            icon: mdi:remote
             cards:
-              - type: custom:bubble-card
-                card_type: pop-up
-                hash: "#bedroom-remote"
-                name: Bedroom Roku
-                icon: mdi:remote
               - type: horizontal-stack
                 cards:
                   - type: custom:bubble-card
