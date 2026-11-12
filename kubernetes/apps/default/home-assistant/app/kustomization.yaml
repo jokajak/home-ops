@@ -9,6 +9,7 @@ resources:
   - ./configmap-air-quality.yaml
   - ./configmap-pollen.yaml
   - ./configmap-pihole.yaml
+  - ./configmap-home-dashboard.yaml
   - ./externalsecret.yaml
   - ./database
   - ../../../../templates/gatus/guarded
