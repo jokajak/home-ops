@@ -49,6 +49,7 @@ Add rows as rooms are brought onto the dashboard.
 | `media_player.primary_bedroom_tv` | unchanged |
 | `media_player.primary_bedroom_roku` | unchanged |
 | `remote.primary_bedroom_roku` | unchanged (same device, different domain) |
+| TV Wake-on-LAN button (renamed in HA) | `button.primary_bedroom_tv_wake` |
 
 ## Rename checklist
 

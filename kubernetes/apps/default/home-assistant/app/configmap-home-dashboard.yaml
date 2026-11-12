@@ -162,7 +162,6 @@ data:
                   icon: mdi:television
                   tap_action:
                     action: perform-action
-                    # TODO(owner): rename the WoL button to this ID (see naming doc).
                     perform_action: button.press
                     target:
                       entity_id: button.primary_bedroom_tv_wake
