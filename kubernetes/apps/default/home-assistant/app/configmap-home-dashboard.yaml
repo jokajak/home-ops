@@ -39,13 +39,13 @@ data:
             unique_id: primary_bedroom_tv_on
             state: >-
               {{ states('media_player.primary_bedroom_tv') not in ['off', 'unavailable', 'unknown'] }}
-          # TODO(owner): replace "ROKU_SOURCE" with the Roku's entry in the TV's
-          # source_list attribute (Developer tools -> States).
+          # "Roku" is the input's name in the TV's source_list (webOS uses the
+          # CEC device name, not "HDMI n").
           - name: Primary bedroom TV on Roku
             unique_id: primary_bedroom_tv_on_roku
             state: >-
               {{ is_state('binary_sensor.primary_bedroom_tv_on', 'on')
-                 and is_state_attr('media_player.primary_bedroom_tv', 'source', 'ROKU_SOURCE') }}
+                 and is_state_attr('media_player.primary_bedroom_tv', 'source', 'Roku') }}
 
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/home-draft.yaml.
@@ -176,15 +176,15 @@ data:
                 card:
                   type: vertical-stack
                   cards:
-                    # Active input lights up. TODO(owner): replace ROKU_SOURCE /
-                    # PS5_SOURCE with the names in the TV's source_list.
+                    # Active input lights up. "Roku" / "PS5" are the names in
+                    # the TV's source_list -- exact spelling matters.
                     - type: horizontal-stack
                       cards:
                         - type: custom:mushroom-template-card
                           primary: Roku
                           icon: mdi:television-play
                           icon_color: >-
-                            {{ 'purple' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'ROKU_SOURCE') else 'disabled' }}
+                            {{ 'purple' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'Roku') else 'disabled' }}
                           layout: vertical
                           tap_action:
                             action: perform-action
@@ -192,12 +192,12 @@ data:
                             target:
                               entity_id: media_player.primary_bedroom_tv
                             data:
-                              source: ROKU_SOURCE
+                              source: Roku
                         - type: custom:mushroom-template-card
                           primary: PlayStation
                           icon: mdi:sony-playstation
                           icon_color: >-
-                            {{ 'blue' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'PS5_SOURCE') else 'disabled' }}
+                            {{ 'blue' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'PS5') else 'disabled' }}
                           layout: vertical
                           tap_action:
                             action: perform-action
@@ -205,7 +205,7 @@ data:
                             target:
                               entity_id: media_player.primary_bedroom_tv
                             data:
-                              source: PS5_SOURCE
+                              source: PS5
                     # Power and volume always come from the TV, whatever the input.
                     - type: custom:bubble-card
                       card_type: media-player
