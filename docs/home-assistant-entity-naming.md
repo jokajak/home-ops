@@ -45,7 +45,7 @@ Add rows as rooms are brought onto the dashboard.
 | `light.josh_lamp` | `light.primary_bedroom_lamp_josh` |
 | `light.primary_bedroom_lamps` | unchanged (group) |
 | `light.primary_fan_light` | `light.primary_bedroom_fan_light` |
-| fan | `fan.primary_bedroom_fan` (TBD: current ID) |
+| fan (renamed in HA) | `fan.primary_bedroom_fan` |
 | `media_player.primary_bedroom_tv` | unchanged |
 | `media_player.primary_bedroom_roku` | unchanged |
 | `remote.primary_bedroom_roku` | unchanged (same device, different domain) |
