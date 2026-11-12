@@ -46,8 +46,9 @@ Add rows as rooms are brought onto the dashboard.
 | `light.primary_bedroom_lamps` | unchanged (group) |
 | `light.primary_fan_light` | `light.primary_bedroom_fan_light` |
 | fan | `fan.primary_bedroom_fan` (TBD: current ID) |
-| TV | `media_player.primary_bedroom_tv` (TBD: current ID) |
-| Roku | `media_player.primary_bedroom_roku` (TBD: current ID) |
+| `media_player.primary_bedroom_tv` | unchanged |
+| `media_player.primary_bedroom_roku` | unchanged |
+| `remote.primary_bedroom_roku` | unchanged (same device, different domain) |
 
 ## Rename checklist
 
