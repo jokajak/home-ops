@@ -89,6 +89,11 @@ data:
                 card_type: button
                 button_type: name
                 card_layout: large-2-rows
+                # In a sections view the grid sets the height, not card_layout:
+                # without rows: 2 the second row of sub-buttons is clipped.
+                grid_options:
+                  columns: full
+                  rows: 2
                 name: Primary Bedroom
                 icon: mdi:bed-king
                 entity: sensor.air_quality_meter_temperature
@@ -96,13 +101,11 @@ data:
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
+                # Bubble deals sub-buttons alternately into the two rows (1st top,
+                # 2nd bottom, 3rd top...), so this order gives
+                #   top:    TV  fan  fan light
+                #   bottom: Emily  Josh
                 sub_button:
-                  - entity: sensor.air_quality_meter_humidity
-                    icon: mdi:water-percent
-                    show_state: true
-                    show_background: false
-                    tap_action:
-                      action: more-info
                   # The binary sensor, not the media_player: the TV entity goes
                   # unavailable while asleep. Tap opens the room, since turning
                   # it on needs Wake-on-LAN.
@@ -112,21 +115,21 @@ data:
                     tap_action:
                       action: navigate
                       navigation_path: "#primary-bedroom"
+                  - entity: light.primary_bedroom_lamp_emily
+                    icon: mdi:lamp
+                    name: Emily
+                    show_name: true
+                    show_background: true
+                    tap_action:
+                      action: toggle
                   - entity: fan.primary_bedroom_fan
                     icon: mdi:ceiling-fan
                     show_background: true
                     tap_action:
                       action: toggle
-                  - entity: light.primary_bedroom_lamp_emily
-                    name: Emily
-                    icon: mdi:lamp
-                    show_name: true
-                    show_background: true
-                    tap_action:
-                      action: toggle
                   - entity: light.primary_bedroom_lamp_josh
-                    name: Josh
                     icon: mdi:lamp
+                    name: Josh
                     show_name: true
                     show_background: true
                     tap_action:
@@ -141,21 +144,27 @@ data:
                     background: rgba(92, 107, 192, 0.22) !important;
                   }
                   .bubble-icon-container {
-                    background: rgba(92, 107, 192, 0.45) !important;
+                    background: rgba(92, 107, 192, 0.30) !important;
                   }
+                  /* Saturated icon on a light tint: readable in light and dark. */
                   .bubble-icon {
-                    color: rgb(159, 168, 218) !important;
+                    color: rgb(92, 107, 192) !important;
                   }
                   .bubble-name {
                     font-size: 16px !important;
                     font-weight: 600 !important;
                   }
-                  /* Sub-buttons are the tap targets people reach for: 44px is
-                     the usual minimum comfortable touch size on a phone. */
+                  /* State line: "70.5 °F · 48%" -- humidity rides along here
+                     instead of taking a sub-button. */
+                  ${card.querySelector('.bubble-state').innerText =
+                    (hass.states['sensor.air_quality_meter_temperature']?.state ?? '-') + ' °F · ' +
+                    (hass.states['sensor.air_quality_meter_humidity']?.state ?? '-') + '%'}
+                  /* Sub-buttons are the tap targets people reach for. 40px is
+                     the most two rows can take in a two-row tile. */
                   .bubble-sub-button {
-                    height: 44px !important;
-                    min-width: 44px !important;
-                    border-radius: 22px !important;
+                    height: 40px !important;
+                    min-width: 40px !important;
+                    border-radius: 20px !important;
                   }
                   .bubble-sub-button-icon {
                     --mdc-icon-size: 24px !important;
@@ -167,7 +176,7 @@ data:
               - type: custom:bubble-card
                 card_type: button
                 button_type: name
-                card_layout: large-2-rows
+                card_layout: large
                 name: Office
                 icon: mdi:desk
                 entity: climate.office_fan
@@ -186,21 +195,21 @@ data:
                     background: rgba(230, 110, 70, 0.22) !important;
                   }
                   .bubble-icon-container {
-                    background: rgba(230, 110, 70, 0.45) !important;
+                    background: rgba(230, 110, 70, 0.30) !important;
                   }
                   .bubble-icon {
-                    color: rgb(244, 160, 130) !important;
+                    color: rgb(216, 90, 48) !important;
                   }
                   .bubble-name {
                     font-size: 16px !important;
                     font-weight: 600 !important;
                   }
-                  /* Sub-buttons are the tap targets people reach for: 44px is
-                     the usual minimum comfortable touch size on a phone. */
+                  /* Sub-buttons are the tap targets people reach for. 40px is
+                     the most two rows can take in a two-row tile. */
                   .bubble-sub-button {
-                    height: 44px !important;
-                    min-width: 44px !important;
-                    border-radius: 22px !important;
+                    height: 40px !important;
+                    min-width: 40px !important;
+                    border-radius: 20px !important;
                   }
                   .bubble-sub-button-icon {
                     --mdc-icon-size: 24px !important;
