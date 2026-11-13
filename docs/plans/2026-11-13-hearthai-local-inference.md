@@ -41,9 +41,11 @@ own merge with a check in between, and the pause belongs to the owner.
 2. **Owner populates `SECRET_LOCAL_LLM_HOST`** in `kubernetes/flux/vars/cluster-secrets.sops.yaml`
    (name or address only, no scheme or port) and prepares the laptop (owner steps below). Its own
    commit.
-3. **home-ops change A merges** (files below). Check: the gate pod is Running; with the laptop
-   awake, `local-qwen` answers; with it asleep, the request fails in about 3 s with the fixed
-   message and the status tile is down.
+3. **home-ops change A merges** (files below). Check, with the laptop **awake first**: the gate pod
+   is Running, `local-qwen` answers, and the `local-inference` status tile is **up**. Then with it
+   asleep: the request fails in about 3 s with the fixed message and the tile is down. The awake
+   check is the one that matters for the probe. A tile that is down in both states means the gate's
+   network policy is denying Gatus, not that the laptop is off.
 
 What breaks out of order: nothing destructive. If A lands before step 2, the value falls back to
 `local-llm.invalid`, the gate reports unavailable, and the lane fails closed until the variable is
@@ -56,9 +58,13 @@ data is at risk in either case.
   `localInference.enabled: true` and
   `localInference.upstreamUrl: "http://${SECRET_LOCAL_LLM_HOST:=local-llm.invalid}:11434"`, with a
   comment that the address is the only site input and that the lane must never gain a fallback.
+- Same file: `localInference.gate.networkPolicy.additionalIngress` with one entry selecting the
+  Gatus pods in the `observability` namespace, by the narrowest labels that match only them. The
+  chart's gate policy admits this release's LiteLLM pods and node probes and nothing else, so
+  without this entry Cilium drops the probe below. hearthai I1 adds the value for exactly this.
 - `kubernetes/apps/ai/hearthai/app/gatus.yaml`: one endpoint, `local-inference`, probing the gate
   Service's `/api/version` in-cluster, group `internal`, **no alert**. The probe never sees the
-  laptop's address.
+  laptop's address. It originates from the Gatus pod, which is why the policy entry above exists.
 - `kubernetes/apps/ai/hearthai/README.md`: a "Local lane" section: what it is, that down is normal,
   and the owner steps.
 
@@ -104,9 +110,37 @@ together.
   is an owner step in the dashboard.
 - **Image overrides:** the `litellm` and `meridian` overrides in the HelmRelease are unrelated to
   this plan and stay until hearthai's pins pass them.
-- **Pinning (hearthai O9):** once the local lane is live, change
-  `kubernetes/flux/repositories/git/hearthai.yaml` from `branch: main` to a reviewed `commit:`.
-  From the deny-table increment onward, chart merges change security settings.
+
+### Pinning the hearthai source (hearthai O9)
+
+Once the local lane is live, `kubernetes/flux/repositories/git/hearthai.yaml` moves from
+`branch: main` to a `commit:`. From the deny-table increment onward, chart merges change security
+settings and should be a reviewed step here.
+
+A pin alone would be a regression. Every later chart or security fix would then need someone to
+remember to promote it, and the deployment could sit on an old chart indefinitely while hearthai
+`main` moves. So the pin ships in the same change as its update path, or not at all:
+
+- **Mechanism.** Renovate opens a pull request here that moves the commit to the head of hearthai
+  `main`. Whether the existing `flux` manager already does this for a `GitRepository` commit pin is
+  not confirmed; the `mindroom` source is pinned the same way and is the thing to check. If it does
+  not, the pin gets a `# renovate:` annotation in this repo's existing convention with the
+  `git-refs` datasource. Not automerged.
+- **Cadence.** Grouped weekly, so each hearthai commit is not its own pull request.
+- **Review before merge.** Read the hearthai diff under `deploy/` between the two commits; `flate`
+  passes on the pull request; merge. Image bumps for Open WebUI and LiteLLM arrive this way too and
+  both migrate a database on start, so read their release notes.
+- **Urgent fix.** Edit the commit by hand and merge the same day. The weekly cadence is a default,
+  not a hold.
+- **Stale descriptions to remove in the same change:** the "Floating on main" header in the
+  `GitRepository` file, the "Upgrading" section of `kubernetes/apps/ai/hearthai/README.md`, and the
+  comments in `app/helmrelease.yaml` that say a push to hearthai deploys.
+- **End state.** When hearthai cuts a tagged release, this becomes an `OCIRepository` with a
+  version range, which Renovate tracks natively. The pin is the interim.
+
+Whether Renovate picks the pin up is only shown by its next run after the change merges. That is an
+owner check: a Renovate pull request for the hearthai commit should appear within a week of
+hearthai `main` moving.
 
 ## Owner steps
 
