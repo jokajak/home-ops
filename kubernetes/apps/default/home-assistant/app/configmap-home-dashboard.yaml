@@ -7,6 +7,14 @@ metadata:
   namespace: default
   labels:
     app.kubernetes.io/name: home-assistant
+  # Flux postBuild substitution is off for this ConfigMap only. Bubble Card's
+  # JS templates use dollar-brace syntax, and Flux would rewrite (usually blank)
+  # every one of them. Nothing here needs a cluster variable, so turning it off
+  # costs nothing and lets YAML pasted from the Bubble editor go in verbatim.
+  # If a cluster variable is ever needed here, drop this annotation and escape
+  # each JS template with a doubled dollar instead.
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
 data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/packages/home_dashboard.yaml. Same mechanics and naming
@@ -50,417 +58,505 @@ data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/home-draft.yaml.
   #
-  # Phone-first: the home view is one row per room; tapping it opens a Bubble
-  # pop-up (#primary-bedroom). Context rules are deliberately few and predictable --
-  # what's on screen follows what the TV is physically doing.
+  # Phone-first. Home screen is one large tinted Bubble tile per room;
+  # tapping a tile opens that room's Bubble pop-up. Context rules are
+  # deliberately few and predictable -- what's on screen follows what the TV is
+  # physically doing.
   #
-  # No Bubble `styles:` JS templates here: they use ${...}, which Flux
-  # postBuild substitution would rewrite.
+  # Bubble `styles:` JS templates are fine here: substitution is disabled on
+  # this ConfigMap (see the annotation above).
   # ---------------------------------------------------------------------------
   dashboard.yaml: |
     views:
       - title: Home
         path: home
         icon: mdi:home
-        cards:
+        type: sections
+        sections:
           # --- Home screen -----------------------------------------------------
-          # Sub-buttons double as status lights and quick toggles, so a lamp left
-          # on can be switched off without opening the room.
-          - type: custom:bubble-card
-            card_type: button
-            button_type: name
-            name: Primary Bedroom
-            icon: mdi:bed-king
-            tap_action:
-              action: navigate
-              navigation_path: "#primary-bedroom"
-            sub_button:
-              # Readings, not toggles: no background so they don't look tappable
-              # like the switches beside them; tap opens history. The meter is
-              # portable (see naming doc) -- move these if it leaves the bedroom.
-              - entity: sensor.air_quality_meter_temperature
-                icon: mdi:thermometer
+          # Rooms get visual weight: large two-row Bubble tiles, tinted per room,
+          # with every light one tap away as a sub-button. Climate stays a plain
+          # row -- it is glanced at, not played with.
+          - type: grid
+            cards:
+              - type: heading
+                heading_style: title
+                heading: Rooms
+
+              # The meter is portable (see naming doc) -- move the temperature
+              # and humidity if it leaves the bedroom.
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                card_layout: large-2-rows
+                name: Primary Bedroom
+                icon: mdi:bed-king
+                entity: sensor.air_quality_meter_temperature
                 show_state: true
-                show_background: false
-                tap_action:
-                  action: more-info
-              - entity: sensor.air_quality_meter_humidity
-                icon: mdi:water-percent
-                show_state: true
-                show_background: false
-                tap_action:
-                  action: more-info
-              - entity: light.primary_bedroom_lamps
-                icon: mdi:lamp
-                show_background: true
-                tap_action:
-                  action: toggle
-              - entity: light.primary_bedroom_fan_light
-                icon: mdi:ceiling-fan-light
-                show_background: true
-                tap_action:
-                  action: toggle
-              - entity: fan.primary_bedroom_fan
-                icon: mdi:ceiling-fan
-                show_background: true
-                tap_action:
-                  action: toggle
-              - entity: binary_sensor.primary_bedroom_tv_on
-                icon: mdi:television
-                show_background: true
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
-
-          # --- Primary bedroom pop-up---------------------------------------------
-          - type: custom:bubble-card
-            card_type: pop-up
-            hash: "#primary-bedroom"
-            name: Primary Bedroom
-            icon: mdi:bed-king
-            cards:
-              - type: custom:bubble-card
-                card_type: separator
-                name: Lights
-                icon: mdi:lightbulb-group
-              # Main tap = both lamps; sub-buttons = one side each.
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.primary_bedroom_lamps
-                name: Lamps
-                icon: mdi:lamp
                 sub_button:
+                  - entity: sensor.air_quality_meter_humidity
+                    icon: mdi:water-percent
+                    show_state: true
+                    show_background: false
+                    tap_action:
+                      action: more-info
+                  # The binary sensor, not the media_player: the TV entity goes
+                  # unavailable while asleep. Tap opens the room, since turning
+                  # it on needs Wake-on-LAN.
+                  - entity: binary_sensor.primary_bedroom_tv_on
+                    icon: mdi:television
+                    show_background: true
+                    tap_action:
+                      action: navigate
+                      navigation_path: "#primary-bedroom"
+                  - entity: fan.primary_bedroom_fan
+                    icon: mdi:ceiling-fan
+                    show_background: true
+                    tap_action:
+                      action: toggle
                   - entity: light.primary_bedroom_lamp_emily
                     name: Emily
+                    icon: mdi:lamp
                     show_name: true
                     show_background: true
                     tap_action:
                       action: toggle
                   - entity: light.primary_bedroom_lamp_josh
                     name: Josh
+                    icon: mdi:lamp
                     show_name: true
                     show_background: true
                     tap_action:
                       action: toggle
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.primary_bedroom_fan_light
-                name: Fan light
-                icon: mdi:ceiling-fan-light
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: fan.primary_bedroom_fan
-                name: Fan
-                icon: mdi:ceiling-fan
-
-              - type: custom:bubble-card
-                card_type: separator
-                name: TV
-                icon: mdi:television
-
-              # TV off: one button. It presses the WoL button directly rather
-              # than media_player.turn_on, because HA skips service calls to
-              # entities that are `unavailable` -- which is this TV asleep.
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: binary_sensor.primary_bedroom_tv_on
-                    state: "off"
-                card:
-                  type: custom:bubble-card
-                  card_type: button
-                  button_type: name
-                  name: Watch TV
-                  icon: mdi:television
-                  tap_action:
-                    action: perform-action
-                    perform_action: button.press
-                    target:
-                      entity_id: button.primary_bedroom_tv_wake
-
-              # TV on: inputs, then power + volume, then Roku-only controls.
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: binary_sensor.primary_bedroom_tv_on
-                    state: "on"
-                card:
-                  type: vertical-stack
-                  cards:
-                    # Active input lights up. "Roku" / "PS5" are the names in
-                    # the TV's source_list -- exact spelling matters.
-                    - type: horizontal-stack
-                      cards:
-                        - type: custom:mushroom-template-card
-                          primary: Roku
-                          icon: mdi:television-play
-                          icon_color: >-
-                            {{ 'purple' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'Roku') else 'disabled' }}
-                          layout: vertical
-                          tap_action:
-                            action: perform-action
-                            perform_action: media_player.select_source
-                            target:
-                              entity_id: media_player.primary_bedroom_tv
-                            data:
-                              source: Roku
-                        - type: custom:mushroom-template-card
-                          primary: PlayStation
-                          icon: mdi:sony-playstation
-                          icon_color: >-
-                            {{ 'blue' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'PS5') else 'disabled' }}
-                          layout: vertical
-                          tap_action:
-                            action: perform-action
-                            perform_action: media_player.select_source
-                            target:
-                              entity_id: media_player.primary_bedroom_tv
-                            data:
-                              source: PS5
-                    # Power and volume always come from the TV, whatever the input.
-                    - type: custom:bubble-card
-                      card_type: media-player
-                      entity: media_player.primary_bedroom_tv
-                      name: TV
-                      icon: mdi:television
-                      hide:
-                        play_pause_button: true
-                        previous_button: true
-                        next_button: true
-                    - type: conditional
-                      conditions:
-                        - condition: state
-                          entity: binary_sensor.primary_bedroom_tv_on_roku
-                          state: "on"
-                      card:
-                        type: custom:bubble-card
-                        card_type: media-player
-                        entity: media_player.primary_bedroom_roku
-                        name: Roku
-                        icon: mdi:television-play
-                        hide:
-                          power_button: true
-                          volume_button: true
-                        sub_button:
-                          - icon: mdi:remote
-                            name: Remote
-                            show_name: true
-                            tap_action:
-                              action: navigate
-                              navigation_path: "#primary-bedroom-remote"
-
-          # --- Primary bedroom Roku remote pop-up---------------------------------
-          # Kept off the main pop-up so the everyday screen stays short.
-          - type: custom:bubble-card
-            card_type: pop-up
-            hash: "#primary-bedroom-remote"
-            name: Primary Bedroom Roku
-            icon: mdi:remote
-            cards:
-              - type: horizontal-stack
-                cards:
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: Back
-                    icon: mdi:arrow-left
+                  - entity: light.primary_bedroom_fan_light
+                    icon: mdi:ceiling-fan-light
+                    show_background: true
                     tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: back
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
+                      action: toggle
+                styles: |
+                  .bubble-button-card-container {
+                    background: rgba(92, 107, 192, 0.22) !important;
+                  }
+                  .bubble-icon-container {
+                    background: rgba(92, 107, 192, 0.45) !important;
+                  }
+                  .bubble-icon {
+                    color: rgb(159, 168, 218) !important;
+                  }
+                  .bubble-name {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                  }
+
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                card_layout: large-2-rows
+                name: Office
+                icon: mdi:desk
+                entity: climate.office_fan
+                show_attribute: true
+                attribute: current_temperature
+                tap_action:
+                  action: none
+                sub_button:
+                  - entity: light.office_light
+                    icon: mdi:floor-lamp-dual
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                styles: |
+                  .bubble-button-card-container {
+                    background: rgba(230, 110, 70, 0.22) !important;
+                  }
+                  .bubble-icon-container {
+                    background: rgba(230, 110, 70, 0.45) !important;
+                  }
+                  .bubble-icon {
+                    color: rgb(244, 160, 130) !important;
+                  }
+                  .bubble-name {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                  }
+
+              - type: heading
+                heading_style: title
+                heading: Climate
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                name: Climate
+                icon: mdi:thermostat
+                tap_action:
+                  action: navigate
+                  navigation_path: "#climate"
+                sub_button:
+                  - entity: climate.upstairs_hvac
                     name: Up
-                    icon: mdi:chevron-up
+                    icon: mdi:home-floor-1
+                    show_name: true
+                    show_attribute: true
+                    attribute: current_temperature
+                    show_background: false
                     tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: up
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: Home
-                    icon: mdi:home
-                    tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: home
-              - type: horizontal-stack
-                cards:
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: Left
-                    icon: mdi:chevron-left
-                    tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: left
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: OK
-                    icon: mdi:circle-medium
-                    tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: select
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: Right
-                    icon: mdi:chevron-right
-                    tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: right
-              - type: horizontal-stack
-                cards:
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
-                    name: Rewind
-                    icon: mdi:rewind
-                    tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: reverse
-                  - type: custom:bubble-card
-                    card_type: button
-                    button_type: name
+                      action: navigate
+                      navigation_path: "#climate"
+                  - entity: climate.downstairs_hvac
                     name: Down
-                    icon: mdi:chevron-down
+                    icon: mdi:home-floor-0
+                    show_name: true
+                    show_attribute: true
+                    attribute: current_temperature
+                    show_background: false
                     tap_action:
-                      action: perform-action
-                      perform_action: remote.send_command
-                      target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: down
-                  - type: custom:bubble-card
+                      action: navigate
+                      navigation_path: "#climate"
+
+          # --- Pop-ups ---------------------------------------------------------
+          # Bubble pop-ups render nothing in place; they only need to be on the
+          # view. Kept in their own section so the grid above stays readable.
+          - type: grid
+            cards:
+            # --- Primary bedroom pop-up---------------------------------------------
+            - type: custom:bubble-card
+              card_type: pop-up
+              hash: "#primary-bedroom"
+              name: Primary Bedroom
+              icon: mdi:bed-king
+              cards:
+                - type: custom:bubble-card
+                  card_type: separator
+                  name: Lights
+                  icon: mdi:lightbulb-group
+                # Main tap = both lamps; sub-buttons = one side each.
+                - type: custom:bubble-card
+                  card_type: button
+                  button_type: switch
+                  entity: light.primary_bedroom_lamps
+                  name: Lamps
+                  icon: mdi:lamp
+                  sub_button:
+                    - entity: light.primary_bedroom_lamp_emily
+                      name: Emily
+                      show_name: true
+                      show_background: true
+                      tap_action:
+                        action: toggle
+                    - entity: light.primary_bedroom_lamp_josh
+                      name: Josh
+                      show_name: true
+                      show_background: true
+                      tap_action:
+                        action: toggle
+                - type: custom:bubble-card
+                  card_type: button
+                  button_type: switch
+                  entity: light.primary_bedroom_fan_light
+                  name: Fan light
+                  icon: mdi:ceiling-fan-light
+                - type: custom:bubble-card
+                  card_type: button
+                  button_type: switch
+                  entity: fan.primary_bedroom_fan
+                  name: Fan
+                  icon: mdi:ceiling-fan
+
+                - type: custom:bubble-card
+                  card_type: separator
+                  name: TV
+                  icon: mdi:television
+
+                # TV off: one button. It presses the WoL button directly rather
+                # than media_player.turn_on, because HA skips service calls to
+                # entities that are `unavailable` -- which is this TV asleep.
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: binary_sensor.primary_bedroom_tv_on
+                      state: "off"
+                  card:
+                    type: custom:bubble-card
                     card_type: button
                     button_type: name
-                    name: Forward
-                    icon: mdi:fast-forward
+                    name: Watch TV
+                    icon: mdi:television
                     tap_action:
                       action: perform-action
-                      perform_action: remote.send_command
+                      perform_action: button.press
                       target:
-                        entity_id: remote.primary_bedroom_roku
-                      data:
-                        command: forward
+                        entity_id: button.primary_bedroom_tv_wake
 
-          # --- Climate (home row) ----------------------------------------------
-          # One pop-up for every climate device, not one per room. The row shows
-          # the two whole-floor readings; everything else is one tap away.
-          - type: custom:bubble-card
-            card_type: button
-            button_type: name
-            name: Climate
-            icon: mdi:thermostat
-            tap_action:
-              action: navigate
-              navigation_path: "#climate"
-            sub_button:
-              - entity: climate.upstairs_hvac
-                name: Up
-                icon: mdi:home-floor-1
-                show_name: true
-                show_attribute: true
-                attribute: current_temperature
-                show_background: false
-                tap_action:
-                  action: navigate
-                  navigation_path: "#climate"
-              - entity: climate.downstairs_hvac
-                name: Down
-                icon: mdi:home-floor-0
-                show_name: true
-                show_attribute: true
-                attribute: current_temperature
-                show_background: false
-                tap_action:
-                  action: navigate
-                  navigation_path: "#climate"
+                # TV on: inputs, then power + volume, then Roku-only controls.
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: binary_sensor.primary_bedroom_tv_on
+                      state: "on"
+                  card:
+                    type: vertical-stack
+                    cards:
+                      # Active input lights up. "Roku" / "PS5" are the names in
+                      # the TV's source_list -- exact spelling matters.
+                      - type: horizontal-stack
+                        cards:
+                          - type: custom:bubble-card
+                            card_type: button
+                            button_type: name
+                            name: Roku
+                            icon: mdi:television-play
+                            tap_action:
+                              action: perform-action
+                              perform_action: media_player.select_source
+                              target:
+                                entity_id: media_player.primary_bedroom_tv
+                              data:
+                                source: Roku
+                            # Lit while the TV is on this input. The template
+                            # reads the TV, not this card (which has no entity).
+                            styles: |
+                              .bubble-button-card-container {
+                                background: ${hass.states['media_player.primary_bedroom_tv']?.attributes?.source === 'Roku'
+                                  ? 'rgba(156, 39, 176, 0.35)' : 'var(--bubble-button-main-background-color)'} !important;
+                              }
+                              .bubble-icon {
+                                color: ${hass.states['media_player.primary_bedroom_tv']?.attributes?.source === 'Roku'
+                                  ? 'rgb(156, 39, 176)' : 'var(--secondary-text-color)'} !important;
+                              }
+                          - type: custom:bubble-card
+                            card_type: button
+                            button_type: name
+                            name: PlayStation
+                            icon: mdi:sony-playstation
+                            tap_action:
+                              action: perform-action
+                              perform_action: media_player.select_source
+                              target:
+                                entity_id: media_player.primary_bedroom_tv
+                              data:
+                                source: PS5
+                            # Lit while the TV is on this input. The template
+                            # reads the TV, not this card (which has no entity).
+                            styles: |
+                              .bubble-button-card-container {
+                                background: ${hass.states['media_player.primary_bedroom_tv']?.attributes?.source === 'PS5'
+                                  ? 'rgba(33, 150, 243, 0.35)' : 'var(--bubble-button-main-background-color)'} !important;
+                              }
+                              .bubble-icon {
+                                color: ${hass.states['media_player.primary_bedroom_tv']?.attributes?.source === 'PS5'
+                                  ? 'rgb(33, 150, 243)' : 'var(--secondary-text-color)'} !important;
+                              }
+                      # Power and volume always come from the TV, whatever the input.
+                      - type: custom:bubble-card
+                        card_type: media-player
+                        entity: media_player.primary_bedroom_tv
+                        name: TV
+                        icon: mdi:television
+                        hide:
+                          play_pause_button: true
+                          previous_button: true
+                          next_button: true
+                      - type: conditional
+                        conditions:
+                          - condition: state
+                            entity: binary_sensor.primary_bedroom_tv_on_roku
+                            state: "on"
+                        card:
+                          type: custom:bubble-card
+                          card_type: media-player
+                          entity: media_player.primary_bedroom_roku
+                          name: Roku
+                          icon: mdi:television-play
+                          hide:
+                            power_button: true
+                            volume_button: true
+                          sub_button:
+                            - icon: mdi:remote
+                              name: Remote
+                              show_name: true
+                              tap_action:
+                                action: navigate
+                                navigation_path: "#primary-bedroom-remote"
 
-          # --- Climate pop-up --------------------------------------------------
-          # Each card: current temp, setpoint -/+, and a mode menu.
-          - type: custom:bubble-card
-            card_type: pop-up
-            hash: "#climate"
-            name: Climate
-            icon: mdi:thermostat
-            cards:
-              - type: custom:bubble-card
-                card_type: climate
-                entity: climate.upstairs_hvac
-                name: Upstairs
-                icon: mdi:home-floor-1
-                sub_button:
-                  - name: Mode
-                    select_attribute: hvac_modes
-                    show_arrow: false
-                    state_background: false
-              - type: custom:bubble-card
-                card_type: climate
-                entity: climate.downstairs_hvac
-                name: Downstairs
-                icon: mdi:home-floor-0
-                sub_button:
-                  - name: Mode
-                    select_attribute: hvac_modes
-                    show_arrow: false
-                    state_background: false
-              # Seasonal: the window AC is unplugged in winter, so its card only
-              # appears while the entity is reachable.
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: climate.playroom_ac
-                    state_not: unavailable
-                card:
-                  type: custom:bubble-card
+            # --- Primary bedroom Roku remote pop-up---------------------------------
+            # Kept off the main pop-up so the everyday screen stays short.
+            - type: custom:bubble-card
+              card_type: pop-up
+              hash: "#primary-bedroom-remote"
+              name: Primary Bedroom Roku
+              icon: mdi:remote
+              cards:
+                - type: horizontal-stack
+                  cards:
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Back
+                      icon: mdi:arrow-left
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: back
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Up
+                      icon: mdi:chevron-up
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: up
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Home
+                      icon: mdi:home
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: home
+                - type: horizontal-stack
+                  cards:
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Left
+                      icon: mdi:chevron-left
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: left
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: OK
+                      icon: mdi:circle-medium
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: select
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Right
+                      icon: mdi:chevron-right
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: right
+                - type: horizontal-stack
+                  cards:
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Rewind
+                      icon: mdi:rewind
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: reverse
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Down
+                      icon: mdi:chevron-down
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: down
+                    - type: custom:bubble-card
+                      card_type: button
+                      button_type: name
+                      name: Forward
+                      icon: mdi:fast-forward
+                      tap_action:
+                        action: perform-action
+                        perform_action: remote.send_command
+                        target:
+                          entity_id: remote.primary_bedroom_roku
+                        data:
+                          command: forward
+
+            # --- Climate pop-up --------------------------------------------------
+            # Each card: current temp, setpoint -/+, and a mode menu.
+            - type: custom:bubble-card
+              card_type: pop-up
+              hash: "#climate"
+              name: Climate
+              icon: mdi:thermostat
+              cards:
+                - type: custom:bubble-card
                   card_type: climate
-                  entity: climate.playroom_ac
-                  name: Playroom AC
-                  icon: mdi:air-conditioner
+                  entity: climate.upstairs_hvac
+                  name: Upstairs
+                  icon: mdi:home-floor-1
                   sub_button:
                     - name: Mode
                       select_attribute: hvac_modes
                       show_arrow: false
                       state_background: false
-              - type: custom:bubble-card
-                card_type: climate
-                entity: climate.office_fan
-                name: Office fan
-                icon: mdi:fan
-                sub_button:
-                  - name: Mode
-                    select_attribute: hvac_modes
-                    show_arrow: false
-                    state_background: false
+                - type: custom:bubble-card
+                  card_type: climate
+                  entity: climate.downstairs_hvac
+                  name: Downstairs
+                  icon: mdi:home-floor-0
+                  sub_button:
+                    - name: Mode
+                      select_attribute: hvac_modes
+                      show_arrow: false
+                      state_background: false
+                # Seasonal: the window AC is unplugged in winter, so its card only
+                # appears while the entity is reachable.
+                - type: conditional
+                  conditions:
+                    - condition: state
+                      entity: climate.playroom_ac
+                      state_not: unavailable
+                  card:
+                    type: custom:bubble-card
+                    card_type: climate
+                    entity: climate.playroom_ac
+                    name: Playroom AC
+                    icon: mdi:air-conditioner
+                    sub_button:
+                      - name: Mode
+                        select_attribute: hvac_modes
+                        show_arrow: false
+                        state_background: false
+                - type: custom:bubble-card
+                  card_type: climate
+                  entity: climate.office_fan
+                  name: Office fan
+                  icon: mdi:fan
+                  sub_button:
+                    - name: Mode
+                      select_attribute: hvac_modes
+                      show_arrow: false
+                      state_background: false
