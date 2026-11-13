@@ -168,6 +168,27 @@ sensitive — same posture as secrets.
 - Outbound network access depends on the environment's network policy; don't assume arbitrary
   egress.
 
+## Home Assistant skill
+
+`.claude/skills/home-assistant-best-practices/` is vendored from upstream (see its
+`UPSTREAM.md`; never edit those files in place). Use it for HA modelling choices — triggers,
+conditions, helpers, modes, templates, card types. Where it assumes a different setup than
+this repo, these rules win:
+
+- **Git-managed config is the steady state.** Anything meant to be reproducible — dashboards,
+  template entities, automations that belong to a feature — is written as a YAML package in a
+  ConfigMap under `kubernetes/apps/default/home-assistant/app/` and mounted into
+  `/config/packages` (see `configmap-air-quality.yaml` for the pattern). The skill's
+  preference for config-flow helpers, the HA API or UI-created config does not override that;
+  use its UI/API path only for one-off owner steps (see the one-off corollary above).
+- **No HA API or UI access from these sessions.** Changes reach HA by merge → Flux →
+  Reloader restart. When the skill says to call the API or click in the UI, hand that step to
+  the owner instead, with the exact values.
+- **Container install, no Supervisor.** Supervisor backups and Apps don't apply; durability is
+  volsync and CNPG (see the durability notes above). Its entity-rename impact analysis
+  (`safe-refactoring.md`) does apply — renames are owner steps recorded in
+  `docs/home-assistant-entity-naming.md`.
+
 ## Commands
 
 Tasks are driven by [go-task](https://taskfile.dev); run `task -l` to list everything. The
