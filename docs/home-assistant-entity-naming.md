@@ -56,6 +56,17 @@ Add rows as rooms are brought onto the dashboard.
 | `remote.primary_bedroom_roku` | unchanged (same device, different domain) |
 | TV Wake-on-LAN button (renamed in HA) | `button.primary_bedroom_tv_wake` |
 
+### Climate
+
+The doubled names come from the integration joining the device name ("Upstairs") with the
+entity name ("Upstairs"). Rename the thermostat's sibling entities (humidity, sensors) the
+same way.
+
+| Current | New |
+|---|---|
+| `climate.upstairs_upstairs` | `climate.upstairs_hvac` |
+| `climate.downstairs_downstairs` | `climate.downstairs_hvac` |
+
 ## Rename checklist
 
 Renames are done in the HA UI (entity settings → Entity ID). They are a one-off owner step,
