@@ -182,6 +182,19 @@ spec:
           - path: /config/dashboards/air-quality.yaml
             subPath: dashboard.yaml
             readOnly: true
+      # Phone-first family dashboard (draft, admin-only). Same two-mount shape as
+      # air-quality above. Reloader restarts HA on every edit, so iterate in a
+      # scratch UI dashboard's raw editor and commit once it looks right.
+      home-dashboard-config:
+        type: configMap
+        name: home-assistant-home-dashboard
+        globalMounts:
+          - path: /config/packages/home_dashboard.yaml
+            subPath: home_dashboard.yaml
+            readOnly: true
+          - path: /config/dashboards/home-draft.yaml
+            subPath: dashboard.yaml
+            readOnly: true
       # Ephemeral by design -- a fresh venv every pod start is the whole point.
       venv:
         type: emptyDir

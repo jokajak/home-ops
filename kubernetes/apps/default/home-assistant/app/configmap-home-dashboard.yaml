@@ -1,0 +1,361 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/yannh/kubernetes-json-schema/master/v1.26.1-standalone-strict/configmap-v1.json
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-home-dashboard
+  namespace: default
+  labels:
+    app.kubernetes.io/name: home-assistant
+data:
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/packages/home_dashboard.yaml. Same mechanics and naming
+  # traps as configmap-air-quality.yaml: package file uses an UNDERSCORE, the
+  # dashboard url_path a HYPHEN.
+  #
+  # Package merging is recursive, so this `lovelace: dashboards:` merges with the
+  # air-quality one as long as the dashboard keys differ.
+  #
+  # Draft: admin-only until the family layout is settled. Entity names follow
+  # docs/home-assistant-entity-naming.md.
+  # ---------------------------------------------------------------------------
+  home_dashboard.yaml: |
+    lovelace:
+      dashboards:
+        home-draft:
+          mode: yaml
+          filename: dashboards/home-draft.yaml
+          title: Home (draft)
+          icon: mdi:home
+          show_in_sidebar: true
+          require_admin: true
+
+    # Dashboard conditions can only test an entity's state, not an attribute
+    # (the TV's `source`). These two flatten what the cards need into on/off.
+    template:
+      - binary_sensor:
+          # webOS goes `unavailable`, not just `off`, while the TV sleeps.
+          - name: Primary bedroom TV on
+            unique_id: primary_bedroom_tv_on
+            state: >-
+              {{ states('media_player.primary_bedroom_tv') not in ['off', 'unavailable', 'unknown'] }}
+          # "Roku" is the input's name in the TV's source_list (webOS uses the
+          # CEC device name, not "HDMI n").
+          - name: Primary bedroom TV on Roku
+            unique_id: primary_bedroom_tv_on_roku
+            state: >-
+              {{ is_state('binary_sensor.primary_bedroom_tv_on', 'on')
+                 and is_state_attr('media_player.primary_bedroom_tv', 'source', 'Roku') }}
+
+  # ---------------------------------------------------------------------------
+  # Mounted at /config/dashboards/home-draft.yaml.
+  #
+  # Phone-first: the home view is one row per room; tapping it opens a Bubble
+  # pop-up (#bedroom). Context rules are deliberately few and predictable --
+  # what's on screen follows what the TV is physically doing.
+  #
+  # No Bubble `styles:` JS templates here: they use ${...}, which Flux
+  # postBuild substitution would rewrite.
+  # ---------------------------------------------------------------------------
+  dashboard.yaml: |
+    views:
+      - title: Home
+        path: home
+        icon: mdi:home
+        cards:
+          # --- Home screen -----------------------------------------------------
+          # Sub-buttons double as status lights and quick toggles, so a lamp left
+          # on can be switched off without opening the room.
+          - type: custom:bubble-card
+            card_type: button
+            button_type: name
+            name: Bedroom
+            icon: mdi:bed-king
+            tap_action:
+              action: navigate
+              navigation_path: "#bedroom"
+            sub_button:
+              - entity: light.primary_bedroom_lamps
+                icon: mdi:lamp
+                show_background: true
+                tap_action:
+                  action: toggle
+              - entity: light.primary_bedroom_fan_light
+                icon: mdi:ceiling-fan-light
+                show_background: true
+                tap_action:
+                  action: toggle
+              - entity: fan.primary_bedroom_fan
+                icon: mdi:ceiling-fan
+                show_background: true
+                tap_action:
+                  action: toggle
+              - entity: binary_sensor.primary_bedroom_tv_on
+                icon: mdi:television
+                show_background: true
+                tap_action:
+                  action: navigate
+                  navigation_path: "#bedroom"
+
+          # --- Bedroom pop-up --------------------------------------------------
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#bedroom"
+            name: Bedroom
+            icon: mdi:bed-king
+            cards:
+              - type: custom:bubble-card
+                card_type: separator
+                name: Lights
+                icon: mdi:lightbulb-group
+              # Main tap = both lamps; sub-buttons = one side each.
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.primary_bedroom_lamps
+                name: Lamps
+                icon: mdi:lamp
+                sub_button:
+                  - entity: light.primary_bedroom_lamp_emily
+                    name: Emily
+                    show_name: true
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                  - entity: light.primary_bedroom_lamp_josh
+                    name: Josh
+                    show_name: true
+                    show_background: true
+                    tap_action:
+                      action: toggle
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.primary_bedroom_fan_light
+                name: Fan light
+                icon: mdi:ceiling-fan-light
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: fan.primary_bedroom_fan
+                name: Fan
+                icon: mdi:ceiling-fan
+
+              - type: custom:bubble-card
+                card_type: separator
+                name: TV
+                icon: mdi:television
+
+              # TV off: one button. It presses the WoL button directly rather
+              # than media_player.turn_on, because HA skips service calls to
+              # entities that are `unavailable` -- which is this TV asleep.
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: binary_sensor.primary_bedroom_tv_on
+                    state: "off"
+                card:
+                  type: custom:bubble-card
+                  card_type: button
+                  button_type: name
+                  name: Watch TV
+                  icon: mdi:television
+                  tap_action:
+                    action: perform-action
+                    perform_action: button.press
+                    target:
+                      entity_id: button.primary_bedroom_tv_wake
+
+              # TV on: inputs, then power + volume, then Roku-only controls.
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: binary_sensor.primary_bedroom_tv_on
+                    state: "on"
+                card:
+                  type: vertical-stack
+                  cards:
+                    # Active input lights up. "Roku" / "PS5" are the names in
+                    # the TV's source_list -- exact spelling matters.
+                    - type: horizontal-stack
+                      cards:
+                        - type: custom:mushroom-template-card
+                          primary: Roku
+                          icon: mdi:television-play
+                          icon_color: >-
+                            {{ 'purple' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'Roku') else 'disabled' }}
+                          layout: vertical
+                          tap_action:
+                            action: perform-action
+                            perform_action: media_player.select_source
+                            target:
+                              entity_id: media_player.primary_bedroom_tv
+                            data:
+                              source: Roku
+                        - type: custom:mushroom-template-card
+                          primary: PlayStation
+                          icon: mdi:sony-playstation
+                          icon_color: >-
+                            {{ 'blue' if is_state_attr('media_player.primary_bedroom_tv', 'source', 'PS5') else 'disabled' }}
+                          layout: vertical
+                          tap_action:
+                            action: perform-action
+                            perform_action: media_player.select_source
+                            target:
+                              entity_id: media_player.primary_bedroom_tv
+                            data:
+                              source: PS5
+                    # Power and volume always come from the TV, whatever the input.
+                    - type: custom:bubble-card
+                      card_type: media-player
+                      entity: media_player.primary_bedroom_tv
+                      name: TV
+                      icon: mdi:television
+                      hide:
+                        play_pause_button: true
+                        previous_button: true
+                        next_button: true
+                    - type: conditional
+                      conditions:
+                        - condition: state
+                          entity: binary_sensor.primary_bedroom_tv_on_roku
+                          state: "on"
+                      card:
+                        type: custom:bubble-card
+                        card_type: media-player
+                        entity: media_player.primary_bedroom_roku
+                        name: Roku
+                        icon: mdi:television-play
+                        hide:
+                          power_button: true
+                          volume_button: true
+                        sub_button:
+                          - icon: mdi:remote
+                            name: Remote
+                            show_name: true
+                            tap_action:
+                              action: navigate
+                              navigation_path: "#bedroom-remote"
+
+          # --- Bedroom Roku remote pop-up --------------------------------------
+          # Kept off the main pop-up so the everyday screen stays short.
+          - type: custom:bubble-card
+            card_type: pop-up
+            hash: "#bedroom-remote"
+            name: Bedroom Roku
+            icon: mdi:remote
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Back
+                    icon: mdi:arrow-left
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: back
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Up
+                    icon: mdi:chevron-up
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: up
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Home
+                    icon: mdi:home
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: home
+              - type: horizontal-stack
+                cards:
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Left
+                    icon: mdi:chevron-left
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: left
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: OK
+                    icon: mdi:circle-medium
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: select
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Right
+                    icon: mdi:chevron-right
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: right
+              - type: horizontal-stack
+                cards:
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Rewind
+                    icon: mdi:rewind
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: reverse
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Down
+                    icon: mdi:chevron-down
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: down
+                  - type: custom:bubble-card
+                    card_type: button
+                    button_type: name
+                    name: Forward
+                    icon: mdi:fast-forward
+                    tap_action:
+                      action: perform-action
+                      perform_action: remote.send_command
+                      target:
+                        entity_id: remote.primary_bedroom_roku
+                      data:
+                        command: forward
