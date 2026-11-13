@@ -68,6 +68,8 @@ same way.
 | `climate.upstairs_upstairs` | `climate.upstairs_hvac` |
 | `climate.downstairs_downstairs` | `climate.downstairs_hvac` |
 | `climate.playroom_ac` | unchanged |
+| `climate.fan_office` | `climate.office_fan` |
+| `sensor.fan_office_temperature` | `sensor.office_fan_temperature` (and its other `fan_office_*` siblings) |
 
 ## Rename checklist
 
