@@ -21,6 +21,11 @@ one predictable pattern. Display names are what the family sees and stay casual.
 - Lowercase, `_` separated, no brand or model names (`roku` is the device role, so it's fine;
   `tcl_55s4` is not).
 
+**Exception — portable devices.** A device that moves between rooms is named after the
+device, not an area, so its IDs don't go stale on every move:
+`sensor.air_quality_meter_temperature`, `sensor.air_quality_meter_humidity`. Dashboard cards
+that place it in a room say so in a comment; move those cards when the device moves.
+
 The **display name** is independent: "Emily's lamp", "Bedroom TV". Edit it freely; nothing
 references it.
 

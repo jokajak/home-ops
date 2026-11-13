@@ -75,6 +75,21 @@ data:
               action: navigate
               navigation_path: "#bedroom"
             sub_button:
+              # Readings, not toggles: no background so they don't look tappable
+              # like the switches beside them; tap opens history. The meter is
+              # portable (see naming doc) -- move these if it leaves the bedroom.
+              - entity: sensor.air_quality_meter_temperature
+                icon: mdi:thermometer
+                show_state: true
+                show_background: false
+                tap_action:
+                  action: more-info
+              - entity: sensor.air_quality_meter_humidity
+                icon: mdi:water-percent
+                show_state: true
+                show_background: false
+                tap_action:
+                  action: more-info
               - entity: light.primary_bedroom_lamps
                 icon: mdi:lamp
                 show_background: true
