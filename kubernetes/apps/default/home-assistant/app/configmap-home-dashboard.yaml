@@ -101,7 +101,7 @@ data:
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
-                # Bubble deals sub-buttons alternately into the two rows (1st top,
+                # The sub-button grid (see styles) fills column by column (1st top,
                 # 2nd bottom, 3rd top...), so this order gives
                 #   top:    TV  fan  fan light
                 #   bottom: Emily  Josh
@@ -156,9 +156,28 @@ data:
                   }
                   /* State line: "70.5 °F · 48%" -- humidity rides along here
                      instead of taking a sub-button. */
-                  ${card.querySelector('.bubble-state').innerText =
-                    (hass.states['sensor.air_quality_meter_temperature']?.state ?? '-') + ' °F · ' +
-                    (hass.states['sensor.air_quality_meter_humidity']?.state ?? '-') + '%'}
+                  ${(() => {
+                    const n = (id, d) => {
+                      const v = parseFloat(hass.states[id]?.state);
+                      return isNaN(v) ? '-' : v.toFixed(d);
+                    };
+                    card.querySelector('.bubble-state').innerText =
+                      n('sensor.air_quality_meter_temperature', 1) + ' °F · ' +
+                      n('sensor.air_quality_meter_humidity', 0) + '%';
+                  })()}
+                  /* Bubble's own large-2-rows layout stacked these in one
+                     overflowing column. Pin it: two 40px rows, filled column by
+                     column -- which is why sub_button is ordered to alternate. */
+                  .bubble-sub-button-container {
+                    display: grid !important;
+                    grid-template-rows: repeat(2, 40px) !important;
+                    grid-auto-flow: column !important;
+                    grid-auto-columns: max-content !important;
+                    gap: 8px !important;
+                    align-content: center !important;
+                    justify-content: end !important;
+                    height: auto !important;
+                  }
                   /* Sub-buttons are the tap targets people reach for. 40px is
                      the most two rows can take in a two-row tile. */
                   .bubble-sub-button {
