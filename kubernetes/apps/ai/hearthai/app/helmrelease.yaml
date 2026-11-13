@@ -121,21 +121,17 @@ spec:
         nginx.ingress.kubernetes.io/proxy-buffering: "off"
 
     # ── LiteLLM ───────────────────────────────────────────────────────────────
-    # The model catalogue moved into the chart (files/litellm-config.yaml, a
-    # byte-for-byte copy of the ConfigMap this repo used to carry). Adding a
-    # model is now a hearthai change plus a bump of the pinned commit in
-    # kubernetes/flux/repositories/git/hearthai.yaml.
+    # The model catalogue lives in the chart (files/litellm-config.yaml).
+    # Adding a model is a hearthai change; how it reaches this cluster is
+    # described in kubernetes/flux/repositories/git/hearthai.yaml.
     litellm:
       existingSecret: litellm-secret
-      # ⚠️ VERSION OVERRIDE, NOT A PREFERENCE. The chart pins v1.99.1 — the
-      # version this cluster ran when hearthai imported it — and Renovate has
-      # since moved this cluster to v1.100.1 (#1268). Without the override the
-      # packaging change is a downgrade, and the `-database` image applies its
-      # own Prisma migrations at startup: rolling it back against an
-      # already-migrated database is not a safe no-op. Renovate keeps bumping
-      # it here, in the same image.repository/tag shape it already tracks
-      # everywhere else in this repo. Drop this once the chart's own pin has
-      # caught up.
+      # ⚠️ VERSION OVERRIDE, NOT A PREFERENCE. The chart's own pin lags the
+      # version this cluster runs, so without the override the chart would
+      # downgrade it — and the `-database` image applies its own Prisma
+      # migrations at startup: rolling it back against an already-migrated
+      # database is not a safe no-op. Renovate bumps it here. Drop this once
+      # the chart's pin is at or past this tag.
       image:
         repository: ghcr.io/berriai/litellm-database
         tag: v1.106.6
@@ -164,12 +160,8 @@ spec:
     # automated: see "meridian: logging it in" in
     # docs/plans/2026-08-24-hermes-household-agents.md.
     meridian:
-      # Same override, same reason: the chart pins 1.68.0 and this cluster is
-      # on 1.71.1 (#1269). ⚠️ Unlike litellm's, this is the chart's single
-      # `image:` string rather than a repository/tag pair, which Renovate's
-      # helm-values manager may not recognise — check the next Renovate run,
-      # and if it is invisible, fix it in the chart rather than adding a custom
-      # manager here.
+      # Same override, same reason: the chart's pin lags this cluster.
+      # Renovate bumps it here like any other image.
       image: ghcr.io/rynfar/meridian:1.88.0
       # MERIDIAN_API_KEY. Its own auth check is opt-in — no key, no gate — so
       # this is what stops any pod that can reach :3456 from spending the
