@@ -21,6 +21,11 @@ one predictable pattern. Display names are what the family sees and stay casual.
 - Lowercase, `_` separated, no brand or model names (`roku` is the device role, so it's fine;
   `tcl_55s4` is not).
 
+**Exception — portable devices.** A device that moves between rooms is named after the
+device, not an area, so its IDs don't go stale on every move:
+`sensor.air_quality_meter_temperature`, `sensor.air_quality_meter_humidity`. Dashboard cards
+that place it in a room say so in a comment; move those cards when the device moves.
+
 The **display name** is independent: "Emily's lamp", "Bedroom TV". Edit it freely; nothing
 references it.
 
@@ -30,6 +35,7 @@ references it.
 |---|---|
 | Primary bedroom | `primary_bedroom` |
 | Office | `office` |
+| Playroom | `playroom` |
 | Upstairs (whole-floor devices) | `upstairs` |
 | Downstairs (whole-floor devices) | `downstairs` |
 
@@ -50,6 +56,20 @@ Add rows as rooms are brought onto the dashboard.
 | `media_player.primary_bedroom_roku` | unchanged |
 | `remote.primary_bedroom_roku` | unchanged (same device, different domain) |
 | TV Wake-on-LAN button (renamed in HA) | `button.primary_bedroom_tv_wake` |
+
+### Climate
+
+The doubled names come from the integration joining the device name ("Upstairs") with the
+entity name ("Upstairs"). Rename the thermostat's sibling entities (humidity, sensors) the
+same way.
+
+| Current | New |
+|---|---|
+| `climate.upstairs_upstairs` | `climate.upstairs_hvac` |
+| `climate.downstairs_downstairs` | `climate.downstairs_hvac` |
+| `climate.playroom_ac` | unchanged |
+| `climate.fan_office` | `climate.office_fan` |
+| `sensor.fan_office_temperature` | `sensor.office_fan_temperature` (and its other `fan_office_*` siblings) |
 
 ## Rename checklist
 
