@@ -150,6 +150,19 @@ data:
                     font-size: 16px !important;
                     font-weight: 600 !important;
                   }
+                  /* Sub-buttons are the tap targets people reach for: 44px is
+                     the usual minimum comfortable touch size on a phone. */
+                  .bubble-sub-button {
+                    height: 44px !important;
+                    min-width: 44px !important;
+                    border-radius: 22px !important;
+                  }
+                  .bubble-sub-button-icon {
+                    --mdc-icon-size: 24px !important;
+                  }
+                  .bubble-sub-button-name-container {
+                    font-size: 14px !important;
+                  }
 
               - type: custom:bubble-card
                 card_type: button
@@ -181,6 +194,19 @@ data:
                   .bubble-name {
                     font-size: 16px !important;
                     font-weight: 600 !important;
+                  }
+                  /* Sub-buttons are the tap targets people reach for: 44px is
+                     the usual minimum comfortable touch size on a phone. */
+                  .bubble-sub-button {
+                    height: 44px !important;
+                    min-width: 44px !important;
+                    border-radius: 22px !important;
+                  }
+                  .bubble-sub-button-icon {
+                    --mdc-icon-size: 24px !important;
+                  }
+                  .bubble-sub-button-name-container {
+                    font-size: 14px !important;
                   }
 
               - type: heading
