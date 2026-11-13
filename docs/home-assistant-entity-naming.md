@@ -35,6 +35,7 @@ references it.
 |---|---|
 | Primary bedroom | `primary_bedroom` |
 | Office | `office` |
+| Playroom | `playroom` |
 | Upstairs (whole-floor devices) | `upstairs` |
 | Downstairs (whole-floor devices) | `downstairs` |
 
@@ -66,6 +67,7 @@ same way.
 |---|---|
 | `climate.upstairs_upstairs` | `climate.upstairs_hvac` |
 | `climate.downstairs_downstairs` | `climate.downstairs_hvac` |
+| window AC (TBD: current ID) | `climate.playroom_window_ac` |
 
 ## Rename checklist
 
