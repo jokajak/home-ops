@@ -58,8 +58,8 @@ data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/home-draft.yaml.
   #
-  # Phone-first. Home screen is one large tinted Bubble tile per room;
-  # tapping a tile opens that room's Bubble pop-up. Context rules are
+  # Phone-first. Home screen is one section per room of plain Bubble switch
+  # buttons; the TV row opens the room's Bubble pop-up. Context rules are
   # deliberately few and predictable -- what's on screen follows what the TV is
   # physically doing.
   #
@@ -74,172 +74,111 @@ data:
         type: sections
         sections:
           # --- Home screen -----------------------------------------------------
-          # Rooms get visual weight: large two-row Bubble tiles, tinted per room,
-          # with every light one tap away as a sub-button. Climate stays a plain
-          # row -- it is glanced at, not played with.
+          # Plain Bubble cards, no CSS overrides: visual weight comes from
+          # Bubble's own state colouring (a switch button fills when on), so a
+          # room with lights on stands out by itself. One section per room;
+          # half-width (6 of 12 columns) buttons pair up on a phone.
+
+          # Primary bedroom. The meter is portable (see naming doc) -- move the
+          # readings in the header if it leaves the bedroom.
           - type: grid
             cards:
-              - type: heading
-                heading_style: title
-                heading: Rooms
-
-              # The meter is portable (see naming doc) -- move the temperature
-              # and humidity if it leaves the bedroom.
+              - type: custom:bubble-card
+                card_type: separator
+                name: Primary Bedroom
+                icon: mdi:bed-king
+                sub_button:
+                  - entity: sensor.air_quality_meter_temperature
+                    icon: mdi:thermometer
+                    show_state: true
+                    show_background: false
+                    tap_action:
+                      action: more-info
+                  - entity: sensor.air_quality_meter_humidity
+                    icon: mdi:water-percent
+                    show_state: true
+                    show_background: false
+                    tap_action:
+                      action: more-info
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.primary_bedroom_lamp_emily
+                name: Emily's lamp
+                icon: mdi:lamp
+                grid_options:
+                  columns: 6
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.primary_bedroom_lamp_josh
+                name: Josh's lamp
+                icon: mdi:lamp
+                grid_options:
+                  columns: 6
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: fan.primary_bedroom_fan
+                name: Fan
+                icon: mdi:ceiling-fan
+                grid_options:
+                  columns: 6
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.primary_bedroom_fan_light
+                name: Fan light
+                icon: mdi:ceiling-fan-light
+                grid_options:
+                  columns: 6
+              # TV controls need room (inputs, volume, remote), so they live in
+              # the pop-up. The binary sensor, not the media_player: the TV
+              # entity is `unavailable` while asleep.
               - type: custom:bubble-card
                 card_type: button
                 button_type: name
-                card_layout: large-2-rows
-                # In a sections view the grid sets the height, not card_layout:
-                # without rows: 2 the second row of sub-buttons is clipped.
-                grid_options:
-                  columns: full
-                  rows: 2
-                name: Primary Bedroom
-                icon: mdi:bed-king
-                entity: sensor.air_quality_meter_temperature
+                entity: binary_sensor.primary_bedroom_tv_on
+                name: TV
+                icon: mdi:television
                 show_state: true
+                grid_options:
+                  columns: 12
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
-                # The sub-button grid (see styles) fills column by column (1st top,
-                # 2nd bottom, 3rd top...), so this order gives
-                #   top:    TV  fan  fan light
-                #   bottom: Emily  Josh
-                sub_button:
-                  # The binary sensor, not the media_player: the TV entity goes
-                  # unavailable while asleep. Tap opens the room, since turning
-                  # it on needs Wake-on-LAN.
-                  - entity: binary_sensor.primary_bedroom_tv_on
-                    icon: mdi:television
-                    show_background: true
-                    tap_action:
-                      action: navigate
-                      navigation_path: "#primary-bedroom"
-                  - entity: light.primary_bedroom_lamp_emily
-                    icon: mdi:lamp
-                    name: Emily
-                    show_name: true
-                    show_background: true
-                    tap_action:
-                      action: toggle
-                  - entity: fan.primary_bedroom_fan
-                    icon: mdi:ceiling-fan
-                    show_background: true
-                    tap_action:
-                      action: toggle
-                  - entity: light.primary_bedroom_lamp_josh
-                    icon: mdi:lamp
-                    name: Josh
-                    show_name: true
-                    show_background: true
-                    tap_action:
-                      action: toggle
-                  - entity: light.primary_bedroom_fan_light
-                    icon: mdi:ceiling-fan-light
-                    show_background: true
-                    tap_action:
-                      action: toggle
-                styles: |
-                  .bubble-button-card-container {
-                    background: rgba(92, 107, 192, 0.22) !important;
-                  }
-                  .bubble-icon-container {
-                    background: rgba(92, 107, 192, 0.30) !important;
-                  }
-                  /* Saturated icon on a light tint: readable in light and dark. */
-                  .bubble-icon {
-                    color: rgb(92, 107, 192) !important;
-                  }
-                  .bubble-name {
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
-                  }
-                  /* State line: "70.5 °F · 48%" -- humidity rides along here
-                     instead of taking a sub-button. */
-                  ${(() => {
-                    const n = (id, d) => {
-                      const v = parseFloat(hass.states[id]?.state);
-                      return isNaN(v) ? '-' : v.toFixed(d);
-                    };
-                    card.querySelector('.bubble-state').innerText =
-                      n('sensor.air_quality_meter_temperature', 1) + ' °F · ' +
-                      n('sensor.air_quality_meter_humidity', 0) + '%';
-                  })()}
-                  /* Bubble's own large-2-rows layout stacked these in one
-                     overflowing column. Pin it: two 40px rows, filled column by
-                     column -- which is why sub_button is ordered to alternate. */
-                  .bubble-sub-button-container {
-                    display: grid !important;
-                    grid-template-rows: repeat(2, 40px) !important;
-                    grid-auto-flow: column !important;
-                    grid-auto-columns: max-content !important;
-                    gap: 8px !important;
-                    align-content: center !important;
-                    justify-content: end !important;
-                    height: auto !important;
-                  }
-                  /* Sub-buttons are the tap targets people reach for. 40px is
-                     the most two rows can take in a two-row tile. */
-                  .bubble-sub-button {
-                    height: 40px !important;
-                    min-width: 40px !important;
-                    border-radius: 20px !important;
-                  }
-                  .bubble-sub-button-icon {
-                    --mdc-icon-size: 24px !important;
-                  }
-                  .bubble-sub-button-name-container {
-                    font-size: 14px !important;
-                  }
 
+          # Office. No pop-up yet.
+          - type: grid
+            cards:
               - type: custom:bubble-card
-                card_type: button
-                button_type: name
-                card_layout: large
+                card_type: separator
                 name: Office
                 icon: mdi:desk
-                entity: climate.office_fan
-                show_attribute: true
-                attribute: current_temperature
-                tap_action:
-                  action: none
                 sub_button:
-                  - entity: light.office_light
-                    icon: mdi:floor-lamp-dual
-                    show_background: true
+                  - entity: climate.office_fan
+                    icon: mdi:thermometer
+                    show_attribute: true
+                    attribute: current_temperature
+                    show_background: false
                     tap_action:
-                      action: toggle
-                styles: |
-                  .bubble-button-card-container {
-                    background: rgba(230, 110, 70, 0.22) !important;
-                  }
-                  .bubble-icon-container {
-                    background: rgba(230, 110, 70, 0.30) !important;
-                  }
-                  .bubble-icon {
-                    color: rgb(216, 90, 48) !important;
-                  }
-                  .bubble-name {
-                    font-size: 16px !important;
-                    font-weight: 600 !important;
-                  }
-                  /* Sub-buttons are the tap targets people reach for. 40px is
-                     the most two rows can take in a two-row tile. */
-                  .bubble-sub-button {
-                    height: 40px !important;
-                    min-width: 40px !important;
-                    border-radius: 20px !important;
-                  }
-                  .bubble-sub-button-icon {
-                    --mdc-icon-size: 24px !important;
-                  }
-                  .bubble-sub-button-name-container {
-                    font-size: 14px !important;
-                  }
+                      action: more-info
+              - type: custom:bubble-card
+                card_type: button
+                button_type: switch
+                entity: light.office_light
+                name: Light
+                icon: mdi:floor-lamp-dual
+                grid_options:
+                  columns: 12
 
-              - type: heading
-                heading_style: title
-                heading: Climate
+          # Climate stays a deliberately plain row -- glanced at, not played with.
+          - type: grid
+            cards:
+              - type: custom:bubble-card
+                card_type: separator
+                name: Climate
+                icon: mdi:thermostat
               - type: custom:bubble-card
                 card_type: button
                 button_type: name
