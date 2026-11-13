@@ -7,6 +7,14 @@ metadata:
   namespace: default
   labels:
     app.kubernetes.io/name: home-assistant
+  # Flux postBuild substitution is off for this ConfigMap only. Bubble Card's
+  # JS templates use dollar-brace syntax, and Flux would rewrite (usually blank)
+  # every one of them. Nothing here needs a cluster variable, so turning it off
+  # costs nothing and lets YAML pasted from the Bubble editor go in verbatim.
+  # If a cluster variable is ever needed here, drop this annotation and escape
+  # each JS template with a doubled dollar instead.
+  annotations:
+    kustomize.toolkit.fluxcd.io/substitute: disabled
 data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/packages/home_dashboard.yaml. Same mechanics and naming
@@ -55,8 +63,8 @@ data:
   # deliberately few and predictable -- what's on screen follows what the TV is
   # physically doing.
   #
-  # No Bubble `styles:` JS templates here: they use ${...}, which Flux
-  # postBuild substitution would rewrite.
+  # Bubble `styles:` JS templates are fine here: substitution is disabled on
+  # this ConfigMap (see the annotation above).
   # ---------------------------------------------------------------------------
   dashboard.yaml: |
     views:
@@ -69,9 +77,6 @@ data:
           # Rooms get visual weight: large two-row Bubble tiles, tinted per room,
           # with every light one tap away as a sub-button. Climate stays a plain
           # row -- it is glanced at, not played with.
-          #
-          # styles: is static CSS only. Bubble's JS templates start with a
-          # dollar-brace, which Flux postBuild substitution would rewrite.
           - type: grid
             cards:
               - type: heading
