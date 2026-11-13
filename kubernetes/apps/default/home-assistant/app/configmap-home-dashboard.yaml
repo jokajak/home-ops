@@ -50,8 +50,8 @@ data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/home-draft.yaml.
   #
-  # Phone-first. Home screen is a two-up grid of room-card-minimalist tiles
-  # (HACS); tapping a tile opens that room's Bubble pop-up. Context rules are
+  # Phone-first. Home screen is one large tinted Bubble tile per room;
+  # tapping a tile opens that room's Bubble pop-up. Context rules are
   # deliberately few and predictable -- what's on screen follows what the TV is
   # physically doing.
   #
@@ -66,105 +66,150 @@ data:
         type: sections
         sections:
           # --- Home screen -----------------------------------------------------
-          # Tile icons are status lights and quick toggles; the tile body opens
-          # the room. Rooms without a pop-up yet have tap_action: none.
+          # Rooms get visual weight: large two-row Bubble tiles, tinted per room,
+          # with every light one tap away as a sub-button. Climate stays a plain
+          # row -- it is glanced at, not played with.
+          #
+          # styles: is static CSS only. Bubble's JS templates start with a
+          # dollar-brace, which Flux postBuild substitution would rewrite.
           - type: grid
             cards:
               - type: heading
                 heading_style: title
                 heading: Rooms
-              - type: custom:room-card-minimalist
+
+              # The meter is portable (see naming doc) -- move the temperature
+              # and humidity if it leaves the bedroom.
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                card_layout: large-2-rows
                 name: Primary Bedroom
                 icon: mdi:bed-king
-                card_template: indigo
-                background_type: color
-                use_template_color_for_title: false
-                use_template_color_for_secondary: false
-                # The meter is portable (see naming doc) -- move this line if it
-                # leaves the bedroom.
-                secondary: >-
-                  {{ states('sensor.air_quality_meter_temperature') }}°F
-                  {{ states('sensor.air_quality_meter_humidity') }}%
+                entity: sensor.air_quality_meter_temperature
+                show_state: true
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
-                entities:
-                  - type: entity
-                    entity: light.primary_bedroom_lamps
-                    icon: mdi:lamp
-                    icon_off: mdi:lamp-outline
-                    on_state: "on"
-                    template_on: yellow
-                  - type: entity
-                    entity: light.primary_bedroom_fan_light
-                    icon: mdi:ceiling-fan-light
-                    icon_off: mdi:ceiling-fan-light
-                    on_state: "on"
-                    template_on: yellow
-                  - type: entity
-                    entity: fan.primary_bedroom_fan
-                    icon: mdi:ceiling-fan
-                    icon_off: mdi:ceiling-fan
-                    on_state: "on"
-                    template_on: green
+                sub_button:
+                  - entity: sensor.air_quality_meter_humidity
+                    icon: mdi:water-percent
+                    show_state: true
+                    show_background: false
+                    tap_action:
+                      action: more-info
                   # The binary sensor, not the media_player: the TV entity goes
-                  # unavailable while asleep. Tap opens the room rather than
-                  # toggling, since "on" needs Wake-on-LAN.
-                  - type: entity
-                    entity: binary_sensor.primary_bedroom_tv_on
+                  # unavailable while asleep. Tap opens the room, since turning
+                  # it on needs Wake-on-LAN.
+                  - entity: binary_sensor.primary_bedroom_tv_on
                     icon: mdi:television
-                    icon_off: mdi:television-off
-                    on_state: "on"
-                    template_on: blue
+                    show_background: true
                     tap_action:
                       action: navigate
                       navigation_path: "#primary-bedroom"
-              - type: custom:room-card-minimalist
+                  - entity: fan.primary_bedroom_fan
+                    icon: mdi:ceiling-fan
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                  - entity: light.primary_bedroom_lamp_emily
+                    name: Emily
+                    icon: mdi:lamp
+                    show_name: true
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                  - entity: light.primary_bedroom_lamp_josh
+                    name: Josh
+                    icon: mdi:lamp
+                    show_name: true
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                  - entity: light.primary_bedroom_fan_light
+                    icon: mdi:ceiling-fan-light
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                styles: |
+                  .bubble-button-card-container {
+                    background: rgba(92, 107, 192, 0.22) !important;
+                  }
+                  .bubble-icon-container {
+                    background: rgba(92, 107, 192, 0.45) !important;
+                  }
+                  .bubble-icon {
+                    color: rgb(159, 168, 218) !important;
+                  }
+                  .bubble-name {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                  }
+
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
+                card_layout: large-2-rows
                 name: Office
                 icon: mdi:desk
-                card_template: orange
-                background_type: color
-                use_template_color_for_title: true
-                use_template_color_for_secondary: true
-                secondary: >-
-                  {{ state_attr('climate.office_fan', 'current_temperature') }}°F
+                entity: climate.office_fan
+                show_attribute: true
+                attribute: current_temperature
                 tap_action:
                   action: none
-                entities:
-                  - type: entity
-                    entity: light.office_light
+                sub_button:
+                  - entity: light.office_light
                     icon: mdi:floor-lamp-dual
-                    icon_off: mdi:floor-lamp-dual-outline
-                    on_state: "on"
-                    template_on: yellow
-              - type: custom:room-card-minimalist
-                name: Sunroom
-                icon: mdi:table-chair
-                card_template: yellow
-                background_type: color
-                use_template_color_for_title: true
-                use_template_color_for_secondary: true
-                tap_action:
-                  action: none
-                entities: []
+                    show_background: true
+                    tap_action:
+                      action: toggle
+                styles: |
+                  .bubble-button-card-container {
+                    background: rgba(230, 110, 70, 0.22) !important;
+                  }
+                  .bubble-icon-container {
+                    background: rgba(230, 110, 70, 0.45) !important;
+                  }
+                  .bubble-icon {
+                    color: rgb(244, 160, 130) !important;
+                  }
+                  .bubble-name {
+                    font-size: 16px !important;
+                    font-weight: 600 !important;
+                  }
 
               - type: heading
                 heading_style: title
                 heading: Climate
-              - type: custom:room-card-minimalist
+              - type: custom:bubble-card
+                card_type: button
+                button_type: name
                 name: Climate
                 icon: mdi:thermostat
-                card_template: blue
-                background_type: color
-                use_template_color_for_title: true
-                use_template_color_for_secondary: true
-                secondary: >-
-                  Up {{ state_attr('climate.upstairs_hvac', 'current_temperature') }}°
-                  Down {{ state_attr('climate.downstairs_hvac', 'current_temperature') }}°
                 tap_action:
                   action: navigate
                   navigation_path: "#climate"
-                entities: []
+                sub_button:
+                  - entity: climate.upstairs_hvac
+                    name: Up
+                    icon: mdi:home-floor-1
+                    show_name: true
+                    show_attribute: true
+                    attribute: current_temperature
+                    show_background: false
+                    tap_action:
+                      action: navigate
+                      navigation_path: "#climate"
+                  - entity: climate.downstairs_hvac
+                    name: Down
+                    icon: mdi:home-floor-0
+                    show_name: true
+                    show_attribute: true
+                    attribute: current_temperature
+                    show_background: false
+                    tap_action:
+                      action: navigate
+                      navigation_path: "#climate"
 
           # --- Pop-ups ---------------------------------------------------------
           # Bubble pop-ups render nothing in place; they only need to be on the
