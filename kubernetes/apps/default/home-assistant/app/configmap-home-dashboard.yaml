@@ -51,7 +51,7 @@ data:
   # Mounted at /config/dashboards/home-draft.yaml.
   #
   # Phone-first: the home view is one row per room; tapping it opens a Bubble
-  # pop-up (#bedroom). Context rules are deliberately few and predictable --
+  # pop-up (#primary-bedroom). Context rules are deliberately few and predictable --
   # what's on screen follows what the TV is physically doing.
   #
   # No Bubble `styles:` JS templates here: they use ${...}, which Flux
@@ -69,11 +69,11 @@ data:
           - type: custom:bubble-card
             card_type: button
             button_type: name
-            name: Bedroom
+            name: Primary Bedroom
             icon: mdi:bed-king
             tap_action:
               action: navigate
-              navigation_path: "#bedroom"
+              navigation_path: "#primary-bedroom"
             sub_button:
               # Readings, not toggles: no background so they don't look tappable
               # like the switches beside them; tap opens history. The meter is
@@ -110,13 +110,13 @@ data:
                 show_background: true
                 tap_action:
                   action: navigate
-                  navigation_path: "#bedroom"
+                  navigation_path: "#primary-bedroom"
 
-          # --- Bedroom pop-up --------------------------------------------------
+          # --- Primary bedroom pop-up---------------------------------------------
           - type: custom:bubble-card
             card_type: pop-up
-            hash: "#bedroom"
-            name: Bedroom
+            hash: "#primary-bedroom"
+            name: Primary Bedroom
             icon: mdi:bed-king
             cards:
               - type: custom:bubble-card
@@ -250,14 +250,14 @@ data:
                             show_name: true
                             tap_action:
                               action: navigate
-                              navigation_path: "#bedroom-remote"
+                              navigation_path: "#primary-bedroom-remote"
 
-          # --- Bedroom Roku remote pop-up --------------------------------------
+          # --- Primary bedroom Roku remote pop-up---------------------------------
           # Kept off the main pop-up so the everyday screen stays short.
           - type: custom:bubble-card
             card_type: pop-up
-            hash: "#bedroom-remote"
-            name: Bedroom Roku
+            hash: "#primary-bedroom-remote"
+            name: Primary Bedroom Roku
             icon: mdi:remote
             cards:
               - type: horizontal-stack
