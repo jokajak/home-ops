@@ -58,8 +58,8 @@ data:
   # ---------------------------------------------------------------------------
   # Mounted at /config/dashboards/home-draft.yaml.
   #
-  # Phone-first. Home screen is one section per room of plain Bubble switch
-  # buttons; the TV row opens the room's Bubble pop-up. Context rules are
+  # Home screen is an overview (the owner's Mushroom room grid); tapping a room
+  # with a pop-up opens its Bubble detail view. Context rules are
   # deliberately few and predictable -- what's on screen follows what the TV is
   # physically doing.
   #
@@ -72,138 +72,281 @@ data:
         path: home
         icon: mdi:home
         type: sections
+        # Overview first, detail on demand: the home screen is a compact Mushroom
+        # grid (the owner's existing layout), and a room card opens that room's Bubble
+        # pop-up. Only rooms with a pop-up navigate; the rest keep Mushroom's default
+        # tap until theirs exist.
+        header:
+          layout: center
+          badges_position: top
+          badges_wrap: scroll
+        badges:
+          - type: entity
+            entity: person.josh
+            show_name: true
+            show_state: true
+            show_icon: true
+          - type: entity
+            entity: person.emily
+            show_name: true
+            show_state: true
+            show_icon: true
+          - type: entity
+            entity: person.oliver
+            show_name: true
+            show_state: true
+            show_icon: true
         sections:
-          # --- Home screen -----------------------------------------------------
-          # Plain Bubble cards, no CSS overrides: visual weight comes from
-          # Bubble's own state colouring (a switch button fills when on), so a
-          # room with lights on stands out by itself. One section per room;
-          # half-width (6 of 12 columns) buttons pair up on a phone.
-
-          # Primary bedroom. The meter is portable (see naming doc) -- move the
-          # readings in the header if it leaves the bedroom.
+          # --- Today ---------------------------------------------------------------
           - type: grid
             cards:
-              - type: custom:bubble-card
-                card_type: separator
-                name: Primary Bedroom
-                icon: mdi:bed-king
-                sub_button:
-                  - entity: sensor.air_quality_meter_temperature
-                    icon: mdi:thermometer
-                    show_state: true
-                    show_background: false
-                    tap_action:
-                      action: more-info
-                  - entity: sensor.air_quality_meter_humidity
-                    icon: mdi:water-percent
-                    show_state: true
-                    show_background: false
-                    tap_action:
-                      action: more-info
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.primary_bedroom_lamp_emily
-                name: Emily's lamp
-                icon: mdi:lamp
+              - type: heading
+                heading_style: title
+              - type: custom:clock-weather-card
+                entity: weather.forecast_home
+              - type: custom:mushroom-template-card
+                entity: cover.car_garage_door
+                area: garage
+                primary: Car Garage Door
+                secondary: '{{ states("cover.car_garage_door") }}'
+                features_position: bottom
+                icon: |-
+                  {% set s = states("cover.car_garage_door") %}
+                  {% if s == "closed" %}mdi:garage
+                  {% elif s in ["opening", "closing"] %}mdi:garage-alert
+                  {% elif s == "open" %}mdi:garage-open
+                  {% else %}mdi:alert{% endif %}
+                color: |-
+                  {% set s = states("cover.car_garage_door") %}
+                  {% if s == "closed" %}green
+                  {% elif s == "open" %}orange
+                  {% elif s in ["opening", "closing"] %}yellow
+                  {% else %}red{% endif %}
+                badge_icon: >-
+                  {% if is_state("binary_sensor.screek_hs_l12_22cbec_presence", "on") %}mdi:motion-sensor{% endif %}
+                badge_color: red
+              - type: custom:mushroom-template-card
+                entity: cover.van_garage_door
+                area: garage
+                primary: Van Garage Door
+                secondary: '{{ states("cover.van_garage_door") }}'
+                features_position: bottom
+                icon: |-
+                  {% set s = states("cover.van_garage_door") %}
+                  {% if s == "closed" %}mdi:garage
+                  {% elif s in ["opening", "closing"] %}mdi:garage-alert
+                  {% elif s == "open" %}mdi:garage-open
+                  {% else %}mdi:alert{% endif %}
+                color: |-
+                  {% set s = states("cover.van_garage_door") %}
+                  {% if s == "closed" %}green
+                  {% elif s == "open" %}orange
+                  {% elif s in ["opening", "closing"] %}yellow
+                  {% else %}red{% endif %}
+                badge_icon: >-
+                  {% if is_state("binary_sensor.screek_hs_l12_22cbec_presence", "on") %}mdi:motion-sensor{% endif %}
+                badge_color: red
+
+          # --- Rooms ---------------------------------------------------------------
+          # Card: icon colour = lights on; icon tap = everything in the room off;
+          # card tap = the room's pop-up (where one exists).
+          - type: grid
+            cards:
+              - type: heading
+                heading_style: title
+                heading: Rooms
+              # The meter is portable (see naming doc) -- move the readings if it
+              # leaves the bedroom.
+              - type: custom:mushroom-template-card
+                area: primary_bedroom
+                icon: mdi:bed-king-outline
+                primary: |-
+                  {% if is_state("input_boolean.primary_bedroom_override", "on") %}Primary Bedroom (off){% else %}Primary Bedroom{% endif %}
+                secondary: >-
+                  {{ states('sensor.air_quality_meter_temperature', with_unit=True) }}
+                  {{ states('sensor.air_quality_meter_humidity', with_unit=True) }}
+                multiline_secondary: false
+                features_position: bottom
+                color: |-
+                  {% if is_state("light.primary_bedroom_lights", "on") %}orange{% else %}disabled{% endif %}
+                badge_icon: >-
+                  {% if is_state("binary_sensor.primary_bedroom_screek_hs_l12_presence", "on") %}mdi:motion-sensor{% endif %}
                 grid_options:
                   columns: 6
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.primary_bedroom_lamp_josh
-                name: Josh's lamp
-                icon: mdi:lamp
-                grid_options:
-                  columns: 6
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: fan.primary_bedroom_fan
-                name: Fan
-                icon: mdi:ceiling-fan
-                grid_options:
-                  columns: 6
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.primary_bedroom_fan_light
-                name: Fan light
-                icon: mdi:ceiling-fan-light
-                grid_options:
-                  columns: 6
-              # TV controls need room (inputs, volume, remote), so they live in
-              # the pop-up. The binary sensor, not the media_player: the TV
-              # entity is `unavailable` while asleep.
-              - type: custom:bubble-card
-                card_type: button
-                button_type: name
-                entity: binary_sensor.primary_bedroom_tv_on
-                name: TV
-                icon: mdi:television
-                show_state: true
-                grid_options:
-                  columns: 12
+                  rows: 1
                 tap_action:
                   action: navigate
                   navigation_path: "#primary-bedroom"
-
-          # Office. No pop-up yet.
-          - type: grid
-            cards:
-              - type: custom:bubble-card
-                card_type: separator
-                name: Office
-                icon: mdi:desk
-                sub_button:
-                  - entity: climate.office_fan
-                    icon: mdi:thermometer
-                    show_attribute: true
-                    attribute: current_temperature
-                    show_background: false
-                    tap_action:
-                      action: more-info
-              - type: custom:bubble-card
-                card_type: button
-                button_type: switch
-                entity: light.office_light
-                name: Light
-                icon: mdi:floor-lamp-dual
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    area_id: primary_bedroom
+              # Temperature from the Dyson's climate entity: the old
+              # sensor.fan_office_temperature went away in the rename.
+              - type: custom:mushroom-template-card
+                area: office
+                icon: phu:rooms-office
+                primary: |-
+                  {% if is_state("input_boolean.office_override", "on") %}Office (off){% else %}Office{% endif %}
+                secondary: >-
+                  {{ state_attr('climate.office_fan', 'current_temperature') }} °F
+                  {{ states('sensor.office_humidity', with_unit=True) }}
+                multiline_secondary: false
+                features_position: bottom
+                color: |-
+                  {% if is_state("light.office_lights", "on") %}orange{% else %}grey{% endif %}
+                badge_icon: |-
+                  {% if is_state("switch.office_desk", "on") %}mdi:power-plug
+                  {% elif is_state("binary_sensor.office_motion", "on") %}mdi:motion-sensor
+                  {% elif is_state("binary_sensor.office_occupied", "on") %}mdi:abacus
+                  {% endif %}
+                badge_color: |-
+                  {% if is_state("binary_sensor.office_occupied", "on") %}green
+                  {% elif is_state("switch.office_desk", "on") %}yellow
+                  {% elif is_state("binary_sensor.office_motion", "on") %}red
+                  {% endif %}
                 grid_options:
-                  columns: 12
-
-          # Climate stays a deliberately plain row -- glanced at, not played with.
-          - type: grid
-            cards:
-              - type: custom:bubble-card
-                card_type: button
-                button_type: name
-                name: Climate
-                icon: mdi:thermostat
+                  columns: 6
+                  rows: 1
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id: light.office_lights
+              - type: custom:mushroom-template-card
+                area: playroom
+                primary: Playroom
+                icon: |-
+                  {% if is_state('media_player.playroom_tv', 'on') %}mdi:television-ambient-light{% else %}mdi:television-off{% endif %}
+                color: |-
+                  {% if is_state("light.playroom_lights", "on") %}orange{% else %}grey{% endif %}
+                multiline_secondary: false
+                features_position: bottom
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    entity_id: light.playroom_lights
+              - type: custom:mushroom-template-card
+                area: guest_room
+                primary: Guest Room
+                icon: mdi:bed-empty
+                features_position: bottom
+              - type: custom:mushroom-template-card
+                area: o_bedroom
+                primary: O Bedroom
+                icon: mdi:bed-empty
+                # TODO(owner): this reads the PRIMARY bedroom's humidity (copied from
+                # the old dashboard). Point it at O Bedroom's own sensor or drop it.
+                secondary: "{{ states('sensor.primary_bedroom_humidity', with_unit=True) }}"
+                features_position: bottom
+                color: |-
+                  {% if is_state("light.oliver_bedroom_lights", "on") %}orange{% else %}disabled{% endif %}
+              - type: custom:mushroom-template-card
+                area: f_bedroom
+                primary: F Bedroom
+                icon: mdi:bed-empty
+                secondary: "{{ states('sensor.girl_humidifier_humidity', with_unit=True) }}"
+                features_position: bottom
+              - type: custom:mushroom-template-card
+                area: sunroom
+                primary: Sunroom
+                icon: mdi:table-chair
+                secondary: >-
+                  {{ states('sensor.my_weather_station_inside_temperature', with_unit=True) }}
+                  {{ states('sensor.my_weather_station_humidity_indoor', with_unit=True) }}
+                features_position: bottom
+              - type: custom:mushroom-template-card
+                primary: Kitchen
+                icon: mdi:stove
+                features_position: bottom
+                color: |-
+                  {% if is_state("light.kitchen_lights", "on") %}orange{% else %}grey{% endif %}
+                badge_icon: >-
+                  {% if is_state("binary_sensor.apollo_mtr_1_2fb068_ld2450_presence", "on") %}mdi:motion-sensor{% endif %}
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    area_id: kitchen
+              - type: custom:mushroom-template-card
+                primary: Basement
+                icon: mdi:television
+                features_position: bottom
+              - type: custom:mushroom-template-card
+                area: foyer
+                primary: Foyer
+                icon: mdi:chandelier
+                features_position: bottom
+                color: |-
+                  {% if is_state("light.foyer_lights", "on") %}orange{% else %}grey{% endif %}
+                tap_action:
+                  action: more-info
+                icon_tap_action:
+                  action: perform-action
+                  perform_action: light.turn_off
+                  target:
+                    area_id: foyer
+              # Whole-floor thermostats, controllable in place. Tap opens the Climate
+              # pop-up, which also has the playroom AC and the office Dyson.
+              - type: custom:mushroom-climate-card
+                entity: climate.upstairs_hvac
+                name: Upstairs
+                primary_info: name
+                secondary_info: state
+                icon_type: icon
+                fill_container: false
+                show_temperature_control: true
+                collapsible_controls: false
                 tap_action:
                   action: navigate
                   navigation_path: "#climate"
-                sub_button:
-                  - entity: climate.upstairs_hvac
-                    name: Up
-                    icon: mdi:home-floor-1
-                    show_name: true
-                    show_attribute: true
-                    attribute: current_temperature
-                    show_background: false
-                    tap_action:
-                      action: navigate
-                      navigation_path: "#climate"
-                  - entity: climate.downstairs_hvac
-                    name: Down
-                    icon: mdi:home-floor-0
-                    show_name: true
-                    show_attribute: true
-                    attribute: current_temperature
-                    show_background: false
-                    tap_action:
-                      action: navigate
-                      navigation_path: "#climate"
+              - type: custom:mushroom-climate-card
+                entity: climate.downstairs_hvac
+                name: Downstairs
+                secondary_info: state
+                fill_container: false
+                show_temperature_control: true
+                tap_action:
+                  action: navigate
+                  navigation_path: "#climate"
+
+          # --- Media ---------------------------------------------------------------
+          - type: grid
+            cards:
+              - type: heading
+                heading: Media
+                heading_style: title
+              - type: entities
+                entities:
+                  - entity: media_player.playroom_tv
+                  - entity: media_player.pr_4k_stick
+                  - entity: media_player.primary_bedroom_tv
+                  - entity: media_player.primary_bedroom_roku
+                  - entity: media_player.porch_tv
+                  - entity: media_player.porch_roku
+                  - entity: media_player.basement_streaming_stick
+
+          # --- Cameras -------------------------------------------------------------
+          - type: grid
+            cards:
+              - type: heading
+                heading_style: title
+              - type: picture-entity
+                entity: camera.garage_camera
+                show_state: false
+                show_name: true
+                camera_view: auto
+                fit_mode: cover
+              - type: picture-entity
+                entity: camera.dining_camera
+                show_state: false
+                show_name: true
+                camera_view: auto
+                fit_mode: cover
+                tap_action:
+                  action: more-info
 
           # --- Pop-ups ---------------------------------------------------------
           # Bubble pop-ups render nothing in place; they only need to be on the
