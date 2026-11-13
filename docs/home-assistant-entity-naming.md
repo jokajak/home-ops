@@ -67,7 +67,7 @@ same way.
 |---|---|
 | `climate.upstairs_upstairs` | `climate.upstairs_hvac` |
 | `climate.downstairs_downstairs` | `climate.downstairs_hvac` |
-| window AC (TBD: current ID) | `climate.playroom_window_ac` |
+| `climate.playroom_ac` | unchanged |
 
 ## Rename checklist
 
