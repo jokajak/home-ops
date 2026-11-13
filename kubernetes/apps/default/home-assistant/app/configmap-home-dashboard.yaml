@@ -176,10 +176,6 @@ data:
           - type: grid
             cards:
               - type: custom:bubble-card
-                card_type: separator
-                name: Climate
-                icon: mdi:thermostat
-              - type: custom:bubble-card
                 card_type: button
                 button_type: name
                 name: Climate
