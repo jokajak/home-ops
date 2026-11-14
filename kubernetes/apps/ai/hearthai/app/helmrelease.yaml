@@ -183,3 +183,25 @@ spec:
     hearthmem:
       persistence:
         existingClaim: hearthmem-data
+
+    # ── Local lane ────────────────────────────────────────────────────────────
+    # A model name served only by a machine on the home network, behind the
+    # chart's gate Service (hearthai-local:11434). The laptop's address is the
+    # only site input, and it comes from a substitution variable. The `.invalid`
+    # default is deliberate: until the owner sets SECRET_LOCAL_LLM_HOST the lane
+    # fails closed, because that name never resolves. Never give this a working
+    # fallback: a local lane that quietly reroutes elsewhere is not one.
+    # See docs/plans/2026-11-13-hearthai-local-inference.md.
+    localInference:
+      enabled: true
+      upstreamUrl: "http://${SECRET_LOCAL_LLM_HOST:=local-llm.invalid}:11434"
+      gate:
+        networkPolicy:
+          # The gate admits this release's LiteLLM and node probes only. Gatus
+          # probes it from its own namespace; without this entry the probe is
+          # dropped and the status tile stays down even with the laptop awake.
+          additionalIngress:
+            - namespace: observability
+              matchLabels:
+                app.kubernetes.io/name: gatus
+                app.kubernetes.io/instance: gatus
