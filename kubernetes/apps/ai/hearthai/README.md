@@ -65,6 +65,35 @@ A third by the same rule: Open WebUI's LiteLLM virtual key is minted in the Lite
 pasted into the Bitwarden `open-webui litellm` item over its `replace-me` sentinel
 (`terraform/bitwarden/README.md`).
 
+## Local lane
+
+A model name (`local-qwen`) served only by a laptop on the home network, reached through a small
+gate Service in this release (`hearthai-local:11434`). It has one backend and **no fallback**:
+when the laptop is off the model is unavailable, not rerouted. That is its normal state, so the
+`local-inference` tile on the status page is not alerted on.
+
+- `localInference` in [`app/helmrelease.yaml`](./app/helmrelease.yaml) turns it on. The laptop's
+  address comes from `${SECRET_LOCAL_LLM_HOST}`; the `.invalid` default makes the lane fail
+  closed until it is set. It must never be given a fallback.
+- The gate's network policy admits this release's LiteLLM and node probes. `additionalIngress`
+  adds the Gatus pods in `observability`, selected by `app.kubernetes.io/name` and
+  `app.kubernetes.io/instance`, so the probe in [`app/gatus.yaml`](./app/gatus.yaml) is not dropped.
+- Design, cutover order and rollback:
+  [`docs/plans/2026-11-13-hearthai-local-inference.md`](../../../../docs/plans/2026-11-13-hearthai-local-inference.md).
+
+**Owner steps** (one-off, not automated):
+
+1. Populate `SECRET_LOCAL_LLM_HOST` in `kubernetes/flux/vars/cluster-secrets.sops.yaml`: the
+   laptop's name or address, no scheme, no port. Its own commit, before this lane is merged.
+2. On the laptop: pull the model, expose Ollama beyond localhost on port 11434, give the laptop a
+   stable name or address, and decide how that port is restricted (Ollama has no authentication).
+3. In the LiteLLM admin UI, confirm Open WebUI's virtual key can see `local-qwen`; mint one key
+   per coding CLI or machine limited to `local-qwen` and keep it on that machine.
+4. After merge, with the laptop **awake**, check that the `local-inference` tile is up and
+   `local-qwen` answers. Then with it asleep, check that requests fail quickly with the fixed
+   message and the tile is down. A tile that is down in both states means the policy is denying
+   Gatus.
+
 ## What is load-bearing
 
 - **Single replica, `Recreate`, `ReadWriteOnce` — everywhere.** Open WebUI is SQLite on one

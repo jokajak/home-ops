@@ -12,6 +12,7 @@
 # meridian and hearthmem are deliberately unprobed: both are ClusterIP-only
 # with no ingress, and meridian answers 401 to anything without the API key,
 # so a probe would report a permanent failure rather than a health signal.
+# The local-inference gate is probed too, but never alerts.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -48,6 +49,18 @@ data:
       - name: "litellm"
         group: internal
         url: "https://llm.${SECRET_DOMAIN:=internal}/health/liveliness"
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"
+      # The laptop being asleep is its normal state, so this has no alerts: a
+      # down tile means "the lane is unavailable", not "something broke". The
+      # gate answers /api/version by asking the laptop, 200 when it is up and
+      # 503 when it is not. If the tile is down while the laptop is awake, the
+      # gate's network policy is denying this pod (see additionalIngress in
+      # helmrelease.yaml).
+      - name: "local-inference"
+        group: internal
+        url: "http://hearthai-local.ai.svc.cluster.local:11434/api/version"
         interval: 1m
         conditions:
           - "[STATUS] == 200"
