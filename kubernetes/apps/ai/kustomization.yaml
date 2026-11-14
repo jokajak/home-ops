@@ -17,3 +17,6 @@ resources:
   # cost, and the household's queries stay off a vendor's logs.
   - ./searxng/ks.yaml
   - ./mindroom/ks.yaml
+  # Sandbox namespace for the ai-jobs executor: quota, default-deny, Role.
+  # Must be live before aiJobs is enabled (see its namespace.yaml).
+  - ./ai-jobs/ks.yaml

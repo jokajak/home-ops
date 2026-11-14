@@ -1,0 +1,20 @@
+---
+# Default deny for every pod in ai-jobs: nothing in, nothing out, DNS included.
+#
+# `- {}` is Cilium's documented spelling: a rule with no peers selects the
+# endpoints for enforcement in that direction and allows nothing. (An empty
+# or absent list would leave the direction unenforced.) Per-profile allows
+# (DNS, and hearthmem for memory-recall) are rendered into this namespace by
+# the hearthai chart, one CiliumNetworkPolicy per enabled profile, and add to
+# this baseline.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-deny
+  namespace: ai-jobs
+spec:
+  endpointSelector: {}
+  ingress:
+    - {}
+  egress:
+    - {}

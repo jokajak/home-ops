@@ -1,0 +1,25 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/source.toolkit.fluxcd.io/gitrepository_v1.json
+# kubernetes-sigs/agent-sandbox, as a Helm chart source.
+#
+# Upstream publishes the controller image and release manifests, but not the
+# Helm chart: the chart lives in the repository under helm/ (chart version
+# 0.1.4 at this tag, which does not move per release), so Flux pins the chart
+# by git tag. Renovate bumps `ref.tag` through its flux manager; the controller
+# image tag in agent-sandbox/app/helmrelease.yaml must move with it (the chart
+# requires image.tag and has no default), so review those two together.
+#
+# Core only: the HelmRelease leaves controller.extensions at false.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: agent-sandbox
+  namespace: flux-system
+spec:
+  interval: 30m
+  url: https://github.com/kubernetes-sigs/agent-sandbox.git
+  ref:
+    tag: v1.0.9
+  ignore: |
+    /*
+    !/helm

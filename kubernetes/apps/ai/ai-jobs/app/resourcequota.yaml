@@ -1,0 +1,15 @@
+---
+# Generous for one household; bounds a runaway loop in ai-jobs.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ai-jobs
+  namespace: ai-jobs
+spec:
+  hard:
+    pods: "4"
+    requests.cpu: "1"
+    requests.memory: 1Gi
+    limits.memory: 2Gi
+    count/sandboxes.agents.x-k8s.io: "8"
+    count/secrets: "16"
