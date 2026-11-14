@@ -143,6 +143,15 @@ spec:
         enabled: true
         className: internal
         host: "llm.${SECRET_DOMAIN:=internal}"
+        annotations:
+          hajimari.io/icon: mdi:router-network
+          # Coding CLIs come in through here, and a cold local prompt can take
+          # close to a minute before the first byte, which is the controller's
+          # default read timeout. Same four settings as Open WebUI's ingress.
+          nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+          nginx.ingress.kubernetes.io/proxy-body-size: "0"
+          nginx.ingress.kubernetes.io/proxy-buffering: "off"
 
     # ── Postgres ──────────────────────────────────────────────────────────────
     # See the warning at the top of this file. The shared cluster in the
