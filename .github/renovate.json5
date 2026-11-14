@@ -171,6 +171,30 @@
       ],
     },
     {
+      // hearthai ships the chart (and its security settings) this cluster deploys, so a new head
+      // of main is a reviewed step, never automerged. The flux manager already reads
+      // GitRepository `ref.commit` as a git-refs digest, so no `# renovate:` annotation is needed.
+      // One weekly PR rather than one per upstream commit; the schedule is explicit so it holds
+      // if the global one changes.
+      description: [
+        'hearthai chart source: weekly, grouped, reviewed, never automerged',
+      ],
+      matchManagers: [
+        'flux',
+      ],
+      matchDatasources: [
+        'git-refs',
+      ],
+      matchDepNames: [
+        'hearthai',
+      ],
+      groupName: 'hearthai chart source',
+      schedule: [
+        'on saturday',
+      ],
+      automerge: false,
+    },
+    {
       description: [
         'Use custom versioning for k3s',
       ],

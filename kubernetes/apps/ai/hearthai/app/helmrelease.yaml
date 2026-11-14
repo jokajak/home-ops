@@ -46,8 +46,11 @@ spec:
   chart:
     spec:
       # A path in the GitRepository, not a packaged chart — hearthai has not cut
-      # a tagged release yet. reconcileStrategy: Revision so a new source commit
-      # is an upgrade even though the chart version in Chart.yaml has not moved.
+      # a tagged release yet. The GitRepository is pinned to a commit (see
+      # kubernetes/flux/repositories/git/hearthai.yaml), so this chart changes
+      # only when that pin is bumped in a reviewed pull request.
+      # reconcileStrategy: Revision so a new pinned commit is an upgrade even
+      # though the chart version in Chart.yaml has not moved.
       # This becomes an OCIRepository + version once the first tag publishes
       # oci://ghcr.io/jokajak/charts/hearthai.
       chart: ./deploy/charts/hearthai
@@ -122,8 +125,8 @@ spec:
 
     # ── LiteLLM ───────────────────────────────────────────────────────────────
     # The model catalogue lives in the chart (files/litellm-config.yaml).
-    # Adding a model is a hearthai change; how it reaches this cluster is
-    # described in kubernetes/flux/repositories/git/hearthai.yaml.
+    # Adding a model is a hearthai change; it reaches this cluster when the
+    # commit pin is bumped, as described in kubernetes/flux/repositories/git/hearthai.yaml.
     litellm:
       existingSecret: litellm-secret
       # ⚠️ VERSION OVERRIDE, NOT A PREFERENCE. The chart's own pin lags the

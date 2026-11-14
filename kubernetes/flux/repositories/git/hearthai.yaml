@@ -8,16 +8,21 @@
 # hostnames, the Secrets, the claims, and the Postgres database. See
 # docs/plans/2026-09-10-hearthai-single-release.md.
 #
-# ⚠️ Floating on main, intentionally, while the chart is under active
-# development. Every push to jokajak/hearthai main becomes a new source
-# revision, and reconcileStrategy: Revision in the HelmRelease turns each one
-# into an upgrade (chart version 0.1.0+<sha>) — that is the dev loop: push the
-# chart, the cluster follows. The cost is that whatever lands on main deploys
-# unreviewed, which is acceptable only because this is a single-household lab
-# and the chart's owner is the one pushing. Pin this back to `commit:` (or,
-# better, an OCIRepository + version range once hearthai cuts a tag to
-# oci://ghcr.io/jokajak/charts/hearthai — which is also what lets Renovate
-# track it) as soon as the chart stabilises.
+# Pinned to a commit of jokajak/hearthai main, and moved by a reviewed pull
+# request. home-ops deploys exactly this commit's deploy/ tree, so a push to
+# hearthai does nothing here until the pin moves. reconcileStrategy: Revision in
+# the HelmRelease turns each new pin into an upgrade (chart version
+# 0.1.0+<sha>).
+#
+# Renovate's flux manager reads a GitRepository `ref.commit` as a git-refs
+# digest and proposes the new head of hearthai's default branch (main) in one
+# weekly, non-automerged pull request; see the hearthai rule in
+# .github/renovate.json5. Review that diff under deploy/, let flate pass, merge.
+# For an urgent fix, edit `commit:` by hand the same day. See "Upgrading" in
+# kubernetes/apps/ai/hearthai/README.md.
+#
+# Moving to an OCIRepository + version range (oci://ghcr.io/jokajak/charts/hearthai)
+# once hearthai cuts a tag would replace this pin.
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -27,7 +32,7 @@ spec:
   interval: 30m
   url: "https://github.com/jokajak/hearthai.git"
   ref:
-    branch: "main"
+    commit: a4b47f9e4b4050f5f30618bcf92deed58ecb5b05
   ignore: |
     # exclude all
     /*

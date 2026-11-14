@@ -109,16 +109,31 @@ when the laptop is off the model is unavailable, not rerouted. That is its norma
 
 ## Upgrading
 
-While the chart is under active development it **floats on `main`** in
+The chart is **pinned to a commit** of hearthai `main` in
 [`kubernetes/flux/repositories/git/hearthai.yaml`](../../../flux/repositories/git/hearthai.yaml)
-— no `commit:` pin. Every push to hearthai's `main` becomes a new source revision, and
-`reconcileStrategy: Revision` in `app/helmrelease.yaml` turns each one into an upgrade (chart
-version `0.1.0+<sha>`). Bumping an image or adding a model is therefore just a hearthai change:
-push it, the cluster follows. The trade-off is that whatever lands on `main` deploys unreviewed —
-fine for a single-household lab whose chart owner is the one pushing. Pin it back to a `commit:`
-(or an `OCIRepository` + version range once hearthai publishes
-`oci://ghcr.io/jokajak/charts/hearthai`, which is also what lets Renovate track it) once the
-chart stabilises.
+(`ref.commit`). A push to hearthai deploys nothing here until that pin moves; when it does,
+`reconcileStrategy: Revision` in `app/helmrelease.yaml` turns the new commit into an upgrade (chart
+version `0.1.0+<sha>`). Bumping an image or adding a model is therefore a hearthai change followed
+by a pin bump.
+
+**Routine bump.** Renovate's `flux` manager reads the pin as a git-refs digest and opens one
+pull request a week ("hearthai chart source", Saturdays, never automerged) when hearthai's `main`
+has moved; the rule is in `.github/renovate.json5`. To review it:
+
+1. Read the hearthai diff between the old and new commit, limited to `deploy/` (the only path the
+   source exports): `git diff <old>..<new> -- deploy/` in a hearthai checkout, or the GitHub
+   compare view. Look for changed security settings, images, Secret names, and new required values.
+2. Check that `flate` passes on the pull request.
+3. Merge. Flux reconciles the new commit and upgrades the release.
+
+**Urgent fix, same day.** Don't wait for Saturday: edit `commit:` in `hearthai.yaml` to the new
+full SHA by hand, run `task k8s:flate`, and merge after the same diff review. Renovate's next
+weekly pull request then finds nothing newer, or just the next commits.
+
+If Renovate has not opened a pull request for several weeks while hearthai `main` is moving, the
+pin is going stale silently: check the Dependency Dashboard issue for the hearthai entry. Moving to
+an `OCIRepository` + version range once hearthai publishes `oci://ghcr.io/jokajak/charts/hearthai`
+would replace the commit pin.
 
 **Two images are overridden in `app/helmrelease.yaml`, and are meant to come back out.** The
 chart pins litellm v1.99.1 and meridian 1.68.0 — the versions this cluster ran when hearthai
