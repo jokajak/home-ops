@@ -33,7 +33,7 @@ spec:
           app:
             image:
               repository: docker.io/gotenberg/gotenberg
-              tag: "8.40"
+              tag: "9.5"
             # args only (not command) so the image's tini entrypoint is kept
             args:
               - gotenberg
