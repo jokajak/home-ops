@@ -3,3 +3,6 @@ customization:
   systemExtensions:
     officialExtensions:
       - siderolabs/intel-ucode
+      # gVisor (runsc) for the `gvisor` RuntimeClass; see
+      # kubernetes/apps/system/runtime-classes.
+      - siderolabs/gvisor
