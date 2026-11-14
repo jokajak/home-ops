@@ -46,6 +46,22 @@ spec:
               LOG_LEVEL: DEBUG
               HEALTH_PORT: "8081"
             restartPolicy: Always
+            # Gatus reads /config once at start and does not pick up files that
+            # appear later. As a native sidecar, this container holds the app
+            # back until its startup probe passes, and /healthz only answers
+            # 200 after the first watch sync, so the per-app endpoint files are
+            # in place before Gatus starts. Without it, a slow sidecar start
+            # (an image bump, say) leaves Gatus on the base config alone.
+            probes:
+              startup:
+                enabled: true
+                custom: true
+                spec:
+                  httpGet:
+                    path: /healthz
+                    port: 8081
+                  periodSeconds: 1
+                  failureThreshold: 120
             resources:
               requests:
                 cpu: 10m
