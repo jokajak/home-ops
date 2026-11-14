@@ -134,7 +134,7 @@ spec:
       # the chart's pin is at or past this tag.
       image:
         repository: ghcr.io/berriai/litellm-database
-        tag: v1.106.6
+        tag: v1.109.1
       persistence:
         existingClaim: litellm-token
       # Kept, so other in-cluster consumers and the admin UI keep the hostname
