@@ -33,6 +33,7 @@ nodes:
       busPath: 0*
       vlanAddress: ENC[AES256_GCM,data:dwQUN7slQT41Ii7Y/UWL,iv:8PUNn63QsiMCtsiGExnMaEfoln8uVR3P+Mn5CaEVwh0=,tag:GwqS0SNUZxJuefm00TDsVA==,type:str]
       installerAnnotation: true
+      gvisor: true
   - host: basement-dell-sff
     ip: ENC[AES256_GCM,data:IsOxh2Xb3jJWh8dnWAg=,iv:PHqG1MBzkfHT7yiyZnQ/Lss5DGXdZ2oPT8R9m9jHDxM=,tag:lIOFWqrK6Uw1zqCTNUyGoQ==,type:str]
     role: worker
@@ -40,6 +41,7 @@ nodes:
       busPath: 0*
       vlanAddress: ENC[AES256_GCM,data:G088hqGp/vK8zD5Uh0B9,iv:brLOksykXGPOKE8cJpJEtqY9e3yp+oD4e+WcIHhr+50=,tag:vlQyu+eCG+/PxABYNsfJhg==,type:str]
       installerAnnotation: true
+      gvisor: true
   - host: basement-rpi4-chocolate
     ip: ENC[AES256_GCM,data:SjT7Gd5o398unHlcfPg=,iv:uJYK4t02pNUvWMCONYaocG4v5tWsGWs+WQgCZuL40pQ=,tag:LMqwESa9RP1niV7HwHRxdA==,type:str]
     role: worker
@@ -67,6 +69,7 @@ nodes:
       busPath: 0*
       vlanAddress: ENC[AES256_GCM,data:lwGnVdvXaCEWgYiMdx0f,iv:zD3bgvyiu2yD0OAIrtZpILE2n7UrLXZ2Tk3WSIz3hXU=,tag:LmkbShBHi1m3SEdSKJy7Cg==,type:str]
       installerAnnotation: true
+      gvisor: true
   - host: foyer-hp-800g3
     ip: ENC[AES256_GCM,data:xMjZrkLBx+y5iOjwB8c=,iv:bhUjbH3o9VvsDQa44pk3hJmmXbi5AC8gRWP9Hrw1S8I=,tag:wNTCM4A7wG3FU+C3cM/75w==,type:str]
     role: worker
@@ -74,6 +77,7 @@ nodes:
       busPath: 0*
       vlanAddress: ENC[AES256_GCM,data:4LDEyFb3HaOk1VB7DkUC,iv:B7YYZExZGU0Xm7GxcmB/t8SqIGq/1grTAq8LxHBA0UA=,tag:jyzN1qIStyXOL7kli4ShCg==,type:str]
       installerAnnotation: true
+      gvisor: true
   - host: basement-lenovo-m910q
     ip: ENC[AES256_GCM,data:jj6/TbhraDsDVJQAkts=,iv:Dhqg0eJCFn8PaK4ZKx7l4Gzgs6CqHevaZ9z0Jfr5k7s=,tag:PV3Bhgzguv1ACWeCmKk+Fw==,type:str]
     role: control-plane
@@ -81,6 +85,7 @@ nodes:
       busPath: 0*
       vlanAddress: ENC[AES256_GCM,data:1IxP5AtSRqstifwlM9uu,iv:RR3ExoDA6NWW1d0tE0m+hMukXncMhElpQldY5l/mFWY=,tag:phoPuhdGu20Cg9KgxWF2pA==,type:str]
       installerAnnotation: true
+      gvisor: true
 sops:
   age:
     - recipient: age1sy27zexxvef2q63aeky2uuhmm0rvrclqf6fzfu2qqe2pc0w6rc8s7fde68

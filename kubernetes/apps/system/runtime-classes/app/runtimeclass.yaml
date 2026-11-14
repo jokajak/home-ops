@@ -8,9 +8,10 @@
 # The scheduling.nodeSelector below is what keeps pods that name this class off
 # the Pi nodes (it is merged into the pod's nodeSelector at admission).
 #
-# gVisor pods will not start until the `user.max_user_namespaces` sysctl
-# decision is made and applied (the extension's README requires it, and it
-# relaxes a KSPP hardening default, so it is the owner's call).
+# gVisor needs unprivileged user namespaces (`user.max_user_namespaces`), which
+# relaxes a KSPP hardening default. It is set only on the x86 nodes, by
+# talos/all/11-gvisor.yaml.tpl keyed on `gvisor: true` in topf.yaml (owner
+# decision, 2026-11-14): the same nodes this selector allows.
 #
 # No workload uses this class until the owner has confirmed it live
 # (`kubectl get runtimeclass gvisor`, then a `runtimeClassName: gvisor` test pod
