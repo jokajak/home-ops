@@ -57,6 +57,11 @@ spec:
         proxy-body-size: 0
         proxy-buffer-size: 16k
         ssl-protocols: TLSv1.3 TLSv1.2
+        # NGINX2Root (CVE-2026-123007 et al.): the bundled nginx 1.27.1 is affected and
+        # ingress-nginx is retired, so no fixed release is coming. Disabling HTTP/2 closes
+        # the lead CVE's path; clients fall back to HTTP/1.1. Goes away with nginx itself —
+        # see docs/plans/2026-02-08-cilium-gateway-api-migration.md.
+        use-http2: "false"
       metrics:
         enabled: true
         serviceMonitor:
