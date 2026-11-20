@@ -127,6 +127,8 @@ resources today).
   already chose **Cilium** Gateway API for this cluster. Cilium is already the CNI here, so that
   choice needs no extra control plane; Envoy Gateway is upstream's answer, not necessarily this
   cluster's.
+- **Settled 2026-11-19: Cilium.** The revised migration plan carries the decision and the
+  cutover mechanics. What follows is the original framing.
 - **Verdict: decide first, then migrate.** Following upstream here is not automatically right.
   Resolve Cilium vs Envoy against that existing doc before any work starts. Whichever wins, the
   migration itself is a per-app `Ingress` → `HTTPRoute` conversion and belongs in its own plan.
