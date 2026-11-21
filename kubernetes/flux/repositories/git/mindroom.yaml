@@ -9,7 +9,7 @@ spec:
   interval: 30m
   url: https://github.com/mindroom-ai/mindroom.git
   ref:
-    commit: 5e7c1569f468e79cdeb6d24a91a64071b628fb83
+    commit: 2b8cadc4f0e81bfb80b17de236814b2b640d3864
   ignore: |
     /*
     !/cluster
