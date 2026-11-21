@@ -58,7 +58,7 @@ spec:
           init-passwd:
             image: &image
               repository: docker.io/library/eclipse-mosquitto
-              tag: 2.1.2-alpine
+              tag: 2.1.4-alpine
             command:
               - /bin/sh
               - -c
