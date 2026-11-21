@@ -1,0 +1,29 @@
+---
+# yaml-language-server: $schema=https://kubernetes-schemas.pages.dev/kustomize.toolkit.fluxcd.io/kustomization_v1.json
+# No targetNamespace: these objects live in two namespaces (ai-jobs, and the
+# ExternalSecret in ai), and targetNamespace would override both.
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-apps-ai-jobs
+  namespace: flux-system
+spec:
+  commonMetadata:
+    labels:
+      app.kubernetes.io/name: ai-jobs
+  interval: 30m
+  timeout: 5m
+  path: "./kubernetes/apps/ai/ai-jobs/app"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: home-kubernetes
+  wait: false
+  dependsOn:
+    - name: cluster-apps-external-secrets
+    - name: cluster-apps-external-secrets-bitwarden
+    # CiliumNetworkPolicy CRD, and the policy engine that enforces the
+    # default-deny below.
+    - name: cilium
+    # The Sandbox CRD (the quota counts it, the Role names it).
+    - name: cluster-apps-agent-sandbox

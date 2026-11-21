@@ -1,0 +1,17 @@
+---
+# Container default and ceiling. A profile that sets its own resources (all of
+# them do) is only bounded by `max`.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: ai-jobs
+  namespace: ai-jobs
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+        memory: 256Mi
+      max:
+        cpu: 500m
+        memory: 256Mi

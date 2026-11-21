@@ -1,0 +1,38 @@
+---
+# What the ai-jobs control plane (service account `hearthai-ai-jobs` in `ai`,
+# created by the hearthai chart) may do here, and nothing more: no cluster
+# scope, nothing in any other namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ai-jobs-executor
+  namespace: ai-jobs
+rules:
+  - apiGroups: ["agents.x-k8s.io"]
+    resources: ["sandboxes"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+  # The per-run Secret: created with an ownerReference to its Sandbox and
+  # garbage-collected with it; delete is for the executor's own cleanup.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ai-jobs-executor
+  namespace: ai-jobs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ai-jobs-executor
+subjects:
+  - kind: ServiceAccount
+    name: hearthai-ai-jobs
+    namespace: ai

@@ -1,0 +1,14 @@
+---
+# yaml-language-server: $schema=https://json.schemastore.org/kustomization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# No `namespace:` here: the manifests name their own (ai-jobs, and ai for the
+# ExternalSecret).
+resources:
+  - ./namespace.yaml
+  - ./resourcequota.yaml
+  - ./limitrange.yaml
+  - ./networkpolicy.yaml
+  - ./serviceaccount.yaml
+  - ./rbac.yaml
+  - ./externalsecret.yaml
