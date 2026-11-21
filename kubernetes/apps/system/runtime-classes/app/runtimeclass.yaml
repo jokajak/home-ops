@@ -1,0 +1,26 @@
+---
+# gVisor sandbox runtime. The handler `runsc` is registered in containerd by the
+# Talos `siderolabs/gvisor` system extension (talos/schematic.yaml.tpl), so this
+# object is inert until a node has been upgraded to the schematic that includes
+# it.
+#
+# Only the x86 schematic carries the extension; the Raspberry Pi nodes do not.
+# The scheduling.nodeSelector below is what keeps pods that name this class off
+# the Pi nodes (it is merged into the pod's nodeSelector at admission).
+#
+# gVisor needs unprivileged user namespaces (`user.max_user_namespaces`), which
+# relaxes a KSPP hardening default. It is set only on the x86 nodes, by
+# talos/all/11-gvisor.yaml.tpl keyed on `gvisor: true` in topf.yaml (owner
+# decision, 2026-11-14): the same nodes this selector allows.
+#
+# No workload uses this class until the owner has confirmed it live
+# (`kubectl get runtimeclass gvisor`, then a `runtimeClassName: gvisor` test pod
+# running `dmesg` shows gVisor's kernel messages).
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: gvisor
+handler: runsc
+scheduling:
+  nodeSelector:
+    kubernetes.io/arch: amd64
