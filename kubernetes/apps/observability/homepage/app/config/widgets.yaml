@@ -1,0 +1,11 @@
+---
+# Cluster-local only: no search widget, nothing that calls out.
+- kubernetes:
+    cluster:
+      show: true
+      cpu: true
+      memory: true
+      showLabel: true
+      label: cluster
+    nodes:
+      show: false
