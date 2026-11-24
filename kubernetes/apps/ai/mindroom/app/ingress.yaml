@@ -4,7 +4,12 @@ kind: Ingress
 metadata:
   name: mindroom-chat
   annotations:
-    hajimari.io/icon: mdi:robot
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Chat
+    gethomepage.dev/description: Mindroom chat (trial)
+    gethomepage.dev/group: AI
+    gethomepage.dev/icon: mdi-robot
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=mindroom-client
 spec:
   ingressClassName: internal
   rules:
@@ -107,6 +112,12 @@ kind: Ingress
 metadata:
   name: mindroom-dashboard
   annotations:
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Mindroom
+    gethomepage.dev/description: Mindroom runtime dashboard
+    gethomepage.dev/group: Admin
+    gethomepage.dev/icon: mdi-robot-outline
+    gethomepage.dev/pod-selector: app.kubernetes.io/name=mindroom-runtime
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-buffering: "off"

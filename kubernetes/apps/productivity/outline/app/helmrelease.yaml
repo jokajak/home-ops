@@ -152,6 +152,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Wiki
+          gethomepage.dev/description: Household knowledge base
+          gethomepage.dev/group: Productivity
+          gethomepage.dev/icon: outline.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=outline
         hosts:
           - host: &host wiki.${SECRET_DOMAIN:=internal}
             paths:

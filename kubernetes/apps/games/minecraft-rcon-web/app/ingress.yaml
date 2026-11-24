@@ -5,7 +5,12 @@ metadata:
   name: minecraft-rcon
   namespace: games
   annotations:
-    hajimari.io/enable: "false"
+    gethomepage.dev/enabled: "true"
+    gethomepage.dev/name: Minecraft RCON
+    gethomepage.dev/description: Minecraft server admin
+    gethomepage.dev/group: Games
+    gethomepage.dev/icon: minecraft.svg
+    gethomepage.dev/pod-selector: app.kubernetes.io/instance=minecraft-rcon-web
     external-dns.alpha.kubernetes.io/target: "internal.${SECRET_DOMAIN:=internal}"
 spec:
   ingressClassName: internal

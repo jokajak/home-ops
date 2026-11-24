@@ -120,8 +120,13 @@ spec:
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
           nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
           nginx.org/websocket-services: matterhub
-          hajimari.io/enable: "true"
-          hajimari.io/icon: "simple-icons:matterdotjs"
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Matter Hub
+          gethomepage.dev/description: Exposes HA entities over Matter
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: matter.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=home-assistant-matter-hub
+          gethomepage.dev/href: https://matterhub.${SECRET_DOMAIN:=internal}
           external-dns.alpha.kubernetes.io/hostname: internal.${SECRET_DOMAIN:=internal}
         hosts:
           - host: matterhub.${SECRET_DOMAIN:=internal}

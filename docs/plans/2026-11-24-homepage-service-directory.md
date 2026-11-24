@@ -69,9 +69,14 @@ No widgets (API-key-backed live stats) in this change — see Future Work.
 - **Pod status badges via explicit `gethomepage.dev/pod-selector`.** Homepage's default selector
   (`app.kubernetes.io/name=<ingress name>`) won't match for every chart, and a mismatch renders a
   misleading "not found" badge. Set the selector per ingress to the pods' real labels; if a chart
-  makes that awkward, set `gethomepage.dev/pod-selector: ""` to disable the badge. Gatus remains
-  the source of truth for health.
+  makes that awkward, set `gethomepage.dev/external: "true"` to hide the badge (an empty
+  `pod-selector` does **not** disable it: Homepage then selects every pod in the namespace). As
+  implemented, every selector matches the rendered pod labels, so no badge is disabled. Gatus
+  remains the source of truth for health.
 - **Single replica, `Recreate`**, no PVC (config is all ConfigMaps; Homepage keeps no state).
+- **Probes send the real `Host` header.** `HOMEPAGE_ALLOWED_HOSTS` is enforced on
+  `/api/healthcheck` too, so a kubelet probe (`Host: <pod-ip>:3000`) would be rejected with 400;
+  the probes set `httpHeaders: Host: homepage.${SECRET_DOMAIN}` instead.
 - **Reloader** annotation (`reloader.stakater.com/auto: "true"`) so config edits restart the pod.
 
 ## Implementation brief (for the implementing agent)

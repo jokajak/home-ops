@@ -61,6 +61,13 @@ spec:
     ingress:
       app:
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: MeTube
+          gethomepage.dev/description: Download video/audio via yt-dlp
+          gethomepage.dev/group: Downloads
+          gethomepage.dev/icon: metube.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=metube
         hosts:
           - host: &host "{{ .Release.Name }}.${SECRET_DOMAIN:=internal}"
             paths:

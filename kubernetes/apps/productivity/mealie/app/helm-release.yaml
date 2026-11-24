@@ -66,6 +66,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Recipes
+          gethomepage.dev/description: Recipes and meal planning
+          gethomepage.dev/group: Productivity
+          gethomepage.dev/icon: mealie.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=mealie
         hosts:
           - host: &host recipes.${SECRET_DOMAIN:=internal}
             paths:

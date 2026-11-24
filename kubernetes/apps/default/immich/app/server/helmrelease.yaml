@@ -105,6 +105,12 @@ spec:
         enabled: true
         className: internal
         annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Photos
+          gethomepage.dev/description: Photo and video backup (Immich)
+          gethomepage.dev/group: Media
+          gethomepage.dev/icon: immich.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=immich-server
           nginx.ingress.kubernetes.io/proxy-body-size: "0"
           # Stream large uploads straight to immich-server instead of buffering
           # the whole body to a temp file at the ingress (avoids OOM during

@@ -134,6 +134,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Tasks
+          gethomepage.dev/description: Shared tasks and checklists
+          gethomepage.dev/group: Productivity
+          gethomepage.dev/icon: vikunja.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=vikunja
         hosts:
           - host: &host tasks.${SECRET_DOMAIN:=internal}
             paths:

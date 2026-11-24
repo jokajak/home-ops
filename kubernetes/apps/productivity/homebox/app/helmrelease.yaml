@@ -149,6 +149,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Inventory
+          gethomepage.dev/description: House inventory, warranties, manuals
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: homebox.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=homebox
         hosts:
           - host: &host inventory.${SECRET_DOMAIN:=internal}
             paths:

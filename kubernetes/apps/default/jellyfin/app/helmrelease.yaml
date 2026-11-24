@@ -87,6 +87,12 @@ spec:
         enabled: true
         className: external
         annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Jellyfin
+          gethomepage.dev/description: Movies, shows and music
+          gethomepage.dev/group: Media
+          gethomepage.dev/icon: jellyfin.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=jellyfin
           nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
           nginx.ingress.kubernetes.io/whitelist-source-range: "${JELLYFIN_ALLOWLIST:=192.168.0.0/16,10.0.0.0/8,172.16.0.0/12}"
         hosts:

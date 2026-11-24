@@ -118,7 +118,12 @@ spec:
         className: internal
         annotations:
           nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-          hajimari.io/icon: mdi:lan
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: UniFi
+          gethomepage.dev/description: Network controller
+          gethomepage.dev/group: Admin
+          gethomepage.dev/icon: unifi.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=unifi
         hosts:
           - host: &host "unifi.${SECRET_DOMAIN:=internal}"
             paths:

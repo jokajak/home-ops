@@ -54,6 +54,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: ESPHome
+          gethomepage.dev/description: Firmware for ESP devices
+          gethomepage.dev/group: Home
+          gethomepage.dev/icon: esphome.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=esphome
         hosts:
           - host: &host esphome.${SECRET_DOMAIN:=internal}
             paths:

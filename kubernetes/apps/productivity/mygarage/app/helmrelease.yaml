@@ -145,6 +145,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Garage
+          gethomepage.dev/description: Vehicle maintenance log
+          gethomepage.dev/group: Productivity
+          gethomepage.dev/icon: mdi-car
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=mygarage
         hosts:
           - host: &host garage.${SECRET_DOMAIN:=internal}
             paths:
