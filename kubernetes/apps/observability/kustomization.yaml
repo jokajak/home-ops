@@ -9,6 +9,7 @@ resources:
   - ./goflow2/ks.yaml
   - ./gatus/ks.yaml
   - ./grafana/ks.yaml
+  - ./homepage/ks.yaml
   - ./unpoller/ks.yaml
   - ./victoriametrics/ks.yaml
   - ./vector/ks.yaml

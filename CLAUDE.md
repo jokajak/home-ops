@@ -217,6 +217,8 @@ ones that mirror CI.
   `${LB_CIDR_V4}`, etc. Reference those rather than hardcoding domains/IPs.
 - Secret plumbing is **always** via `ExternalSecret` (Bitwarden) or `*.sops.yaml`, never plaintext
   in a manifest. Match the style of the nearest existing `externalsecret.yaml`.
+- Ingresses for user-facing apps carry `gethomepage.dev/{enabled,name,description,group,icon}`
+  annotations so they appear on `homepage.${SECRET_DOMAIN}`.
 - Larger multi-step efforts are written up first as dated design docs in `docs/plans/`
   (see the VPN-gateway and Cilium Gateway API plans for the expected format). Follow that
   convention for non-trivial changes.

@@ -1,0 +1,28 @@
+---
+title: Home
+theme: dark
+color: slate
+headerStyle: clean
+# Groups render in this order; cards sort by weight, then name.
+layout:
+  Home:
+    style: row
+    columns: 5
+  Media:
+    style: row
+    columns: 3
+  Productivity:
+    style: row
+    columns: 4
+  AI:
+    style: row
+    columns: 3
+  Downloads:
+    style: row
+    columns: 2
+  Games:
+    style: row
+    columns: 1
+  Admin:
+    style: row
+    columns: 4

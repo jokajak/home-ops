@@ -94,6 +94,12 @@ spec:
       enabled: true
       className: internal
       annotations:
+        gethomepage.dev/enabled: "true"
+        gethomepage.dev/name: Git
+        gethomepage.dev/description: Git forge (Forgejo)
+        gethomepage.dev/group: Productivity
+        gethomepage.dev/icon: forgejo.svg
+        gethomepage.dev/pod-selector: app.kubernetes.io/name=forgejo
         # git pushes over HTTP are large and streamed; do not buffer them
         nginx.ingress.kubernetes.io/proxy-body-size: "0"
         nginx.ingress.kubernetes.io/proxy-request-buffering: "off"

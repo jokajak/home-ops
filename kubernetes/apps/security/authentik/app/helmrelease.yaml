@@ -86,6 +86,12 @@ spec:
         enabled: true
         ingressClassName: external
         annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Authentik
+          gethomepage.dev/description: Single sign-on
+          gethomepage.dev/group: Admin
+          gethomepage.dev/icon: authentik.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=authentik,app.kubernetes.io/component=server
           nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
           nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
         hosts:

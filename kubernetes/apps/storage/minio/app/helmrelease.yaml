@@ -71,6 +71,14 @@ spec:
     ingress:
       main:
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: MinIO
+          gethomepage.dev/description: Object storage console
+          gethomepage.dev/group: Admin
+          gethomepage.dev/icon: minio.svg
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=minio
+          gethomepage.dev/href: https://minio.${SECRET_DOMAIN:=internal}
         hosts:
           - host: "minio.${SECRET_DOMAIN:=internal}"
             paths:

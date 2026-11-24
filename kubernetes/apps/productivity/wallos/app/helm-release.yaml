@@ -64,6 +64,13 @@ spec:
       app:
         enabled: true
         className: internal
+        annotations:
+          gethomepage.dev/enabled: "true"
+          gethomepage.dev/name: Subscriptions
+          gethomepage.dev/description: Subscription and bill tracker
+          gethomepage.dev/group: Productivity
+          gethomepage.dev/icon: mdi-cash-multiple
+          gethomepage.dev/pod-selector: app.kubernetes.io/name=wallos
         hosts:
           - host: &host subs.${SECRET_DOMAIN:=internal}
             paths:

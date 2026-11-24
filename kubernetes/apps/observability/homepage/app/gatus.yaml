@@ -1,0 +1,21 @@
+---
+# /api/healthcheck is behind Homepage's Host validation, so the probe sends
+# the real Host header rather than the service DNS name.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homepage-gatus-ep
+  namespace: observability
+  labels:
+    gatus.io/enabled: "true"
+data:
+  config.yaml: |
+    endpoints:
+      - name: "homepage"
+        group: internal
+        url: "http://homepage.observability.svc.cluster.local:3000/api/healthcheck"
+        headers:
+          Host: homepage.${SECRET_DOMAIN:=internal}
+        interval: 1m
+        conditions:
+          - "[STATUS] == 200"
