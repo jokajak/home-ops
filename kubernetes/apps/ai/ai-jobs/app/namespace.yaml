@@ -1,0 +1,19 @@
+---
+# The sandbox namespace: one pod per ai-jobs run, as agent-sandbox `Sandbox`
+# objects. It holds no workload of its own. See
+# docs/plans/2026-11-13-hearthai-local-inference.md "Sandbox namespace".
+#
+# ⚠️ ORDER MATTERS. This Kustomization (the default-deny policy in particular)
+# must be live in the cluster before the hearthai value that enables `aiJobs`
+# merges: Cilium reads the policy from the live cluster, and a sandbox pod that
+# starts before it exists has open egress. Two merges, with the owner's check
+# in between (`kubectl get cnp,quota,role -n ai-jobs`).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ai-jobs
+  labels:
+    kustomize.toolkit.fluxcd.io/prune: disabled
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted

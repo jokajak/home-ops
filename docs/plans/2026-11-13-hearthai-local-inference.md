@@ -89,15 +89,47 @@ Keys, budgets and spend are not touched.
 
 ### Sandbox namespace (hearthai I12)
 
-1. **home-ops change C merges and is confirmed live:** namespace `ai-jobs`, a `ResourceQuota` on
-   pods, CPU and memory, a default-deny `CiliumNetworkPolicy` for the namespace, and the
-   namespace-scoped Role the control plane needs to create and delete pods there. No workload.
-   Check: `kubectl get cnp,quota -n ai-jobs` shows them.
-2. **Only then** the home-ops value that sets `aiJobs.enabled: true`.
+Home-ops change C (package A5). Two Flux Kustomizations, no workload:
 
-This is the case the cutover rules exist for: the default-deny policy is read from the live
-cluster, and a sandbox pod that starts before it exists has open egress. Do not merge the two
-together.
+- `cluster-apps-agent-sandbox` (`kubernetes/apps/agent-sandbox-system/`): the agent-sandbox
+  controller, **core only** (`controller.extensions: false`), pinned at v1.0.9. Upstream publishes
+  the Helm chart only in its repository (`helm/`), so a `GitRepository`
+  (`kubernetes/flux/repositories/git/agent-sandbox.yaml`) pins the tag and the `HelmRelease`
+  pins the image tag. Renovate moves `ref.tag` through its flux manager; the HelmRelease
+  `image.tag` must be bumped with it (review them as one change). It brings the
+  `sandboxes.agents.x-k8s.io` CRD.
+- `cluster-apps-ai-jobs` (`kubernetes/apps/ai/ai-jobs/`), which depends on the first: namespace
+  `ai-jobs` (Pod Security `restricted`, enforce/warn/audit), `ResourceQuota`, `LimitRange`, a
+  default-deny `CiliumNetworkPolicy`, the `default` service account without a token, a `Role` and
+  `RoleBinding` for `hearthai-ai-jobs` in `ai`, and an `ExternalSecret` `ai-jobs` in `ai`
+  producing `ai-jobs-secret`.
+
+**Cutover (two merges, owner check between):**
+
+1. **Merge this change and let Flux reconcile.** Owner checks, in order:
+   - `kubectl get crd sandboxes.agents.x-k8s.io` exists, and the controller pod in
+     `agent-sandbox-system` is Ready.
+   - `kubectl get cnp,quota,limitrange,role,rolebinding -n ai-jobs` shows all of them, and
+     `kubectl get ns ai-jobs --show-labels` shows the three `pod-security.kubernetes.io` labels.
+   - The default-deny is enforced, not just present: from a throwaway pod in `ai-jobs` carrying
+     a restricted-compatible spec, DNS and any outbound connection must fail.
+2. **Only then** the home-ops value that sets `aiJobs.enabled: true` (package A6).
+
+Out of order, a sandbox pod starts with open egress: Cilium reads the policy from the live
+cluster, so a pod that starts before the policy exists is not retroactively contained. Do not
+merge the two together.
+
+**Owner steps (one-off):**
+
+- Create the Bitwarden item **`ai-jobs credentials`** (the `bitwarden-fields` store) with two
+  custom fields: `caller_key_open_webui` (any long random string; Open WebUI presents it, and the
+  A7 registration reuses it) and `memory_recall_read_token` (the household store's *read* token from
+  `hearthmem read-token <store>`, never its write token). Until it exists the `ai-jobs`
+  ExternalSecret reports an error, which affects nothing else because `aiJobs` is not enabled yet.
+  Rotating the read token revokes the old one; update the field and wait for the hourly refresh.
+- Decide whether to raise VictoriaLogs' retention for audit. `ai-jobs` audit records live as long
+  as its global `-retentionPeriod`, which home-ops does not set (upstream default, 7 days). This
+  change does not touch it.
 
 ### Smaller wiring, no ordering concern
 
