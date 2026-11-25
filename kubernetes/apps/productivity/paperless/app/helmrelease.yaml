@@ -115,6 +115,11 @@ spec:
                   httpGet: &probe
                     path: /accounts/login/
                     port: 8000
+                    # kubelet probes the pod IP; Django rejects that Host with a 400
+                    # (DisallowedHost), so present the real hostname instead
+                    httpHeaders:
+                      - name: Host
+                        value: paperless.${SECRET_DOMAIN:=internal}
                   # first boot runs migrations and builds the search index
                   initialDelaySeconds: 30
                   periodSeconds: 10
